@@ -1,1 +1,6 @@
 venv/*
+playground.py
+*.pyc
+*.pyo
+test/*
+debug.py
