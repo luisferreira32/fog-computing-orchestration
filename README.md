@@ -11,10 +11,11 @@ The objective of this work is to work on the state-of-the-art for Fog Computing 
 To run this simulations it is necessary to have Tensorflow 2.0 installed, recommended to create a venv in the same folder as the source code:
 [Official TF2 installation guide](https://www.tensorflow.org/install/pip#virtual-environment-install) (link accessed 08/2020)
 
-### Installed package list
-(venv) C:\fog-computing-orchestration> pip list
-Package                  Version
-[------------------------ ---------]
+### Installed package list  
+<pre>
+(venv) C:\fog-computing-orchestration> pip list  
+Package                  Version  
+------------------------ ---------
 absl-py                  0.9.0  
 astunparse               1.6.3  
 cachetools               4.1.1  
@@ -54,3 +55,4 @@ Werkzeug                 1.0.1
 wheel                    0.34.2  
 wrapt                    1.12.1  
   
+</pre>
