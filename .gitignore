@@ -3,4 +3,3 @@ playground.py
 *.pyc
 *.pyo
 test/*
-test_*
