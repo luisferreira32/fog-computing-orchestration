@@ -45,7 +45,7 @@ class Core(object):
 		adds communication ability to the node
 	"""
 
-	def __init__(self, name="default_node", cpi=configs.DEFAULT_CPI, cps=1800, placement=(0,0), influx=configs.TASK_ARRIVAL_RATE,coms=None):
+	def __init__(self, name="default_node", cpi=configs.DEFAULT_CPI, cps=configs.DEFAULT_CPS, placement=(0,0), influx=configs.TASK_ARRIVAL_RATE,coms=None):
 		"""
 		Parameters
 		----------
@@ -211,11 +211,11 @@ def extime(n1=None, n2=None, w0=0, t1= task.Unit()):
 	execution time [s] 
 		or -1 if failed
 	"""
-	if n1 is None or n2 is None:
+	if n1 is None or n2 is None or w0 < 0 or n1.wL < 0:
 		if configs.FOG_DEBUG == 1: print("[DEBUG] Invalid parameters in extime()")
 		return -1
 
-	return 1/sr
+	return ((t1.il*n1.cpi*n1.wL)/n1.cps + (t1.il*n2.cpi*w0)/n2.cps)
 
 
 # - task waiting time on node
@@ -236,14 +236,18 @@ def wtime(n1=None, n2=None, w0=0, t1= task.Unit()):
 
 	Return
 	------
-	execution time [s] 
+	avg waiting time time [s] 
 		or -1 if failed
 	"""
-	if sr <= 0:
-		if configs.FOG_DEBUG == 1: print("[DEBUG] Bad service rate in extime()")
+	if n1 is None or n2 is None or w0 < 0 or n1.wL < 0:
+		if configs.FOG_DEBUG == 1: print("[DEBUG] Invalid parameters in wtime()")
 		return -1
 
-	return 1/sr
+	wt = 0
+	if n1.wL > 0: wt += n1.cpuqueue.qsize()/configs.SERVICE_RATE
+	if w0 > 0: wt += n1.cpuqueue.qsize()/configs.SERVICE_RATE + n2.cpuqueue.qsize()/configs.SERVICE_RATE
+	# wt = (QL/srL)[if wL != 0] + (QL/srL + Q0/sr0)[if w0 != 0]
+	return wt
 
 # - distance calculator based on nodes placement
 
