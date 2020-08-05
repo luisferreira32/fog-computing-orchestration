@@ -22,6 +22,8 @@ class Core(object):
 		the fog node name
 	cpi : int
 		cpu cycles per instruction
+	cps : int
+		cpu cycles per second (cpu frequency) * 10 ^8
 	cpuqueue : Queue
 		implements a tasks CPU queue
 	influx : int
@@ -43,7 +45,7 @@ class Core(object):
 		adds communication ability to the node
 	"""
 
-	def __init__(self, name="default_node", cpi=5, placement=(0,0), coms=None):
+	def __init__(self, name="default_node", cpi=configs.DEFAULT_CPI, cps=1800, placement=(0,0), influx=configs.TASK_ARRIVAL_RATE,coms=None):
 		"""
 		Parameters
 		----------
@@ -58,8 +60,9 @@ class Core(object):
 		# set up the attributes
 		self.name = name
 		self.cpi = cpi
+		self.cps = cps
 		self.cpuqueue = Queue(configs.MAX_QUEUE)
-		self.influx = 0
+		self.influx = influx
 		self.wL = 0
 		self.placement = placement
 		self.coms = coms
@@ -79,7 +82,17 @@ class Core(object):
 		self.influx = self.influx+newinflux
 		return 0
 
-	def timestep(self, t1=None, w0=0): # TODO@luis: use a factor for timesteps to allow finer tunning
+	def recieveoffload(self, offloaded=0):
+		"""Adds the offloaded tasks to the tasks to be processed
+
+		Parameters
+		----------
+		offloaded=0
+			number of offloaded tasks to this node
+		"""
+		self.wL += offloaded
+
+	def timestep(self, t1=task.Unit(), w0=0):
 		"""Each timestep is a second, this function runs the second on this world
 		
 		Parameters
@@ -91,42 +104,24 @@ class Core(object):
 
 		Return
 		------
-		pending
-			number of pending tasks, either to be offloaded or discarded
+		remaining time of the timestep < 1s
 		"""
 
-		# default task if none is given
-		if t1 is None:
-			t1 = task.Unit()
+		# each second we have N cpu cycles to use on tasks
+		cycles_remaining = self.cps
+		# The number of tasks to be processed in this node = previous pending + INFLUX - w0 (out flux)
+		self.wL += self.influx - w0
 
-		# The number of tasks to be processed in this time step = previous pending + INFLUX - SERVICE RATE - w0
-		self.wL += self.influx - configs.SERVICE_RATE - w0
-		# more tasks solved than queued
-		if self.wL < 0:
-			while self.wL < 0:
-				if self.cpuqueue.empty():
-					self.wL = 0
-					break
-				self.process()
-				self.wL+=1
-		# perfect balance means nothing will be done, i.e. new allocated tasks, will be consumed at the service rate / offload
-		elif self.wL == 0:
-			pass
-		# and if more influx than service rate, means we'll add to the queue
-		else:
-			while self.wL > 0:
-				if self.cpuqueue.full():
-					if configs.FOG_DEBUG: print("[DEBUG] overload on node "+self.name)
-					return self.wL
-				self.queue(t1)
-				self.wL-=1
-						
-
+		if not self.cpuqueue.empty():
+			task_cycles = self.process()
+			if task_cycles > cycles_remaining:
+				return cycles_remaining/self.cps # task delayed for next timestep, and this one is cut shorter
+		
 		# debug print
 		if configs.FOG_DEBUG:
 			print("[DEBUG] time step completed, queue size at "+str(self.cpuqueue.qsize())+" and influx at "+str(self.influx))
 
-		return self.wL
+		return cycles_remaining/self.cps
 
 
 #------------------------------------------------------ CPU related ------------------------------------------------------
@@ -149,7 +144,7 @@ class Core(object):
 		cycles = t1.il*self.cpi
 
 		if configs.FOG_DEBUG:
-			print("[DEBUG] Finished processing task"+t1.name+" with IL " + str(t1.il)+"*10^"+str(t1.factor) + " at node " + self.name)
+			print("[DEBUG] Finished processing task"+t1.name+" with IL " + str(t1.il)+"*10^8 at node " + self.name)
 
 		return cycles
 
@@ -176,7 +171,7 @@ class Core(object):
 			raise FullCpuQueue
 
 		if configs.FOG_DEBUG:
-			print("[DEBUG] Added task ("+t1.name+") with IL " + str(t1.il)+"*10^"+str(t1.factor) + " to node " + self.name)
+			print("[DEBUG] Added task ("+t1.name+") with IL " + str(t1.il)+"*10^8 to node " + self.name)
 		return 0
 
 
@@ -219,28 +214,33 @@ class Core(object):
 
 # - frequency calculator based on service rate
 
-def getfreq(cycles=None):
-	"""Calculate clock frequency  based on the number of cycles a task takes and the configured service rate
+def avgcps(n=Core(), t=task.Unit(), sr=configs.SERVICE_RATE):
+	"""Calculate cycles per second (*10^8) considering a model node, model task and a model service rate
+	"""
+	return sr*n.cpi*t.il
 
-	Fails if no cycles are given, or if the service rate is miss configured
+
+
+# - task execution time on node local and offloaded
+
+def extime(n1=None, n2=None, w0=0, t1= task.Unit()):
+	"""Calculate task execution time on node local and offloaded
 
 	Return
 	------
-	clock frequency [Hz] * 10 ^ task.factor
-		frequency of the clock if successful
-		-1 if unsuccessful
+	execution time [s] 
+		or -1 if failed
 	"""
-	if cycles is None or configs.SERVICE_RATE <= 0:
-		if configs.FOG_DEBUG == 1: print("[DEBUG] Empty cycles or bad service rate in getfreq()")
+	if n1 is None or n2 is None:
+		if configs.FOG_DEBUG == 1: print("[DEBUG] Invalid parameters in extime()")
 		return -1
 
-	return configs.SERVICE_RATE*cycles
+	return 1/sr
 
 
+# - task waiting time on node
 
-# - task execution time per task based on service rate [IRRELEVANT FUNCTION, it's the inverse of SERVICE RATE]
-
-def extime(sr=configs.SERVICE_RATE):
+def wtime(sr=configs.SERVICE_RATE):
 	"""Calculate the task execution time, based on the SERVICE RATE
 
 	Fails if the service rate is miss configured

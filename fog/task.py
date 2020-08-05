@@ -12,15 +12,13 @@ class Unit(object):
 	name : str
 		the task unit name
 	il : int
-		instructions lines in the task * 10^factor
-	factor : int
-		factor of instruction lines
+		instructions lines in the task * 10^8
 	data : int
 		the data size of a task [Mbytes]
 
 	"""
 
-	def __init__(self, name="default_task", il=configs.DEFAULT_IL, factor=configs.DEFAULT_FACTOR, data=configs.DEFAULT_DATA):
+	def __init__(self, name="default_task", il=configs.DEFAULT_IL, data=configs.DEFAULT_DATA):
 		"""
 		Parameters
 		----------
@@ -35,6 +33,5 @@ class Unit(object):
 		# set up the attributes
 		self.name = name
 		self.il = il
-		self.factor = factor
 		self.data = data
 	

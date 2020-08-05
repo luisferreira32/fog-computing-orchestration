@@ -80,7 +80,7 @@ def transmissionrate(n1=None, n2=None):
 		raise InvalidParameters
 
 
-def transmissiontime(n1=None, n2=None, w0=0, t1=None):
+def transmissiontime(n1=None, n2=None, w0=0, t1=task.Unit()):
 	"""Calculate the fog transmission time given two nodes and the number of offloaded tasks
 
 	Fails with lack of arguments or invalid values
@@ -103,8 +103,6 @@ def transmissiontime(n1=None, n2=None, w0=0, t1=None):
 	if n1 is None or n2 is None or n1.coms is None or w0 <= 0:
 		if configs.FOG_DEBUG == 1: print("[DEBUG] Argument error in transmissiontime()")
 		return -1
-	if t1 is None:
-		t1 = task.Unit()
 
 	# 2*Mbytes*w0/rate
 	return 2*t1.data*(10**6)*w0/transmissionrate(n1,n2)

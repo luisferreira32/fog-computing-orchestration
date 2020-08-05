@@ -6,18 +6,20 @@ FOG_DEBUG = 1
 # fog core constants
 MAX_QUEUE = 10
 MAX_INFLUX = 10
-SERVICE_RATE = 5
+SERVICE_RATE = 1.8
 MAX_AREA = (100, 100)
+UTILITY_REWARD = 0.5
+DEFAULT_CPI = 5
+DEFAULT_CPS = 1800 # * 10**8 if calculated with all default values
 
 # task constants
 DEFAULT_DATA = 500 # Mbytes
-DEFAULT_IL = 200 # * 10^ factor
-DEFAULT_FACTOR = 8
+DEFAULT_IL = 200 # * 10**8 instruction lines
+TASK_ARRIVAL_RATE = 5.2
 
 # comunications constants
 DEFAULT_POWER = 20 # dBm
 DEFAULT_BANDWIDTH = 2 # MHz
-TASK_ARRIVAL_RATE = 3
 B1_PATHLOSS = 0.001
 B2_PATHLOSS = 4
 DISTANCE_VECTOR = [] # this one is calculated based on spacial placement
