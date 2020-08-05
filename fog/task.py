@@ -40,4 +40,11 @@ class Unit(object):
 		self.factor = factor
 
 	def getil():
+		""" Returns number of instruction lines (*10^self.factor) for this task
+		"""
 		return self.il
+
+	def getfactor():
+		""" Returns the factor (*10^factor), of the IL
+		"""
+		return self.factor
