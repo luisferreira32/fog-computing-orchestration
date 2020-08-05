@@ -82,46 +82,17 @@ class Core(object):
 		self.influx = self.influx+newinflux
 		return 0
 
-	def recieveoffload(self, offloaded=0):
+	def addwL(self, recieved=0,offloaded=0):
 		"""Adds the offloaded tasks to the tasks to be processed
 
 		Parameters
 		----------
+		recieved=0
+			number of tasks recieved by other nodes offloading
 		offloaded=0
-			number of offloaded tasks to this node
+			number of offloaded tasks to offload of this node
 		"""
-		self.wL += offloaded
-
-	def timestep(self, t1=task.Unit(), w0=0):
-		"""Each timestep is a second, this function runs the second on this world
-		
-		Parameters
-		----------
-		t1=None
-			configure the task type that is coming in, if not, the default is used
-		w0 = 0
-			number of tasks offloaded to another node
-
-		Return
-		------
-		remaining time of the timestep < 1s
-		"""
-
-		# each second we have N cpu cycles to use on tasks
-		cycles_remaining = self.cps
-		# The number of tasks to be processed in this node = previous pending + INFLUX - w0 (out flux)
-		self.wL += self.influx - w0
-
-		if not self.cpuqueue.empty():
-			task_cycles = self.process()
-			if task_cycles > cycles_remaining:
-				return cycles_remaining/self.cps # task delayed for next timestep, and this one is cut shorter
-		
-		# debug print
-		if configs.FOG_DEBUG:
-			print("[DEBUG] time step completed, queue size at "+str(self.cpuqueue.qsize())+" and influx at "+str(self.influx))
-
-		return cycles_remaining/self.cps
+		self.wL += self.influx + recieved - offloaded
 
 
 #------------------------------------------------------ CPU related ------------------------------------------------------
@@ -129,7 +100,7 @@ class Core(object):
 	def process(self):
 		"""Process the first task in the CPU queue
 
-		Calculates the number of cycles elapsed on the CPU to solve the task
+		Calculates seconds for processing a task
 
 		Raises
 		------
@@ -141,14 +112,14 @@ class Core(object):
 		except Exception as EmptyCpuQueue:
 			raise EmptyCpuQueue
 
-		cycles = t1.il*self.cpi
+		timer = t1.il*self.cpi/self.cps
 
 		if configs.FOG_DEBUG:
 			print("[DEBUG] Finished processing task"+t1.name+" with IL " + str(t1.il)+"*10^8 at node " + self.name)
 
-		return cycles
+		return timer
 
-	def queue(self, t1 = None):
+	def queue(self, t1 = task.Unit()):
 		"""Add a task to the cpu queue
 
 		Parameters
@@ -161,8 +132,6 @@ class Core(object):
 		FullCpuQueue
 			If there is no room in the cpu queue.
 		"""
-		if t1 is None:
-			t1 = task.Unit()
 
 		try:
 			self.cpuqueue.put(t1,block=False)
@@ -225,6 +194,17 @@ def avgcps(n=Core(), t=task.Unit(), sr=configs.SERVICE_RATE):
 
 def extime(n1=None, n2=None, w0=0, t1= task.Unit()):
 	"""Calculate task execution time on node local and offloaded
+	
+	Parameters
+	----------
+	n1=None
+		current node
+	n2=None
+		dest node
+	w0=0
+		number of offloaded tasks
+	t1
+		task type being offloaded
 
 	Return
 	------
@@ -240,10 +220,19 @@ def extime(n1=None, n2=None, w0=0, t1= task.Unit()):
 
 # - task waiting time on node
 
-def wtime(sr=configs.SERVICE_RATE):
-	"""Calculate the task execution time, based on the SERVICE RATE
-
-	Fails if the service rate is miss configured
+def wtime(n1=None, n2=None, w0=0, t1= task.Unit()):
+	"""Calculate the average waiting time
+	
+	Parameters
+	----------
+	n1=None
+		current node
+	n2=None
+		dest node
+	w0=0
+		number of offloaded tasks
+	t1
+		task type being offloaded
 
 	Return
 	------
@@ -262,6 +251,13 @@ def distance(n1=None, n2=None):
 	"""Calculate the distance between two nodes on a plane
 
 	Fails if either node is none returning -1
+
+	Parameters
+	----------
+	n1=None
+		current node
+	n2=None
+		dest node
 
 	Return
 	------

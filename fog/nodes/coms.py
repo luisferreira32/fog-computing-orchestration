@@ -80,7 +80,7 @@ def transmissionrate(n1=None, n2=None):
 		raise InvalidParameters
 
 
-def transmissiontime(n1=None, n2=None, w0=0, t1=task.Unit()):
+def comtime(n1=None, n2=None, w0=0, t1=task.Unit()):
 	"""Calculate the fog transmission time given two nodes and the number of offloaded tasks
 
 	Fails with lack of arguments or invalid values
