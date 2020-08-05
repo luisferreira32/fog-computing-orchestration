@@ -15,14 +15,12 @@ class Unit(object):
 		instructions lines in the task * 10^factor
 	factor : int
 		factor of instruction lines
+	data : int
+		the data size of a task [Mbytes]
 
-	Methods
-	-------
-	getil()
-		returns number of instruction lines (*10^8 default) needed to complete the task
 	"""
 
-	def __init__(self, name="default_task", il=200, factor=8):
+	def __init__(self, name="default_task", il=configs.DEFAULT_IL, factor=configs.DEFAULT_FACTOR, data=configs.DEFAULT_DATA):
 		"""
 		Parameters
 		----------
@@ -38,13 +36,5 @@ class Unit(object):
 		self.name = name
 		self.il = il
 		self.factor = factor
-
-	def getil():
-		""" Returns number of instruction lines (*10^self.factor) for this task
-		"""
-		return self.il
-
-	def getfactor():
-		""" Returns the factor (*10^factor), of the IL
-		"""
-		return self.factor
+		self.data = data
+	

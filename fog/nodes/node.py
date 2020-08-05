@@ -26,6 +26,8 @@ class Core(object):
 		implements a tasks CPU queue
 	influx : int
 		number of tasks allocated per second to this node
+	wL : int
+		number of tasks to be processed in this node
 	placement : int tuple
 		the placement in space of the node (x,y) [meter, meter]
 	coms : Coms
@@ -41,7 +43,7 @@ class Core(object):
 		adds communication ability to the node
 	"""
 
-	def __init__(self, name="default_node", cpi=5, placement=(0,0)):
+	def __init__(self, name="default_node", cpi=5, placement=(0,0), coms=None):
 		"""
 		Parameters
 		----------
@@ -58,7 +60,9 @@ class Core(object):
 		self.cpi = cpi
 		self.cpuqueue = Queue(configs.MAX_QUEUE)
 		self.influx = 0
+		self.wL = 0
 		self.placement = placement
+		self.coms = coms
 
 		# and debug if set to do so
 		if configs.FOG_DEBUG:
@@ -75,13 +79,15 @@ class Core(object):
 		self.influx = self.influx+newinflux
 		return 0
 
-	def timestep(self, t1=None): # TODO@luis: use a factor for timesteps to allow finer tunning
+	def timestep(self, t1=None, w0=0): # TODO@luis: use a factor for timesteps to allow finer tunning
 		"""Each timestep is a second, this function runs the second on this world
 		
 		Parameters
 		----------
 		t1=None
 			configure the task type that is coming in, if not, the default is used
+		w0 = 0
+			number of tasks offloaded to another node
 
 		Return
 		------
@@ -93,34 +99,34 @@ class Core(object):
 		if t1 is None:
 			t1 = task.Unit()
 
-		# the real queue is made of INFLUX - SERVICE RATE
-		taskdiff = self.influx - configs.SERVICE_RATE
+		# The number of tasks to be processed in this time step = previous pending + INFLUX - SERVICE RATE - w0
+		self.wL += self.influx - configs.SERVICE_RATE - w0
 		# more tasks solved than queued
-		if taskdiff < 0:
-			while taskdiff < 0:
+		if self.wL < 0:
+			while self.wL < 0:
 				if self.cpuqueue.empty():
-					taskdiff = 0
+					self.wL = 0
 					break
 				self.process()
-				taskdiff+=1
-		# perfect balance means nothing will be done
-		elif taskdiff == 0:
+				self.wL+=1
+		# perfect balance means nothing will be done, i.e. new allocated tasks, will be consumed at the service rate / offload
+		elif self.wL == 0:
 			pass
 		# and if more influx than service rate, means we'll add to the queue
 		else:
-			while taskdiff > 0:
+			while self.wL > 0:
 				if self.cpuqueue.full():
 					if configs.FOG_DEBUG: print("[DEBUG] overload on node "+self.name)
-					return taskdiff
+					return self.wL
 				self.queue(t1)
-				taskdiff-=1
+				self.wL-=1
 						
 
 		# debug print
 		if configs.FOG_DEBUG:
 			print("[DEBUG] time step completed, queue size at "+str(self.cpuqueue.qsize())+" and influx at "+str(self.influx))
 
-		return taskdiff
+		return self.wL
 
 
 #------------------------------------------------------ CPU related ------------------------------------------------------
@@ -150,12 +156,10 @@ class Core(object):
 	def queue(self, t1 = None):
 		"""Add a task to the cpu queue
 
-		Fails if no task is given
-
 		Parameters
 		------
 		t1=None
-			is a task of type task.Unit to be processed
+			is a task of type task.Unit to be processed, default_task if none given
 
 		Raises
 		------
@@ -163,7 +167,8 @@ class Core(object):
 			If there is no room in the cpu queue.
 		"""
 		if t1 is None:
-			return -1
+			t1 = task.Unit()
+
 		try:
 			self.cpuqueue.put(t1,block=False)
 		except Exception as FullCpuQueue:
@@ -183,21 +188,18 @@ class Core(object):
 
 		Fails if no coms are given
 
-		Raises
-		------
-		EmptyComs
-			if none was given to queue
 		"""
 		if coms is None:
-			raise EmptyComs
+			return -1
 		self.coms = coms
+		return 0
 
 
 	def getB(self):
 		""" Getter for the communication bandwidth [MHz]
 		"""
 		if self.coms is None:
-			return 0
+			return None
 		return self.coms.bandwidth
 
 
@@ -205,7 +207,7 @@ class Core(object):
 		""" Getter for the communication power [dBm]
 		"""
 		if self.coms is None:
-			return 0
+			return None
 		return self.coms.power
 
 
@@ -266,6 +268,9 @@ def distance(n1=None, n2=None):
 	distance between two nodes in meters
 	"""
 	if n1 is None or n2 is None:
+		if configs.FOG_DEBUG == 1: print("[DEBUG] None argument in distance()")
 		return -1
-
-	return math.sqrt((n1.placement[0] - n2.placement[0])**2 + (n1.placement[1] - n2.placement[1])**2)
+	try:
+		return math.sqrt((n1.placement[0] - n2.placement[0])**2 + (n1.placement[1] - n2.placement[1])**2)
+	except Exception as InvalidParameters:
+		raise InvalidParameters
