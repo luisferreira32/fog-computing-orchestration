@@ -1,5 +1,4 @@
 venv/*
-playground.py
 *.pyc
 *.pyo
 fog/test/*

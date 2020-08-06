@@ -157,7 +157,7 @@ class Core(object):
 			self.clock -= time
 
 		if configs.FOG_DEBUG:
-			print("[DEBUG] Node "+ self.name +" cpu timer excess is " + str(time))
+			print("[DEBUG] Node "+ self.name +" cpu timer excess is %.2f and queue size %d" % (float(time), self.cpuqueue))
 			if self.cpuqueue < 1: print("[DEBUG] No task to process at node " + self.name)
 
 		return time
