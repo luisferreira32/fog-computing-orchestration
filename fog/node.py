@@ -32,6 +32,8 @@ class Core(object):
 		the placement in space of the node (x,y) [meter, meter]
 	coms : dictionary
 		the communication center of the node
+	clock : int
+		internal cpu time [s]
 
 	Methods
 	-------
@@ -66,6 +68,7 @@ class Core(object):
 		self.cpi = cpu[0]
 		self.cps = cpu[1]
 		self.cpuqueue = 0
+		self.clock = 0
 		# comunication related
 		self.coms = {
 			"power": coms[0],
@@ -87,8 +90,8 @@ class Core(object):
 		self.influx = self.influx+newinflux
 		return self.influx
 
-	def addwL(self, recieved=0,offloaded=0):
-		"""Adds the offloaded tasks to the tasks to be processed
+	def setwL(self, recieved=0,offloaded=0):
+		"""Sets the number of tasks to be locally processed in this time step
 
 		Parameters
 		----------
@@ -96,8 +99,20 @@ class Core(object):
 			number of tasks recieved by other nodes offloading
 		offloaded=0
 			number of offloaded tasks to offload of this node
+
+		Returns
+		-------
+		number of discarded tasks
 		"""
-		self.wL += self.influx + recieved - offloaded
+		self.wL = self.influx + recieved - offloaded
+		discarded = 0
+		if self.wL > configs.MAX_QUEUE - self.cpuqueue:
+			discarded = self.wL - (configs.MAX_QUEUE - self.cpuqueue)
+			self.wL = configs.MAX_QUEUE - self.cpuqueue
+		if configs.FOG_DEBUG:
+			if discarded > 0: print("[DEBUG] wL Discarded tasks at node " + self.name)
+			if discarded == 0 and self.wL != 0: print("[DEBUG] wL No task discarded at node " + self.name)
+		return discarded
 
 
 	#------------------------------------------------------ CPU related ------------------------------------------------------
@@ -116,19 +131,22 @@ class Core(object):
 			return True
 		return False
 
-	def process(self):
-		"""Process the first task in the CPU queue: calculates seconds for processing a task
+	def process(self, time=0):
+		"""Process the first task in the CPU queue: fractions of a second for processing a task
+
+		Parameters
+		----------
+		given time for processing
 		"""
-		timer = 0
-		if self.cpuqueue >= 1:
-			timer = configs.DEFAULT_IL*self.cpi/self.cps
+		while self.cpuqueue >= 1 and time - configs.DEFAULT_IL*self.cpi/self.cps > 0:
+			time -= configs.DEFAULT_IL*self.cpi/self.cps
 			self.cpuqueue -= 1
 
 		if configs.FOG_DEBUG:
-			if timer > 0: print("[DEBUG] Finished processing task at node " + self.name)
-			if timer == 0: print("[DEBUG] No task to process at node " + self.name)
+			print("[DEBUG] Node "+ self.name +" cpu timer remains " + str(time))
+			if self.cpuqueue < 1: print("[DEBUG] No task to process at node " + self.name)
 
-		return timer
+		return time
 
 	def queue(self):
 		"""Add a task to the cpu queue according to tasks to be processed locally wL
@@ -141,7 +159,7 @@ class Core(object):
 			self.cpuqueue += 1
 			self.wL -= 1
 			if configs.FOG_DEBUG:
-				print("[DEBUG] Added task to node " + self.name)
+				print("[DEBUG] Queued task to node " + self.name)
 		if configs.FOG_DEBUG and self.fullqueue():
 			print("[DEBUG] Full queue at node " + self.name)
 
