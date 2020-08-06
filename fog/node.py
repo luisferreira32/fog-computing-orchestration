@@ -1,10 +1,8 @@
 # external imports
-from queue import Queue # O(1) FIFO for CPU queue
 import math # for distance calculation
 
 # import necessary fog environment configurations
-from .. import configs
-from .. import task
+from . import configs
 
 #------------------------------------------------------ ------------- -----------------------------------------------------
 #--------------------------------------------------- Fog Node Core Class --------------------------------------------------
@@ -24,7 +22,7 @@ class Core(object):
 		cpu cycles per instruction
 	cps : int
 		cpu cycles per second (cpu frequency) * 10 ^8
-	cpuqueue : Queue
+	cpuqueue : int
 		implements a tasks CPU queue
 	influx : int
 		number of tasks allocated per second to this node
@@ -32,7 +30,7 @@ class Core(object):
 		number of tasks to be processed in this node
 	placement : int tuple
 		the placement in space of the node (x,y) [meter, meter]
-	coms : Coms
+	coms : dictionary
 		the communication center of the node
 
 	Methods
@@ -45,7 +43,8 @@ class Core(object):
 		adds communication ability to the node
 	"""
 
-	def __init__(self, name="default_node", cpi=configs.DEFAULT_CPI, cps=configs.DEFAULT_CPS, placement=(0,0), influx=configs.TASK_ARRIVAL_RATE,coms=None):
+	def __init__(self, name="default_node", cpu=(configs.DEFAULT_CPI, configs.DEFAULT_CPS), placement=(0,0), influx=configs.TASK_ARRIVAL_RATE, 
+		coms=(configs.DEFAULT_POWER, configs.DEFAULT_BANDWIDTH)):
 		"""
 		Parameters
 		----------
@@ -58,14 +57,20 @@ class Core(object):
 		"""
 
 		# set up the attributes
+		# generic
 		self.name = name
-		self.cpi = cpi
-		self.cps = cps
-		self.cpuqueue = Queue(configs.MAX_QUEUE)
 		self.influx = influx
 		self.wL = 0
 		self.placement = placement
-		self.coms = coms
+		# cpu related
+		self.cpi = cpu[0]
+		self.cps = cpu[1]
+		self.cpuqueue = 0
+		# comunication related
+		self.coms = {
+			"power": coms[0],
+			"bandwidth" : coms[1]
+		}
 
 		# and debug if set to do so
 		if configs.FOG_DEBUG:
@@ -80,7 +85,7 @@ class Core(object):
 		if self.influx+newinflux > configs.MAX_INFLUX:
 			return -1
 		self.influx = self.influx+newinflux
-		return 0
+		return self.influx
 
 	def addwL(self, recieved=0,offloaded=0):
 		"""Adds the offloaded tasks to the tasks to be processed
@@ -97,82 +102,65 @@ class Core(object):
 
 	#------------------------------------------------------ CPU related ------------------------------------------------------
 
-	def process(self):
-		"""Process the first task in the CPU queue
-
-		Calculates seconds for processing a task
-
-		Raises
-		------
-		EmptyCpuQueue
-			If there is no task in the cpu queue.
+	def emptyqueue(self):
+		"""Checks if CPU queue is empty
 		"""
-		try:
-			t1 = self.cpuqueue.get(block=False)
-		except Exception as EmptyCpuQueue:
-			raise EmptyCpuQueue
+		if self.cpuqueue == 0:
+			return True
+		return False
 
-		timer = t1.il*self.cpi/self.cps
+	def fullqueue(self):
+		"""Checks if CPU queue is full
+		"""
+		if self.cpuqueue == configs.MAX_QUEUE:
+			return True
+		return False
+
+	def process(self):
+		"""Process the first task in the CPU queue: calculates seconds for processing a task
+		"""
+		timer = 0
+		if self.cpuqueue >= 1:
+			timer = configs.DEFAULT_IL*self.cpi/self.cps
+			self.cpuqueue -= 1
 
 		if configs.FOG_DEBUG:
-			print("[DEBUG] Finished processing task"+t1.name+" with IL " + str(t1.il)+"*10^8 at node " + self.name)
+			if timer > 0: print("[DEBUG] Finished processing task at node " + self.name)
+			if timer == 0: print("[DEBUG] No task to process at node " + self.name)
 
 		return timer
 
-	def queue(self, t1 = task.Unit()):
-		"""Add a task to the cpu queue
+	def queue(self):
+		"""Add a task to the cpu queue according to tasks to be processed locally wL
 
-		Parameters
+		Return
 		------
-		t1=None
-			is a task of type task.Unit to be processed, default_task if none given
-
-		Raises
-		------
-		FullCpuQueue
-			If there is no room in the cpu queue.
+		queue size
 		"""
+		while self.cpuqueue < configs.MAX_QUEUE and self.wL > 1:
+			self.cpuqueue += 1
+			self.wL -= 1
+			if configs.FOG_DEBUG:
+				print("[DEBUG] Added task to node " + self.name)
+		if configs.FOG_DEBUG and self.fullqueue():
+			print("[DEBUG] Full queue at node " + self.name)
 
-		try:
-			self.cpuqueue.put(t1,block=False)
-		except Exception as FullCpuQueue:
-			print("[DEBUG] Queue overloaded one node "+self.name)
-			raise FullCpuQueue
-
-		if configs.FOG_DEBUG:
-			print("[DEBUG] Added task ("+t1.name+") with IL " + str(t1.il)+"*10^8 to node " + self.name)
-		return 0
+		return self.cpuqueue
 
 
 	#------------------------------------------------------ Communication related ------------------------------------------------------
 
 
-	def addcoms(self, coms=None):
-		"""Add communication ability to the fog node
-
-		Fails if no coms are given
-
-		"""
-		if coms is None:
-			return -1
-		self.coms = coms
-		return 0
-
-
 	def getB(self):
 		""" Getter for the communication bandwidth [MHz]
 		"""
-		if self.coms is None:
-			return None
-		return self.coms.bandwidth
+		return self.coms.get("bandwidth")
 
 
 	def getP(self):
 		""" Getter for the communication power [dBm]
 		"""
-		if self.coms is None:
-			return None
-		return self.coms.power
+		return self.coms.get("power")
 
 
 
@@ -183,16 +171,16 @@ class Core(object):
 
 # - frequency calculator based on service rate
 
-def avgcps(n=Core(), t=task.Unit(), sr=configs.SERVICE_RATE):
+def avgcps(n=Core(), sr=configs.SERVICE_RATE):
 	"""Calculate cycles per second (*10^8) considering a model node, model task and a model service rate
 	"""
-	return sr*n.cpi*t.il
+	return sr*n.cpi*configs.DEFAULT_IL
 
 
 
 # - task execution time on node local and offloaded
 
-def extime(n1=None, n2=None, w0=0, t1= task.Unit()):
+def extime(n1=None, n2=None, w0=0):
 	"""Calculate task execution time on node local and offloaded
 	
 	Parameters
@@ -203,8 +191,6 @@ def extime(n1=None, n2=None, w0=0, t1= task.Unit()):
 		dest node
 	w0=0
 		number of offloaded tasks
-	t1
-		task type being offloaded
 
 	Return
 	------
@@ -215,12 +201,12 @@ def extime(n1=None, n2=None, w0=0, t1= task.Unit()):
 		if configs.FOG_DEBUG == 1: print("[DEBUG] Invalid parameters in extime()")
 		return -1
 
-	return ((t1.il*n1.cpi*n1.wL)/n1.cps + (t1.il*n2.cpi*w0)/n2.cps)
+	return ((configs.DEFAULT_IL*n1.cpi*n1.wL)/n1.cps + (configs.DEFAULT_IL*n2.cpi*w0)/n2.cps)
 
 
 # - task waiting time on node
 
-def wtime(n1=None, n2=None, w0=0, t1= task.Unit()):
+def wtime(n1=None, n2=None, w0=0):
 	"""Calculate the average waiting time
 	
 	Parameters
@@ -231,8 +217,6 @@ def wtime(n1=None, n2=None, w0=0, t1= task.Unit()):
 		dest node
 	w0=0
 		number of offloaded tasks
-	t1
-		task type being offloaded
 
 	Return
 	------
@@ -244,8 +228,8 @@ def wtime(n1=None, n2=None, w0=0, t1= task.Unit()):
 		return -1
 
 	wt = 0
-	if n1.wL > 0: wt += n1.cpuqueue.qsize()/configs.SERVICE_RATE
-	if w0 > 0: wt += n1.cpuqueue.qsize()/configs.SERVICE_RATE + n2.cpuqueue.qsize()/configs.SERVICE_RATE
+	if n1.wL > 0: wt += n1.cpuqueue/configs.SERVICE_RATE
+	if w0 > 0: wt += n1.cpuqueue/configs.SERVICE_RATE + n2.cpuqueue/configs.SERVICE_RATE
 	# wt = (QL/srL)[if wL != 0] + (QL/srL + Q0/sr0)[if w0 != 0]
 	return wt
 

@@ -7,7 +7,7 @@ FOG_DEBUG = 1
 MAX_QUEUE = 10
 MAX_INFLUX = 10
 SERVICE_RATE = 1.8
-MAX_AREA = (100, 100)
+MAX_AREA = (1, 1)
 UTILITY_REWARD = 0.5
 DEFAULT_CPI = 5
 
@@ -27,3 +27,5 @@ N0 = 174 # thermal noise power 174 dBm/Hz
 
 # derivated default constantsw
 DEFAULT_CPS = SERVICE_RATE*DEFAULT_IL*DEFAULT_CPI # * 10**8 if calculated with all default values
+
+

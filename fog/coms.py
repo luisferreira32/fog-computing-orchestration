@@ -2,8 +2,7 @@
 import math
 
 # import necessary fog environment configurations
-from .. import configs
-from .. import task
+from . import configs
 from . import node
 
 #------------------------------------------------------ ------------- -----------------------------------------------------
@@ -75,34 +74,36 @@ def transmissionrate(n1=None, n2=None):
 	BHz = n1.getB() * (10**6) # bandwidth in Hz and not MHz
 	P = n1.getP() # power in dBm
 	try:
-		return BHz*math.log(1+(configs.B1_PATHLOSS*((node.distance(n1,n2))**(-configs.B2_PATHLOSS))*P)/(BHz*configs.N0))
+		r = BHz*math.log(1+(configs.B1_PATHLOSS*((node.distance(n1,n2))**(-configs.B2_PATHLOSS))*P)/(BHz*configs.N0))
+		if configs.FOG_DEBUG == 1: print("[DEBUG] transmission rate calculated is %.10f" % r)
+		return r
 	except Exception as InvalidParameters:
 		raise InvalidParameters
 
 
-def comtime(n1=None, n2=None, w0=0, t1=task.Unit()):
-	"""Calculate the fog transmission time given two nodes and the number of offloaded tasks
+def comtime(w0=0, rate12 = 0):
+	"""Calculate the fog transmission time number of offloaded tasks and com rate between nodes
 
 	Fails with lack of arguments or invalid values
 
 	Parameters
 	----------
-	n1=None
-		origin node n1, using its com device
-	n2=None
-		recieving node
 	w0=0
 		number of offloaded tasks
 	t1=None
 		task type being transmitted
+	rate12=0
+		transmission rate between n1 and n2
 
 	Return
 	------
 	transmission time, or -1 if failed
 	"""
-	if n1 is None or n2 is None or n1.coms is None or w0 <= 0:
-		if configs.FOG_DEBUG == 1: print("[DEBUG] Argument error in transmissiontime()")
+	if w0 <= 0 or rate12 <=0:
+		if configs.FOG_DEBUG == 1: print("[DEBUG] Argument error in comtime()")
 		return -1
 
 	# 2*Mbytes*w0/rate
-	return 2*t1.data*(10**6)*w0/transmissionrate(n1,n2)
+	c = 2*configs.DEFAULT_DATA*(10**6)*w0/rate12
+	if configs.FOG_DEBUG == 1: print("[DEBUG] Com time is ", c)
+	return c
