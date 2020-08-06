@@ -138,12 +138,19 @@ class Core(object):
 		----------
 		given time for processing
 		"""
+		self.clock += time
 		while self.cpuqueue >= 1 and time - configs.DEFAULT_IL*self.cpi/self.cps > 0:
 			time -= configs.DEFAULT_IL*self.cpi/self.cps
 			self.cpuqueue -= 1
 
+		# we can't accumulate time we're not technically "using" before the next time step, but if we are, we accumulate
+		if self.cpuqueue == 0:
+			time = 0
+		else:
+			self.clock -= time
+
 		if configs.FOG_DEBUG:
-			print("[DEBUG] Node "+ self.name +" cpu timer remains " + str(time))
+			print("[DEBUG] Node "+ self.name +" cpu timer excess is " + str(time))
 			if self.cpuqueue < 1: print("[DEBUG] No task to process at node " + self.name)
 
 		return time
@@ -159,7 +166,7 @@ class Core(object):
 			self.cpuqueue += 1
 			self.wL -= 1
 			if configs.FOG_DEBUG:
-				print("[DEBUG] Queued task to node " + self.name)
+				print("[DEBUG] Queued task to node " + self.name+" to Q size",self.cpuqueue)
 		if configs.FOG_DEBUG and self.fullqueue():
 			print("[DEBUG] Full queue at node " + self.name)
 
