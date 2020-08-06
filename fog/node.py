@@ -110,7 +110,7 @@ class Core(object):
 			discarded = self.wL - (configs.MAX_QUEUE - self.cpuqueue)
 			self.wL = configs.MAX_QUEUE - self.cpuqueue
 		if configs.FOG_DEBUG:
-			if discarded > 0: print("[DEBUG] wL Discarded tasks at node " + self.name)
+			if discarded > 0: print("[DEBUG] wL Discarded",discarded," tasks at node " + self.name)
 			if discarded == 0 and self.wL != 0: print("[DEBUG] wL No task discarded at node " + self.name)
 		return discarded
 
@@ -162,7 +162,7 @@ class Core(object):
 		------
 		queue size
 		"""
-		while self.cpuqueue < configs.MAX_QUEUE and self.wL > 1:
+		while self.cpuqueue < configs.MAX_QUEUE and self.wL >= 1:
 			self.cpuqueue += 1
 			self.wL -= 1
 			if configs.FOG_DEBUG:
