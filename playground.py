@@ -6,6 +6,7 @@ random.seed(1)
 from fog import node
 from fog import configs
 from fog import coms
+from utils import graphs
 
 # ------------------------------------------------------------ SET UP ------------------------------------------------------------
 configs.FOG_DEBUG = 1
@@ -35,8 +36,22 @@ configs.FOG_DEBUG = 1
 # simulate for n iterations, focused on node 1 that's recieving tasks
 nodes[0].addinflux(configs.TASK_ARRIVAL_RATE)
 
+# -- JUST FOR GRAPHS SAKE
+queues = []
+xclock = []
+for node in nodes:
+	queue = []
+	queues.append(queue)
+n=0
+# --
+
 while worldclock < 10:
 	print("-------------------- second",worldclock,"-",worldclock+1,"--------------------")
+
+	# -- JUST FOR GRAPHS SAKE
+	xclock.append(worldclock)
+	n=0
+	# --
 
 	# to keep track of the tasks offloaded and recieved
 	recieving = {}
@@ -48,6 +63,10 @@ while worldclock < 10:
 	# for every node make decisions
 	for node in nodes:
 		# first make offloading decisions depending on state
+		# -- JUST FOR GRAPHS SAKE
+		queues[n].append(node.cpuqueue)
+		n +=1
+		# --
 
 		# ------------------------------------------ THIS IS THE RANDOM ALGORITHM ----------------------------------------
 		if node.excessinflux() > 0:
@@ -60,11 +79,8 @@ while worldclock < 10:
 				randomoff = node
 				while randomoff == node:
 					randomoff = random.choice(nodes)
-				er = int(random.random()*e)
-				e = e - er
-				if e == 1:
-					e=0
-					er +=1
+				er = int(random.random()*e)+1
+				e -= er
 				recieving[randomoff.name] += er
 				print("[DEBUG]",node.name,"offloaded",er,"tasks to node",randomoff.name)
 
@@ -82,3 +98,7 @@ while worldclock < 10:
 
 	# end of the second
 	worldclock +=1
+
+# -- JUST FOR GRAPHS SAKE
+graphs.graphqueues(xclock, queues)
+# --

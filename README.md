@@ -13,9 +13,10 @@ To run this simulations it is necessary to have Tensorflow 2.0 installed, recomm
 
 [Pytest](https://docs.pytest.org/en/stable/getting-started.html) is also an excellent tool for debuging the application
 
+[Matplotlib](https://matplotlib.org/) was used for graphical results
+
 ### Installed package list  
 <pre>
-(venv) C:\fog-computing-orchestration> pip list  
 Package                  Version
 ------------------------ ---------
 absl-py                  0.9.0
@@ -26,6 +27,7 @@ cachetools               4.1.1
 certifi                  2020.6.20
 chardet                  3.0.4
 colorama                 0.4.3
+cycler                   0.10.0
 gast                     0.3.3
 google-auth              1.20.0
 google-auth-oauthlib     0.4.1
@@ -35,12 +37,15 @@ h5py                     2.10.0
 idna                     2.10
 iniconfig                1.0.1
 Keras-Preprocessing      1.1.2
+kiwisolver               1.2.0
 Markdown                 3.2.2
+matplotlib               3.3.0
 more-itertools           8.4.0
 numpy                    1.18.5
 oauthlib                 3.1.0
 opt-einsum               3.3.0
 packaging                20.4
+Pillow                   7.2.0
 pip                      20.2.1
 pluggy                   0.13.1
 protobuf                 3.12.4
@@ -49,6 +54,7 @@ pyasn1                   0.4.8
 pyasn1-modules           0.2.8
 pyparsing                2.4.7
 pytest                   6.0.1
+python-dateutil          2.8.1
 requests                 2.24.0
 requests-oauthlib        1.3.0
 rsa                      4.6
