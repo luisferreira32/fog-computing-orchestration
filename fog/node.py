@@ -90,6 +90,13 @@ class Core(object):
 		self.influx = self.influx+newinflux
 		return self.influx
 
+	def excessinflux(self, recieved=0, offloaded=0):
+		"""Calculates excess influx in this timestep
+		"""
+		if self.influx > configs.MAX_QUEUE - self.cpuqueue - recieved + offloaded:
+			return self.influx - (configs.MAX_QUEUE - self.cpuqueue - recieved + offloaded)
+		return 0
+
 	def setwL(self, recieved=0,offloaded=0):
 		"""Sets the number of tasks to be locally processed in this time step
 
