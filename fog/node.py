@@ -91,11 +91,11 @@ class Core(object):
 		self.influx = self.influx+newinflux
 		return self.influx
 
-	def excessinflux(self, recieved=0, offloaded=0):
+	def excessinflux(self, recieved=None, offloaded=0):
 		"""Calculates excess influx in this timestep
 		"""
-		if self.influx > configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved + offloaded:
-			return self.influx - (configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved + offloaded)
+		if self.influx > configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved.qsize() + offloaded:
+			return self.influx - (configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved.qsize() + offloaded)
 		return 0
 
 
@@ -138,7 +138,7 @@ class Core(object):
 
 		return solved
 
-	def queue(self, recieved=None,offloaded=0):
+	def queue(self, recieved=[],offloaded=0):
 		"""Add a task to the cpu queue and set the locally processed tasks number
 
 		Parameters
@@ -174,7 +174,7 @@ class Core(object):
 
 		discarded = mytasks+recieved.qsize()
 		self.wL -= discarded
-		if discarded > 0: print("[DEBUG] Node",self.name,"discarded",discarded,"tasks with",recieved.qsize(),"from other nodes")
+		if discarded > 0 and configs.FOG_DEBUG: print("[DEBUG] Node",self.name,"discarded",discarded,"tasks with",recieved.qsize(),"from other nodes")
 
 		return self.cpuqueue.qsize()
 
