@@ -1,5 +1,6 @@
 # external imports
 import math # for distance calculation
+import queue
 
 # import necessary fog environment configurations
 from . import configs
@@ -31,7 +32,7 @@ class Core(object):
 	placement : int tuple
 		the placement in space of the node (x,y) [meter, meter]
 	coms : dictionary
-		the communication center of the node
+		the communication parameters of the node
 	clock : int
 		internal cpu time [s]
 
@@ -67,7 +68,7 @@ class Core(object):
 		# cpu related
 		self.cpi = cpu[0]
 		self.cps = cpu[1]
-		self.cpuqueue = 0
+		self.cpuqueue = queue.Queue(maxsize=configs.MAX_QUEUE)
 		self.clock = 0
 		# comunication related
 		self.coms = {
@@ -93,8 +94,8 @@ class Core(object):
 	def excessinflux(self, recieved=0, offloaded=0):
 		"""Calculates excess influx in this timestep
 		"""
-		if self.influx > configs.MAX_QUEUE - self.cpuqueue - recieved + offloaded:
-			return self.influx - (configs.MAX_QUEUE - self.cpuqueue - recieved + offloaded)
+		if self.influx > configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved + offloaded:
+			return self.influx - (configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved + offloaded)
 		return 0
 
 	def setwL(self, recieved=0,offloaded=0):
@@ -113,8 +114,8 @@ class Core(object):
 		"""
 		self.wL = self.influx + recieved - offloaded
 		discarded = 0
-		if self.wL > configs.MAX_QUEUE - self.cpuqueue:
-			discarded = self.wL - (configs.MAX_QUEUE - self.cpuqueue)
+		if self.wL > configs.MAX_QUEUE - self.cpuqueue.qsize():
+			discarded = self.wL - (configs.MAX_QUEUE - self.cpuqueue.qsize())
 			self.wL = self.wL - discarded
 		if configs.FOG_DEBUG:
 			if discarded > 0: print("[DEBUG] wL Discarded",discarded," tasks at node " + self.name)
@@ -127,16 +128,12 @@ class Core(object):
 	def emptyqueue(self):
 		"""Checks if CPU queue is empty
 		"""
-		if self.cpuqueue == 0:
-			return True
-		return False
+		return self.cpuqueue.empty()
 
 	def fullqueue(self):
 		"""Checks if CPU queue is full
 		"""
-		if self.cpuqueue == configs.MAX_QUEUE:
-			return True
-		return False
+		return self.cpuqueue.full()
 
 	def process(self, time=0):
 		"""Process the first task in the CPU queue: fractions of a second for processing a task
@@ -144,21 +141,24 @@ class Core(object):
 		Parameters
 		----------
 		given time for processing
-		"""
-		self.clock += time
-		while self.cpuqueue >= 1 and time - configs.DEFAULT_IL*self.cpi/self.cps > 0:
-			time -= configs.DEFAULT_IL*self.cpi/self.cps
-			self.cpuqueue -= 1
 
-		# we can't accumulate time we're not technically "using" before the next time step, but if we are, we accumulate
-		if self.cpuqueue == 0:
-			time = 0
-		else:
-			self.clock -= time
+		Returns
+		-------
+		list of processed tasks delays
+		"""
+		solved = []
+		while not self.cpuqueue.empty() and time - configs.DEFAULT_IL*self.cpi/self.cps > 0:
+			time -= configs.DEFAULT_IL*self.cpi/self.cps
+			self.clock += configs.DEFAULT_IL*self.cpi/self.cps
+			solved.append(self.cpuqueue.get(False))
+
+		# we can't accumulate time we're not technically "using" before the next time step
+		if self.cpuqueue.empty():
+			self.clock += time
 
 		if configs.FOG_DEBUG:
-			print("[DEBUG] Node "+ self.name +" cpu timer excess is %.2f and queue size %d" % (float(time), self.cpuqueue))
-			if self.cpuqueue < 1: print("[DEBUG] No task to process at node " + self.name)
+			print("[DEBUG] Node "+ self.name +" cpu timer excess is %.2f and queue size %d" % (float(time), self.cpuqueue.qsize()))
+			if self.cpuqueue.empty(): print("[DEBUG] No task to process at node " + self.name)
 
 		return time
 
@@ -169,15 +169,15 @@ class Core(object):
 		------
 		queue size
 		"""
-		while self.cpuqueue < configs.MAX_QUEUE and self.wL >= 1:
-			self.cpuqueue += 1
+		while not self.cpuqueue.full() and self.wL >= 1:
+			self.cpuqueue.put(self.clock, False)
 			self.wL -= 1
 			if configs.FOG_DEBUG:
-				print("[DEBUG] Queued task to node " + self.name+" to Q size",self.cpuqueue)
+				print("[DEBUG] Queued task to node " + self.name+" to Q size",self.cpuqueue.qsize())
 		if configs.FOG_DEBUG and self.fullqueue():
 			print("[DEBUG] Full queue at node " + self.name)
 
-		return self.cpuqueue
+		return self.cpuqueue.qsize()
 
 
 	#------------------------------------------------------ Communication related ------------------------------------------------------
@@ -260,8 +260,8 @@ def wtime(n1=None, n2=None, w0=0):
 		return -1
 
 	wt = 0
-	if n1.wL > 0: wt += n1.cpuqueue/configs.SERVICE_RATE
-	if w0 > 0: wt += n1.cpuqueue/configs.SERVICE_RATE + n2.cpuqueue/configs.SERVICE_RATE
+	if n1.wL > 0: wt += n1.cpuqueue.qsize()/configs.SERVICE_RATE
+	if w0 > 0: wt += n1.cpuqueue.qsize()/configs.SERVICE_RATE + n2.cpuqueue.qsize()/configs.SERVICE_RATE
 	# wt = (QL/srL)[if wL != 0] + (QL/srL + Q0/sr0)[if w0 != 0]
 	return wt
 

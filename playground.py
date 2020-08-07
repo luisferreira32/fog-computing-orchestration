@@ -19,15 +19,14 @@ for x in range(1,6):
 
 configs.FOG_DEBUG = 0
 # calculate com ratios between them in the beginning @NOTE: if distance is bigger than 10m, it might not even be able to transmit!
-comtime12 = {}
+rates12 = {}
 for node1 in nodes:
 	for node2 in nodes:
 		if node1 != node2:
 			r12 = coms.transmissionrate(node1, node2)
-			# for one task, then multiplying is not hard
-			comtime12[node1.name, node2.name] = coms.comtime(1, r12)
+			rates12[node1.name, node2.name] = r12 # 
 
-print(comtime12)
+print(rates12)
 
 # to keep track of the tasks offloaded and recieved
 recieving = {}
@@ -40,7 +39,7 @@ for x in nodes:
 # ---------------------------------------------------------- SIMULATION ----------------------------------------------------------
 worldclock = 0 # [s]
 configs.FOG_DEBUG = 0
-SIM_DEBUG = 0
+SIM_DEBUG = 1
 
 # simulate for n iterations, focused on node 1 that's recieving tasks
 nodes[0].addinflux(5)
@@ -87,7 +86,8 @@ while worldclock < configs.SIM_TIME:
 				# and a random quantity to offload to that node
 				er = int(random.random()*e)+1
 				e -= er
-				arriving_time = worldclock+1+int(comtime12[node.name,randomoff.name]/2)
+				# it will always arrive in the next timestep, at least, then comtime is the roundtrip, so arrives in half time
+				arriving_time = worldclock+1+int(0.5*coms.comtime(er, rates12[node.name, randomoff.name]))
 				if arriving_time >= configs.SIM_TIME: # if they arrive after sim end, they won't be taken into account for this sim
 					continue
 
