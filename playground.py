@@ -28,24 +28,6 @@ for node1 in nodes:
 
 print(rates12)
 
-
-# ---------------------------------------------------------- SIMULATION ----------------------------------------------------------
-# ------------------------------------------- SIMULATION SET UP ----------------------------------------------
-worldclock = 0 # [s]
-configs.FOG_DEBUG = 0
-SIM_DEBUG = 1
-
-# simulate for n iterations, focused on node 1 that's recieving tasks
-nodes[0].addinflux(5)
-nodes[1].addinflux(5)
-nodes[2].addinflux(5)
-
-# -- JUST FOR GRAPHS SAKE
-queues = {}
-wLs = {}
-xclock = []
-# --
-
 # to keep track of the tasks offloaded and recieved
 recieving = {}
 offload = {}
@@ -53,6 +35,22 @@ for x in nodes:
 	for y in range(0,configs.SIM_TIME):
 		recieving[x.name, y] = 0
 		offload[x.name, y] = 0
+
+# ---------------------------------------------------------- SIMULATION ----------------------------------------------------------
+worldclock = 0 # [s]
+configs.FOG_DEBUG = 0
+SIM_DEBUG = 1
+
+# simulate for n iterations, focused on node 1 that's recieving tasks
+nodes[0].addinflux(5)
+
+# -- JUST FOR GRAPHS SAKE
+queues = {}
+wLs = {}
+xclock = []
+# --
+
+
 
 # ------------------------------------------- SIMULATION MAIN LOOP ----------------------------------------------
 while worldclock < configs.SIM_TIME:
@@ -89,14 +87,8 @@ while worldclock < configs.SIM_TIME:
 				er = int(random.random()*e)+1
 				e -= er
 				if SIM_DEBUG: print("[SIM DEBUG]",node.name,"offloaded",er,"tasks to node",randomoff.name)
-				# but when i offload each task arrives at a different timestep
-				while er > 0:
-					arriving_time = worldclock+1 + int(coms.comtime(er, rates12[node.name, randomoff.name]))
-					if arriving_time > configs.SIM_TIME:
-						er -= 1 # BUGGED --- TASKS DISAPPEAR WITH HUGE DELAY THAT NO ONE'S IS ACCOUNTING FOR
-						continue
-					recieving[randomoff.name, arriving_time] += 1
-					er -= 1				
+				recieving[randomoff.name, worldclock] += er
+						
 		# -- tryout with random algorithm (end) --
 
 	# ------------------- Treat the tasks on the nodes, by queueing them and processing what can be processed -------------------
