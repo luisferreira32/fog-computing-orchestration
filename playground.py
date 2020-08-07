@@ -40,7 +40,7 @@ for x in nodes:
 # ---------------------------------------------------------- SIMULATION ----------------------------------------------------------
 worldclock = 0 # [s]
 configs.FOG_DEBUG = 0
-SIM_DEBUG = 1
+SIM_DEBUG = 0
 
 # simulate for n iterations, focused on node 1 that's recieving tasks
 nodes[0].addinflux(5)
@@ -94,7 +94,7 @@ while worldclock < configs.SIM_TIME:
 					continue
 
 				if SIM_DEBUG: print("[SIM DEBUG]",node.name,"offloaded",er,"tasks to node",randomoff.name,"arriving at",arriving_time)
-				for x in range(0,er):
+				for x in range(0,er): # every task that is leaving this node, arrived at its clock
 					recieving[randomoff.name, arriving_time].put(node.clock)
 						
 		# -- tryout with random algorithm (end) --
