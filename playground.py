@@ -38,6 +38,7 @@ nodes[0].addinflux(configs.TASK_ARRIVAL_RATE)
 
 # -- JUST FOR GRAPHS SAKE
 queues = {}
+wLs = {}
 xclock = []
 # --
 
@@ -60,6 +61,7 @@ while worldclock < 10:
 		# first make offloading decisions depending on state
 		# -- JUST FOR GRAPHS SAKE
 		graphs.appendict(queues, node.name, node.cpuqueue)
+		graphs.appendict(wLs, node.name, node.wL)
 		# --
 
 		# ------------------------------------------ THIS IS THE RANDOM ALGORITHM ----------------------------------------
@@ -94,5 +96,6 @@ while worldclock < 10:
 	worldclock +=1
 
 # -- JUST FOR GRAPHS SAKE
-graphs.graphtime(xclock, queues)
+graphs.graphtime(xclock, queues, ylabel="queues")
+graphs.graphtime(xclock, wLs, ylabel="wLs")
 # --
