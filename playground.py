@@ -72,7 +72,7 @@ while worldclock < configs.SIM_TIME:
 		# --
 		
 
-		# -- tryout with random algorithm (start) --
+		# -- tryout with random algorithm (start) -- # supposedly recieved=recieving[node.name, worldclock] would only have previous if com time was working
 		if node.excessinflux() > 0:
 			# when i offload it's on this world clock time
 			offload[node.name, worldclock] = node.excessinflux()
