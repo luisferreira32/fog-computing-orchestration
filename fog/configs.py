@@ -2,7 +2,7 @@
 
 # auxiliary for the programming
 FOG_DEBUG = 1
-SIM_TIME = 20
+SIM_TIME = 100
 
 # fog core constants
 MAX_QUEUE = 10
@@ -23,7 +23,7 @@ DEFAULT_BANDWIDTH = 2 # MHz
 B1_PATHLOSS = 0.001
 B2_PATHLOSS = 4
 DISTANCE_VECTOR = [] # this one is calculated based on spacial placement
-N0 = 174 # thermal noise power 174 dBm/ Hz ? wrong, but we'll just use 174 dBm
+N0 = 111 # thermal noise power 174 dBm/ Hz ? wrong, but we'll just use 174 dBm
 
 
 # derivated default constantsw

@@ -48,6 +48,7 @@ nodes[0].addinflux(5)
 # -- JUST FOR GRAPHS SAKE
 queues = {}
 wLs = {}
+avgdelays = {}
 xclock = []
 # --
 
@@ -104,6 +105,9 @@ while worldclock < configs.SIM_TIME:
 	for node in nodes:
 		# then process with the seconds we've got remaining, i.e. the second that's elapsing, plus the delay that the node clock has
 		delays = node.process(1+(worldclock-node.clock))
+		# -- JUST FOR GRAPHS SAKE
+		utils.appendict(avgdelays, node.name, utils.listavg(delays))
+		# --
 		if SIM_DEBUG: print("[SIM DEBUG] Node",node.name,"clock at",node.clock,"with task completion delays at",delays)
 
 		# lastly decide which ones we'll work on and queue them
@@ -115,4 +119,5 @@ while worldclock < configs.SIM_TIME:
 # -- JUST FOR GRAPHS SAKE
 #graphs.graphtime(xclock, queues, ylabel="queues")
 #graphs.graphtime(xclock, wLs, ylabel="wLs")
+graphs.graphtime(xclock, avgdelays)
 # --

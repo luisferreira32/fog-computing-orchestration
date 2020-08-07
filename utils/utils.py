@@ -23,3 +23,15 @@ def appendict(lines=None, key=None, value=None):
 		lines[key] = [value]
 
 	return 0
+
+def listavg(l=None):
+	"""finds the average value on a numeric list, returns 0 if failed (or if average is zero)
+	"""
+	if l is None:
+		return 0
+	avg = 0
+	try:
+		avg = sum(l)/len(l)
+	except:
+		return 0
+	return avg
