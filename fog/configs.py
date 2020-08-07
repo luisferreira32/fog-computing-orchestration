@@ -2,6 +2,7 @@
 
 # auxiliary for the programming
 FOG_DEBUG = 1
+SIM_TIME = 10
 
 # fog core constants
 MAX_QUEUE = 10
@@ -14,7 +15,7 @@ DEFAULT_CPI = 5
 # task constants
 DEFAULT_DATA = 500 # Mbytes
 DEFAULT_IL = 200 # * 10**8 instruction lines
-TASK_ARRIVAL_RATE = 5.2 # default 5.2
+TASK_ARRIVAL_RATE = 5 # default 5.2
 
 # comunications constants
 DEFAULT_POWER = 20 # dBm
