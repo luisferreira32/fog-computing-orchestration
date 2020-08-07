@@ -138,7 +138,7 @@ class Core(object):
 
 		return solved
 
-	def queue(self, recieved=[],offloaded=0):
+	def queue(self, recieved=None,offloaded=0):
 		"""Add a task to the cpu queue and set the locally processed tasks number
 
 		Parameters

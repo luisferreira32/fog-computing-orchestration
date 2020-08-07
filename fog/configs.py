@@ -23,7 +23,7 @@ DEFAULT_BANDWIDTH = 2 # MHz
 B1_PATHLOSS = 0.001
 B2_PATHLOSS = 4
 DISTANCE_VECTOR = [] # this one is calculated based on spacial placement
-N0 = 111 # thermal noise power 174 dBm/ Hz ? wrong, but we'll just use 174 dBm
+N0 = 174 # thermal noise power 174 dBm/ Hz ? wrong, but we'll just use 174 dBm
 
 
 # derivated default constantsw
