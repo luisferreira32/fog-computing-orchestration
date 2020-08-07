@@ -74,8 +74,8 @@ def transmissionrate(n1=None, n2=None):
 	BHz = n1.getB() * (10**6) # bandwidth in Hz and not MHz
 	P = n1.getP() # power in dBm
 	try:
-		r = BHz*math.log(1+(configs.B1_PATHLOSS*((node.distance(n1,n2))**(-configs.B2_PATHLOSS))*P)/(BHz*configs.N0))
-		if configs.FOG_DEBUG == 1: print("[DEBUG] transmission rate calculated is %.10f" % r)
+		r = BHz*math.log2(1 + 10**(0.1*((configs.B1_PATHLOSS*((node.distance(n1,n2))**(-configs.B2_PATHLOSS))*P) + configs.N0)))
+		if configs.FOG_DEBUG == 1: print("[DEBUG] transmission rate calculated is",r)
 		return r
 	except Exception as InvalidParameters:
 		raise InvalidParameters

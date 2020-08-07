@@ -72,10 +72,10 @@ while worldclock < configs.SIM_TIME:
 		# --
 		
 
-		# -- tryout with random algorithm (start) -- # supposedly recieved=recieving[node.name, worldclock] would only have previous if com time was working
-		if node.excessinflux() > 0:
+		# -- tryout with random algorithm (start) --
+		if node.excessinflux(recieved=recieving[node.name, worldclock]) > 0:
 			# when i offload it's on this world clock time
-			offload[node.name, worldclock] = node.excessinflux()
+			offload[node.name, worldclock] = node.excessinflux(recieved=recieving[node.name, worldclock])
 			e = offload[node.name, worldclock]
 
 			# randomly offload the excess
@@ -87,8 +87,12 @@ while worldclock < configs.SIM_TIME:
 				# and a random quantity to offload to that node
 				er = int(random.random()*e)+1
 				e -= er
-				if SIM_DEBUG: print("[SIM DEBUG]",node.name,"offloaded",er,"tasks to node",randomoff.name)
-				recieving[randomoff.name, worldclock] += er
+				arriving_time = worldclock+1+int(comtime12[node.name,randomoff.name]/2)
+				if arriving_time >= configs.SIM_TIME: # if they arrive after sim end, they won't be taken into account for this sim
+					continue
+
+				if SIM_DEBUG: print("[SIM DEBUG]",node.name,"offloaded",er,"tasks to node",randomoff.name,"arriving at",arriving_time)
+				recieving[randomoff.name, arriving_time] += er
 						
 		# -- tryout with random algorithm (end) --
 
@@ -98,11 +102,11 @@ while worldclock < configs.SIM_TIME:
 	for node in nodes:
 		# then process with the seconds we've got remaining, i.e. the second that's elapsing, plus the delay that the node clock has
 		node.process(1+(worldclock-node.clock))
-		if SIM_DEBUG: print("[SIM DEBUG] Node",node.name,"with queue",node.cpuqueue,"has %.2f seconds behind world clock" % float(1+(worldclock-node.clock)))
+		if SIM_DEBUG: print("[SIM DEBUG] Node",node.name,"with queue",node.cpuqueue,"has %.2f seconds behind worldclock" % float(1+(worldclock-node.clock)))
 
 		# lastly decide which ones we'll work on and queue them
 		discard = node.setwL(recieved=recieving[node.name, worldclock],offloaded = offload[node.name, worldclock])
-		if SIM_DEBUG: print("[SIM DEBUG] Node",node.name,"discarded",discard,"tasks.")
+		if SIM_DEBUG: print("[SIM DEBUG] Node",node.name,"discarded",discard,"tasks and will queue",node.wL,"tasks")
 		node.queue()
 
 	# end of the second
