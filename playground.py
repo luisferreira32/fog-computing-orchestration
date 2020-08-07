@@ -19,14 +19,15 @@ for x in range(1,6):
 
 configs.FOG_DEBUG = 0
 # calculate com ratios between them in the beginning @NOTE: if distance is bigger than 10m, it might not even be able to transmit!
-rates12 = {}
+comtime12 = {}
 for node1 in nodes:
 	for node2 in nodes:
 		if node1 != node2:
 			r12 = coms.transmissionrate(node1, node2)
-			rates12[node1.name, node2.name] = r12
+			# for one task, then multiplying is not hard
+			comtime12[node1.name, node2.name] = coms.comtime(1, r12)
 
-print(rates12)
+print(comtime12)
 
 # to keep track of the tasks offloaded and recieved
 recieving = {}
@@ -39,7 +40,7 @@ for x in nodes:
 # ---------------------------------------------------------- SIMULATION ----------------------------------------------------------
 worldclock = 0 # [s]
 configs.FOG_DEBUG = 0
-SIM_DEBUG = 1
+SIM_DEBUG = 0
 
 # simulate for n iterations, focused on node 1 that's recieving tasks
 nodes[0].addinflux(5)
