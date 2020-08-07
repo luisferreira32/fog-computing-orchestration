@@ -98,30 +98,6 @@ class Core(object):
 			return self.influx - (configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved + offloaded)
 		return 0
 
-	def setwL(self, recieved=0,offloaded=0):
-		"""Sets the number of tasks to be locally processed in this time step
-
-		Parameters
-		----------
-		recieved=0
-			number of tasks recieved by other nodes offloading
-		offloaded=0
-			number of offloaded tasks to offload of this node
-
-		Returns
-		-------
-		number of discarded tasks
-		"""
-		self.wL = self.influx + recieved - offloaded
-		discarded = 0
-		if self.wL > configs.MAX_QUEUE - self.cpuqueue.qsize():
-			discarded = self.wL - (configs.MAX_QUEUE - self.cpuqueue.qsize())
-			self.wL = self.wL - discarded
-		if configs.FOG_DEBUG:
-			if discarded > 0: print("[DEBUG] wL Discarded",discarded," tasks at node " + self.name)
-			if discarded == 0 and self.wL != 0: print("[DEBUG] wL No task discarded at node " + self.name)
-		return discarded
-
 
 	#------------------------------------------------------ CPU related ------------------------------------------------------
 
@@ -150,7 +126,7 @@ class Core(object):
 		while not self.cpuqueue.empty() and time - configs.DEFAULT_IL*self.cpi/self.cps > 0:
 			time -= configs.DEFAULT_IL*self.cpi/self.cps
 			self.clock += configs.DEFAULT_IL*self.cpi/self.cps
-			solved.append(self.cpuqueue.get(False))
+			solved.append(self.clock - self.cpuqueue.get(False))
 
 		# we can't accumulate time we're not technically "using" before the next time step
 		if self.cpuqueue.empty():
@@ -160,22 +136,45 @@ class Core(object):
 			print("[DEBUG] Node "+ self.name +" cpu timer excess is %.2f and queue size %d" % (float(time), self.cpuqueue.qsize()))
 			if self.cpuqueue.empty(): print("[DEBUG] No task to process at node " + self.name)
 
-		return time
+		return solved
 
-	def queue(self):
-		"""Add a task to the cpu queue according to tasks to be processed locally wL
+	def queue(self, recieved=None,offloaded=0):
+		"""Add a task to the cpu queue and set the locally processed tasks number
+
+		Parameters
+		----------
+		recieved=None
+			queue with incoming tasks
+		offloaded=0
+			number of offloaded tasks
 
 		Return
 		------
 		queue size
 		"""
-		while not self.cpuqueue.full() and self.wL >= 1:
+
+		# only count the recieved if there's actually recieved tasks
+		if recieved is None:
+			recieved = queue.Queue() # empty queue
+
+		# figure out how many we're working locally
+		self.wL = self.influx + recieved.qsize() - offloaded
+		mytasks = self.influx - offloaded
+		
+		while not self.cpuqueue.full() and mytasks >= 1:
 			self.cpuqueue.put(self.clock, False)
-			self.wL -= 1
-			if configs.FOG_DEBUG:
-				print("[DEBUG] Queued task to node " + self.name+" to Q size",self.cpuqueue.qsize())
+			mytasks -= 1
+
+		while not self.cpuqueue.full() and not recieved.empty():
+			# place a task with a com delay already
+			self.cpuqueue.put(recieved.get(False), False)
+
 		if configs.FOG_DEBUG and self.fullqueue():
 			print("[DEBUG] Full queue at node " + self.name)
+
+		discarded = mytasks+recieved.qsize()
+		self.wL -= discarded
+		if discarded > 0: print("[DEBUG] Node",self.name,"discarded",discarded,"tasks with",recieved.qsize(),"from other nodes")
 
 		return self.cpuqueue.qsize()
 

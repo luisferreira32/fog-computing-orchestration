@@ -1,5 +1,6 @@
 # external imports
 import random
+import queue
 random.seed(1)
 
 # local imports
@@ -33,13 +34,13 @@ recieving = {}
 offload = {}
 for x in nodes:
 	for y in range(0,configs.SIM_TIME):
-		recieving[x.name, y] = 0
+		recieving[x.name, y] = queue.Queue(100)
 		offload[x.name, y] = 0
 
 # ---------------------------------------------------------- SIMULATION ----------------------------------------------------------
 worldclock = 0 # [s]
 configs.FOG_DEBUG = 0
-SIM_DEBUG = 1
+SIM_DEBUG = 0
 
 # simulate for n iterations, focused on node 1 that's recieving tasks
 nodes[0].addinflux(5)
@@ -101,13 +102,11 @@ while worldclock < configs.SIM_TIME:
 
 	for node in nodes:
 		# then process with the seconds we've got remaining, i.e. the second that's elapsing, plus the delay that the node clock has
-		node.process(1+(worldclock-node.clock))
-		if SIM_DEBUG: print("[SIM DEBUG] Node",node.name,"with queue",node.cpuqueue,"has %.2f seconds behind worldclock" % float(1+(worldclock-node.clock)))
+		delays = node.process(1+(worldclock-node.clock))
+		if SIM_DEBUG: print("[SIM DEBUG] Node",node.name,"clock at",node.clock,"with task completion delays at",delays)
 
 		# lastly decide which ones we'll work on and queue them
-		discard = node.setwL(recieved=recieving[node.name, worldclock],offloaded = offload[node.name, worldclock])
-		if SIM_DEBUG: print("[SIM DEBUG] Node",node.name,"discarded",discard,"tasks and will queue",node.wL,"tasks")
-		node.queue()
+		node.queue(recieved=recieving[node.name, worldclock],offloaded = offload[node.name, worldclock])
 
 	# end of the second
 	worldclock +=1
