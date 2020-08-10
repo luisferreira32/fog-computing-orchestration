@@ -91,11 +91,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		for n in nodes:
 			psum = 0
 			x = random.random()
-			for p in range(0,len(pdistribution)):
-				psum += pdistribution[p]
-				if x < psum:
-					n.setinflux(p)
-					break
+			n.setinflux(utils.discreteX(pdistribution, x))
 
 		# -- JUST FOR GRAPHS SAKE
 		xclock.append(worldclock)

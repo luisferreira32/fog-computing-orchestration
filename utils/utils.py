@@ -46,3 +46,13 @@ def poissondist(lbd=5):
 	for k in range(0,2*lbd+1):
 		dist.append(((lbd**k) * math.exp(-lbd))/(math.factorial(k)))
 	return dist
+
+def discreteX(distribution, normalrand):
+	"""Returns the event X in which the probability landed
+	"""
+	psum = 0
+	for x in range(0,len(distribution)):
+		psum += distribution[x]
+		if normalrand < psum:
+			return x
+	return len(distribution)
