@@ -33,8 +33,10 @@ class Core(object):
 		the placement in space of the node (x,y) [meter, meter]
 	coms : dictionary
 		the communication parameters of the node
-	clock : int
+	clock : float
 		internal cpu time [s]
+	lag : float
+		lag behind world clock
 
 	Methods
 	-------
@@ -70,6 +72,7 @@ class Core(object):
 		self.cps = cpu[1]
 		self.cpuqueue = queue.Queue(maxsize=configs.MAX_QUEUE)
 		self.clock = 0
+		self.lag = 0
 		# comunication related
 		self.coms = {
 			"power": coms[0],
@@ -89,11 +92,11 @@ class Core(object):
 		self.influx = newinflux
 		return self.influx
 
-	def excessinflux(self, recieved=None, offloaded=0):
-		"""Calculates excess influx in this timestep
+	def excessinflux(self, recieved=None):
+		"""Calculates excess influx in this timestep, only redirect if it's our own tasks
 		"""
-		if self.influx > configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved.qsize() + offloaded:
-			return self.influx - (configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved.qsize() + offloaded)
+		if self.influx > configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved.qsize():
+			return self.influx - max(configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved.qsize(), 0)
 		return 0
 
 
@@ -124,12 +127,18 @@ class Core(object):
 		# we can't accumulate time we're not technically "using" before the next time step
 		if self.cpuqueue.empty():
 			self.clock += time
+			self.clock += self.lag
+			time = 0
+			self.lag = 0
 
 		solved = []
-		while not self.cpuqueue.empty() and time - configs.DEFAULT_IL*self.cpi/self.cps > 0:
+		while not self.cpuqueue.empty() and time - configs.DEFAULT_IL*self.cpi/self.cps >= 0:
 			time -= configs.DEFAULT_IL*self.cpi/self.cps
 			self.clock += configs.DEFAULT_IL*self.cpi/self.cps
 			solved.append(self.clock - self.cpuqueue.get(False))
+
+		# if time is remaining, pass on lag to the next time step
+		self.lag += time 
 
 		if configs.FOG_DEBUG:
 			print("[DEBUG] Node "+ self.name +" cpu timer excess is %.2f and queue size %d" % (float(time), self.cpuqueue.qsize()))
@@ -149,7 +158,7 @@ class Core(object):
 
 		Return
 		------
-		queue size
+		number of discarded tasks
 		"""
 
 		# only count the recieved if there's actually recieved tasks
@@ -173,9 +182,9 @@ class Core(object):
 
 		discarded = mytasks+recieved.qsize()
 		self.wL -= discarded
-		if discarded > 0 and configs.FOG_DEBUG: print("[DEBUG] Node",self.name,"discarded",discarded,"tasks with",recieved.qsize(),"from other nodes")
+		if configs.FOG_DEBUG and discarded > 0: print("[DEBUG] Node",self.name,"discarded",discarded,"tasks with",recieved.qsize(),"from other nodes")
 
-		return self.cpuqueue.qsize()
+		return discarded
 
 
 	#------------------------------------------------------ Communication related ------------------------------------------------------
