@@ -81,14 +81,12 @@ class Core(object):
 			print("[DEBUG] Node core "+self.name+" created: "+str(self.__dict__))
 
 
-	def addinflux(self, newinflux=0):
-		"""Adds tasks influx to the node
-
-		If maximum influx is exceeded, return -1 and don't add it
+	def setinflux(self, newinflux=0):
+		"""Sets the influx of a node, i.e. tasks allocated per second
 		"""
-		if self.influx+newinflux > configs.MAX_INFLUX:
+		if newinflux > configs.MAX_INFLUX:
 			return -1
-		self.influx = self.influx+newinflux
+		self.influx = newinflux
 		return self.influx
 
 	def excessinflux(self, recieved=None, offloaded=0):

@@ -126,5 +126,5 @@ while worldclock < configs.SIM_TIME:
 graphs.graphtime(xclock, queues, ylabel="queues")
 #graphs.graphtime(xclock, clocks, ylabel="clocks")
 #graphs.graphtime(xclock, wLs, ylabel="wLs")
-#graphs.graphtime(xclock, avgdelays)
+graphs.graphtime(xclock, avgdelays)
 # --
