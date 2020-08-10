@@ -112,6 +112,11 @@ class Core(object):
 		"""
 		return self.cpuqueue.full()
 
+	def qs(self):
+		"""Checks CPU queue size
+		"""
+		return self.cpuqueue.qsize()
+
 	def process(self, time=0):
 		"""Process the first task in the CPU queue: fractions of a second for processing a task
 
@@ -164,6 +169,11 @@ class Core(object):
 		# only count the recieved if there's actually recieved tasks
 		if recieved is None:
 			recieved = queue.Queue() # empty queue
+
+		# we can't accumulate time we're not technically "using" before the next time step
+		if recieved.empty() and self.cpuqueue.empty():
+			self.clock += self.lag
+			self.lag = 0
 
 		# figure out how many we're working locally
 		self.wL = self.influx + recieved.qsize() - offloaded

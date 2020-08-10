@@ -75,8 +75,11 @@ while worldclock < configs.SIM_TIME:
 	# Where it appends actions to the action bar [origin, dest, number_offloaded], given a state [current node, influx, Queue] and possible actions
 	actions = []		
 	for node in nodes:
-		# -- tryout with random algorithm (start) --
-		act = basic.randomalgorithm(node, nodes, recieving[node.name, worldclock])
+		# -- run the algorithm only for nodes which have tasks allocated by the user! --
+		if node.influx == 0:
+			continue
+		act = basic.leastqueue(node, nodes, recieving[node.name, worldclock])
+		#act = basic.randomalgorithm(node, nodes, recieving[node.name, worldclock])
 		actions.extend(act)
 						
 		# -- tryout with random algorithm (end) --
@@ -115,7 +118,7 @@ while worldclock < configs.SIM_TIME:
 
 # --------------------------------------------- Print all the graphs and stats -----------------------------------------------
 # -- JUST FOR GRAPHS SAKE
-#graphs.graphtime(xclock, queues, ylabel="queues")
+graphs.graphtime(xclock, queues, ylabel="queues")
 #graphs.graphtime(xclock, clocks, ylabel="clocks")
 #graphs.graphtime(xclock, wLs, ylabel="wLs")
 #graphs.graphtime(xclock, avgdelays)
