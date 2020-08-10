@@ -122,15 +122,16 @@ class Core(object):
 		-------
 		list of processed tasks delays
 		"""
+
+		# we can't accumulate time we're not technically "using" before the next time step
+		if self.cpuqueue.empty():
+			self.clock += time
+
 		solved = []
 		while not self.cpuqueue.empty() and time - configs.DEFAULT_IL*self.cpi/self.cps > 0:
 			time -= configs.DEFAULT_IL*self.cpi/self.cps
 			self.clock += configs.DEFAULT_IL*self.cpi/self.cps
 			solved.append(self.clock - self.cpuqueue.get(False))
-
-		# we can't accumulate time we're not technically "using" before the next time step
-		if self.cpuqueue.empty():
-			self.clock += time
 
 		if configs.FOG_DEBUG:
 			print("[DEBUG] Node "+ self.name +" cpu timer excess is %.2f and queue size %d" % (float(time), self.cpuqueue.qsize()))

@@ -49,6 +49,7 @@ nodes[0].addinflux(5)
 queues = {}
 wLs = {}
 avgdelays = {}
+clocks = {}
 xclock = []
 # --
 
@@ -65,8 +66,9 @@ while worldclock < configs.SIM_TIME:
 	for node in nodes:
 		# first make offloading decisions depending on state
 		# -- JUST FOR GRAPHS SAKE
-		utils.appendict(queues, node.name, node.cpuqueue)
+		utils.appendict(queues, node.name, node.cpuqueue.qsize())
 		utils.appendict(wLs, node.name, node.wL)
+		utils.appendict(clocks, node.name, node.clock)
 		# --
 	# ------------------------------------------ THIS IS WHERE THE ALGORITHM RUNS ----------------------------------------
 	# Where it appends actions to the action bar [origin, dest, number_offloaded]
@@ -121,7 +123,8 @@ while worldclock < configs.SIM_TIME:
 	worldclock +=1
 
 # -- JUST FOR GRAPHS SAKE
-#graphs.graphtime(xclock, queues, ylabel="queues")
+graphs.graphtime(xclock, queues, ylabel="queues")
+#graphs.graphtime(xclock, clocks, ylabel="clocks")
 #graphs.graphtime(xclock, wLs, ylabel="wLs")
-graphs.graphtime(xclock, avgdelays)
+#graphs.graphtime(xclock, avgdelays)
 # --
