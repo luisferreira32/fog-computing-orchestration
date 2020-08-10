@@ -18,8 +18,8 @@ def randomalgorithm(node, nodes, recieving):
 	------
 	a set of actions to take by this node in this state
 	"""
-	e = int(random.random()*node.influx)
-	if node.excessinflux(recieved=recieving) > e:
+	e = 0
+	if node.excessinflux(recieved=recieving) > 0:
 		# if there is excess, offload the excess and not a random thing
 		e = node.excessinflux(recieved=recieving)
 
@@ -57,7 +57,9 @@ def leastqueue(node, nodes, recieving):
 	for n in nodes:
 		queues.append(n.qs())
 
-	e = node.influx
+	e = 0
+	if node.excessinflux(recieved=recieving) > 0:
+		e = node.excessinflux(recieved=recieving)
 
 	while e >= 1:
 		i = queues.index(min(queues))

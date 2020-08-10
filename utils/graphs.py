@@ -24,7 +24,8 @@ def graphtime(xtime=None, lines=None, xlabel="x", ylabel="y"):
 		plt.plot(xtime, line, label=key)
 
 	plt.xlabel(xlabel)
-	plt.ylabel(ylabel) 
+	plt.ylabel(ylabel)
+	plt.legend()
 	plt.show()
 	return 0
 

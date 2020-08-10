@@ -1,3 +1,6 @@
+#external imports
+import math
+
 def appendict(lines=None, key=None, value=None):
 	"""appends information to a dictionary called lines
 	
@@ -35,3 +38,11 @@ def listavg(l=None):
 	except:
 		return 0
 	return avg
+
+def poissondist(lbd=5):
+	"""Returns a list with the poission distribution for 0 - 2*lbd
+	"""
+	dist = []
+	for k in range(0,2*lbd+1):
+		dist.append(((lbd**k) * math.exp(-lbd))/(math.factorial(k)))
+	return dist
