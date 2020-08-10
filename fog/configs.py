@@ -7,7 +7,7 @@ N_NODES = 5
 
 # fog core constants
 MAX_QUEUE = 10
-MAX_INFLUX = 10
+MAX_INFLUX = 20
 SERVICE_RATE = 1.8# default 1.8
 MAX_AREA = (100, 100)
 UTILITY_REWARD = 0.5

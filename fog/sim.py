@@ -12,7 +12,7 @@ from utils import utils
 from algorithms import basic
 
 def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MAX_AREA, influx=configs.TASK_ARRIVAL_RATE, sr=configs.SERVICE_RATE, algorithm=None,
-	debug_fog=False, SIM_DEBUG=False, display_q=False, display_wl=False, display_sum=False):
+	debug_fog=False, SIM_DEBUG=False, display_q=False, display_wl=False, display_sum=False, display_w=False):
 	"""Simulates a whole set up in a fog computing environment, given an algorithm
 	
 	Parameters
@@ -29,20 +29,22 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		the offload algorithm for optimizing
 	debug_fog, SIM_DEBUG
 		flags to obtain debug messages
-	display_q, display_wl, display_sum
+	display_q, display_wl, display_sum, display_w
 		flags to display simulation graphs
 	"""
 
+	# We need a coreography algorithm somewhere....
 	if algorithm==None:
 		print("[SIM DEBUG] You need a valid algorithm to simulate")
 		return None
+
 	# ------------------------------------------------------------ SET UP ------------------------------------------------------------
 	# N randomly placed nodes
 	configs.FOG_DEBUG = debug_fog
 	cps = sr*configs.DEFAULT_IL*configs.DEFAULT_CPI
 	nodes = []
 	for x in range(1,n_nodes+1):
-		n1 = node.Core("n"+str(x), placement=(random.random()*area[0], random.random()*area[1]), influx=influx, cpu=(configs.DEFAULT_CPI, cps))
+		n1 = node.Core("n"+str(x), placement=(random.random()*area[0], random.random()*area[1]), influx=0, cpu=(configs.DEFAULT_CPI, cps))
 		nodes.append(n1)
 
 	rates12 = {}
@@ -62,6 +64,9 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 			recieving[x.name, y] = queue.Queue(100)
 			offload[x.name, y] = 0
 
+	# distribution of probabilities
+	pdistribution = utils.poissondist(influx)
+
 	# ---------------------------------------------------------- SIMULATION ----------------------------------------------------------
 	worldclock = 0 # [s]
 	configs.FOG_DEBUG = debug_fog
@@ -69,6 +74,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 	# -- JUST FOR GRAPHS SAKE
 	queues = {}
 	wLs = {}
+	ws = {}
 	alldelays = []
 	xclock = []
 	totaldiscarded = 0
@@ -81,11 +87,22 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 	while worldclock < sim_time:
 		if SIM_DEBUG: print("-------------------- second",worldclock,"-",worldclock+1,"--------------------")
 
+		# ---------------- in each time step, the task arrival rate is a poisson distribution ----------------
+		for n in nodes:
+			psum = 0
+			x = random.random()
+			for p in range(0,len(pdistribution)):
+				psum += pdistribution[p]
+				if x < psum:
+					n.setinflux(p)
+					break
+
 		# -- JUST FOR GRAPHS SAKE
 		xclock.append(worldclock)
 		for n in nodes:
 			utils.appendict(queues, n.name, n.cpuqueue.qsize())
 			utils.appendict(wLs, n.name, n.wL)
+			utils.appendict(ws, n.name, n.influx)
 		# --
 
 		# ------------------------------------------ THIS IS WHERE THE ALGORITHM RUNS ----------------------------------------
@@ -136,8 +153,9 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 	# -- JUST FOR GRAPHS SAKE
 	if display_q: graphs.graphtime(xclock, queues, ylabel="queues")
 	if display_wl: graphs.graphtime(xclock, wLs, ylabel="wLs")
+	if display_w: graphs.graphtime(xclock, ws, ylabel="influx")
 	if display_sum:
-		print("Using algorithm",algorithm,"with SR",sr,"and influx",influx)
+		print("Using algorithm",algorithm,"with SR",sr,"and average influx",influx)
 		print("  Avg delay is", utils.listavg(alldelays))
 		print("  Total processed is", len(alldelays))
 		print("  Total discarded is", totaldiscarded)
