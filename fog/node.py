@@ -132,22 +132,16 @@ class Core(object):
 		# we can't accumulate time we're not technically "using" before the next time step
 		if self.cpuqueue.empty():
 			self.clock += time
-			self.clock += self.lag
 			time = 0
-			self.lag = 0
+		if time >= 2:
+			self.clock += 1
+			time -= 1
 
 		solved = []
 		while not self.cpuqueue.empty() and time - configs.DEFAULT_IL*self.cpi/self.cps >= 0:
 			time -= configs.DEFAULT_IL*self.cpi/self.cps
 			self.clock += configs.DEFAULT_IL*self.cpi/self.cps
 			solved.append(self.clock - self.cpuqueue.get(False))
-
-		# if time is remaining, pass on lag to the next time step
-		self.lag += time
-		# but we can't exceed the tiemstep itself
-		if self.lag > 1:
-			self.lag -= 1
-			self.clock +=1
 
 		if configs.FOG_DEBUG:
 			print("[DEBUG] Node "+ self.name +" cpu timer excess is %.2f and queue size %d" % (float(time), self.cpuqueue.qsize()))

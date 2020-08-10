@@ -13,6 +13,7 @@ from algorithms import basic
 
 # ------------------------------------------------------------ SET UP ------------------------------------------------------------
 # five randomly placed nodes
+configs.FOG_DEBUG = 0
 nodes = []
 for x in range(1,6):
 	n1 = node.Core("n"+str(x), placement=(random.random()*configs.MAX_AREA[0], random.random()*configs.MAX_AREA[1]), influx=0)
@@ -37,7 +38,7 @@ for x in nodes:
 
 # ---------------------------------------------------------- SIMULATION ----------------------------------------------------------
 worldclock = 0 # [s]
-configs.FOG_DEBUG = 1
+configs.FOG_DEBUG = 0
 SIM_DEBUG = 1
 
 # simulate for n iterations, focused on node 1 that's recieving tasks
@@ -117,7 +118,7 @@ while worldclock < configs.SIM_TIME:
 
 # --------------------------------------------- Print all the graphs and stats -----------------------------------------------
 # -- JUST FOR GRAPHS SAKE
-#graphs.graphtime(xclock, queues, ylabel="queues")
+graphs.graphtime(xclock, queues, ylabel="queues")
 #graphs.graphtime(xclock, clocks, ylabel="clocks")
 #graphs.graphtime(xclock, wLs, ylabel="wLs")
 #graphs.graphtime(xclock, avgdelays)
