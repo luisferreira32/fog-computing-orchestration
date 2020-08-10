@@ -25,7 +25,7 @@ def randomalgorithm(node, nodes, recieving):
 
 	actions = []
 	# randomly offload decisions
-	while e > 0:
+	while e >= 1:
 		# choose a different node
 		randomoff = node
 		while randomoff == node:

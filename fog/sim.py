@@ -88,10 +88,10 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		if SIM_DEBUG: print("-------------------- second",worldclock,"-",worldclock+1,"--------------------")
 
 		# ---------------- in each time step, the task arrival rate is a poisson distribution ----------------
-		for n in nodes:
-			psum = 0
-			x = random.random()
-			n.setinflux(utils.discreteX(pdistribution, x))
+		#for n in nodes:
+		psum = 0
+		x = random.random()
+		nodes[0].setinflux(utils.discreteX(pdistribution, x))
 
 		# -- JUST FOR GRAPHS SAKE
 		xclock.append(worldclock)
