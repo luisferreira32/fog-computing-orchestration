@@ -143,7 +143,11 @@ class Core(object):
 			solved.append(self.clock - self.cpuqueue.get(False))
 
 		# if time is remaining, pass on lag to the next time step
-		self.lag += time 
+		self.lag += time
+		# but we can't exceed the tiemstep itself
+		if self.lag > 1:
+			self.lag -= 1
+			self.clock +=1
 
 		if configs.FOG_DEBUG:
 			print("[DEBUG] Node "+ self.name +" cpu timer excess is %.2f and queue size %d" % (float(time), self.cpuqueue.qsize()))
@@ -169,11 +173,6 @@ class Core(object):
 		# only count the recieved if there's actually recieved tasks
 		if recieved is None:
 			recieved = queue.Queue() # empty queue
-
-		# we can't accumulate time we're not technically "using" before the next time step
-		if recieved.empty() and self.cpuqueue.empty():
-			self.clock += self.lag
-			self.lag = 0
 
 		# figure out how many we're working locally
 		self.wL = self.influx + recieved.qsize() - offloaded

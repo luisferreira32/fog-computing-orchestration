@@ -7,8 +7,8 @@ SIM_TIME = 100
 # fog core constants
 MAX_QUEUE = 10
 MAX_INFLUX = 10
-SERVICE_RATE = 2# default 1.8
-MAX_AREA = (1, 1)
+SERVICE_RATE = 1.8# default 1.8
+MAX_AREA = (100, 100)
 UTILITY_REWARD = 0.5
 DEFAULT_CPI = 5
 

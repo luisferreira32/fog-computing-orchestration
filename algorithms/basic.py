@@ -20,7 +20,7 @@ def randomalgorithm(node, nodes, recieving):
 	"""
 	e = int(random.random()*node.influx)
 	if node.excessinflux(recieved=recieving) > e:
-		# when i offload it's on this world clock time
+		# if there is excess, offload the excess and not a random thing
 		e = node.excessinflux(recieved=recieving)
 
 	actions = []
@@ -53,14 +53,17 @@ def leastqueue(node, nodes, recieving):
 	a set of actions to take by this node in this state
 	"""
 	actions = []
-	minqnode = node
+	queues = []
+	for n in nodes:
+		queues.append(n.qs())
+
 	e = node.influx
+
 	while e >= 1:
-		for n in nodes:
-			if minqnode.qs() > n.qs():
-				minqnode = n
-		if minqnode != node:
-			actions.append([node, minqnode, 1])
+		i = queues.index(min(queues))
+		if nodes[i] != node:
+			actions.append([node, nodes[i], 1])
+		queues[i] +=1
 		e -= 1
 	
 	return actions

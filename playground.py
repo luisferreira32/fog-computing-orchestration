@@ -18,7 +18,6 @@ for x in range(1,6):
 	n1 = node.Core("n"+str(x), placement=(random.random()*configs.MAX_AREA[0], random.random()*configs.MAX_AREA[1]), influx=0)
 	nodes.append(n1)
 
-# calculate com ratios between them in the beginning @NOTE: if distance is bigger than 10m, it might not even be able to transmit!
 rates12 = {}
 for node1 in nodes:
 	for node2 in nodes:
@@ -38,8 +37,8 @@ for x in nodes:
 
 # ---------------------------------------------------------- SIMULATION ----------------------------------------------------------
 worldclock = 0 # [s]
-configs.FOG_DEBUG = 0
-SIM_DEBUG = 0
+configs.FOG_DEBUG = 1
+SIM_DEBUG = 1
 
 # simulate for n iterations, focused on node 1 that's recieving tasks
 nodes[0].setinflux(5)
@@ -118,7 +117,7 @@ while worldclock < configs.SIM_TIME:
 
 # --------------------------------------------- Print all the graphs and stats -----------------------------------------------
 # -- JUST FOR GRAPHS SAKE
-graphs.graphtime(xclock, queues, ylabel="queues")
+#graphs.graphtime(xclock, queues, ylabel="queues")
 #graphs.graphtime(xclock, clocks, ylabel="clocks")
 #graphs.graphtime(xclock, wLs, ylabel="wLs")
 #graphs.graphtime(xclock, avgdelays)
