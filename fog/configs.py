@@ -2,7 +2,7 @@
 
 # auxiliary for the programming
 FOG_DEBUG = 0
-SIM_TIME = 100
+SIM_TIME = 1000
 
 # fog core constants
 MAX_QUEUE = 10

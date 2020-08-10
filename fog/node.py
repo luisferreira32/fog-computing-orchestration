@@ -35,8 +35,6 @@ class Core(object):
 		the communication parameters of the node
 	clock : float
 		internal cpu time [s]
-	lag : float
-		lag behind world clock
 
 	Methods
 	-------
@@ -72,7 +70,6 @@ class Core(object):
 		self.cps = cpu[1]
 		self.cpuqueue = queue.Queue(maxsize=configs.MAX_QUEUE)
 		self.clock = 0
-		self.lag = 0
 		# comunication related
 		self.coms = {
 			"power": coms[0],
