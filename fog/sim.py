@@ -11,8 +11,8 @@ from utils import graphs
 from utils import utils
 from algorithms import basic
 
-def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MAX_AREA, influx=configs.TASK_ARRIVAL_RATE,
-	debug_fog=False, debug_sim=False):
+def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MAX_AREA, influx=configs.TASK_ARRIVAL_RATE, algorithm=None,
+	debug_fog=False, debug_sim=False, display_q=False, display_wl=False):
 	"""Simulates a whole set up in a fog computing environment, given an algorithm
 	
 	Parameters
@@ -25,16 +25,23 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		area configurations where to place the nodes
 	influx
 		the arrival rate of tasks in the nodes
+	algorithm
+		the offload algorithm for optimizing
 	debug_fog, debug_sim
 		flags to obtain debug messages
+	display_q, display_wl
+		flags to display simulation graphs
 	"""
 
+	if algorithm==None:
+		print("[SIM DEBUG] You need a valid algorithm to simulate")
+		return
 	# ------------------------------------------------------------ SET UP ------------------------------------------------------------
 	# N randomly placed nodes
-	configs.FOG_DEBUG = 0
+	configs.FOG_DEBUG = debug_fog
 	nodes = []
 	for x in range(1,n_nodes+1):
-		n1 = node.Core("n"+str(x), placement=(random.random()*area[0], random.random()*area[1]), influx=0)
+		n1 = node.Core("n"+str(x), placement=(random.random()*area[0], random.random()*area[1]), influx=influx)
 		nodes.append(n1)
 
 	rates12 = {}
@@ -59,19 +66,9 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 	configs.FOG_DEBUG = debug_fog
 	SIM_DEBUG = debug_sim
 
-	# simulate for n iterations, focused on node 1 that's recieving tasks
-	# let's make the average = TASK_ARRIVAL_RATE
-	nodes[0].setinflux(configs.TASK_ARRIVAL_RATE)
-	nodes[1].setinflux(configs.TASK_ARRIVAL_RATE)
-	nodes[2].setinflux(configs.TASK_ARRIVAL_RATE)
-	nodes[3].setinflux(configs.TASK_ARRIVAL_RATE)
-	nodes[4].setinflux(configs.TASK_ARRIVAL_RATE)
-
 	# -- JUST FOR GRAPHS SAKE
 	queues = {}
 	wLs = {}
-	avgdelays = {}
-	clocks = {}
 	alldelays = []
 	xclock = []
 	totaldiscarded = 0
@@ -88,7 +85,6 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		for n in nodes:
 			utils.appendict(queues, n.name, n.cpuqueue.qsize())
 			utils.appendict(wLs, n.name, n.wL)
-			utils.appendict(clocks, n.name, n.clock)
 		# --
 
 		# ------------------------------------------ THIS IS WHERE THE ALGORITHM RUNS ----------------------------------------
@@ -98,8 +94,8 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 			# -- run the algorithm only for nodes which have tasks allocated by the user! --
 			if n.influx == 0:
 				continue
-			#act = basic.leastqueue(node, nodes, recieving[node.name, worldclock])
-			act = basic.randomalgorithm(n, nodes, recieving[n.name, worldclock])
+			if algorithm=="lq": act = basic.leastqueue(n, nodes, recieving[n.name, worldclock])
+			if algorithm=="rd": act = basic.randomalgorithm(n, nodes, recieving[n.name, worldclock])
 			actions.extend(act)
 							
 			# -- tryout with random algorithm (end) --
@@ -110,7 +106,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 			offload[origin.name, worldclock] += w0
 			# it will always arrive in the next timestep, at least, then comtime is the roundtrip, so arrives in half time
 			arriving_time = worldclock+1+int(0.5*coms.comtime(w0, rates12[origin.name, dest.name]))
-			if arriving_time >= configs.SIM_TIME: # if they arrive after sim end, they won't be taken into account for this sim
+			if arriving_time >= sim_time: # if they arrive after sim end, they won't be taken into account for this sim
 				continue
 
 			if SIM_DEBUG: print("[SIM DEBUG]",origin.name,"offloaded",w0,"tasks to node",dest.name,"arriving at",arriving_time)
@@ -125,7 +121,6 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 			delays = n.process(1+(worldclock-n.clock))
 			# -- JUST FOR GRAPHS SAKE
 			alldelays.extend(delays)
-			utils.appendict(avgdelays, n.name, utils.listavg(delays))
 			# --
 			if SIM_DEBUG: print("[SIM DEBUG] Node",n.name,"clock at %.2f with task completion delays at"% n.clock,delays)
 
@@ -138,11 +133,10 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 
 	# --------------------------------------------- Print all the graphs and stats -----------------------------------------------
 	# -- JUST FOR GRAPHS SAKE
-	#graphs.graphtime(xclock, queues, ylabel="queues")
-	#graphs.graphtime(xclock, clocks, ylabel="clocks")
-	#graphs.graphtime(xclock, wLs, ylabel="wLs")
-	#graphs.graphtime(xclock, avgdelays)
-	print("Avg delay is", utils.listavg(alldelays))
-	print("Total processed is", len(alldelays))
-	print("Total discarded is", totaldiscarded)
+	if display_q: graphs.graphtime(xclock, queues, ylabel="queues")
+	if display_wl: graphs.graphtime(xclock, wLs, ylabel="wLs")
+	print("Using algorithm",algorithm,":")
+	print("  Avg delay is", utils.listavg(alldelays))
+	print("  Total processed is", len(alldelays))
+	print("  Total discarded is", totaldiscarded)
 	# --
