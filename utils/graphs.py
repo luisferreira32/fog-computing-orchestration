@@ -1,7 +1,7 @@
 #  external imports
 import matplotlib.pyplot as plt
 
-def graphtime(xtime=None, lines=None, xlabel="x", ylabel="y"):
+def graphtime(xtime=None, lines=None, xlabel="x", ylabel="y", title="default_title"):
 	"""graph multiple lines in a dictionary lines with time axis xtime
 	
 	Parameters
@@ -25,6 +25,7 @@ def graphtime(xtime=None, lines=None, xlabel="x", ylabel="y"):
 
 	plt.xlabel(xlabel)
 	plt.ylabel(ylabel)
+	plt.title(title)
 	plt.legend()
 	plt.show()
 	return 0

@@ -2,12 +2,16 @@
 import random
 random.seed(1)
 
-def randomalgorithm(node, nodes, recieving):
+# imports from our utils and modules
+from fog import node
+from fog import configs
+
+def randomalgorithm(origin, nodes, recieving):
 	"""Gives a random action based on the state
 	
 	Parameters
 	----------
-	node
+	origin
 		is the node state being processed, i.e. the one recieving allocations
 	nodes
 		the state of the fog, with queues and everything
@@ -19,29 +23,29 @@ def randomalgorithm(node, nodes, recieving):
 	a set of actions to take by this node in this state
 	"""
 	e = 0
-	if node.excessinflux(recieved=recieving) > 0:
+	if origin.excessinflux(recieved=recieving) > 0:
 		# if there is excess, offload the excess and not a random thing
-		e = node.excessinflux(recieved=recieving)
+		e = origin.excessinflux(recieved=recieving)
 
 	actions = []
 	# randomly offload decisions
 	while e >= 1:
 		# choose a different node
-		randomoff = node
-		while randomoff == node:
-			randomoff = random.choice(nodes)
+		randomoff = random.choice(nodes)
+		r = int(random.random()*e)+1
+		if randomoff == origin:
+			continue 
 		# and a random quantity to offload to that node
-		er = int(random.random()*e)+1
-		e -= er
-		actions.append([node, randomoff, er])
+		e -= r
+		actions.append([origin, randomoff, r])
 	return actions
 
-def leastqueue(node, nodes, recieving):
+def leastqueue(origin, nodes, recieving):
 	"""Offloads tasks to the node with the minimum queue status
 	
 	Parameters
 	----------
-	node
+	origin
 		is the node state being processed, i.e. the one recieving allocations
 	nodes
 		the state of the fog, with queues and everything
@@ -54,18 +58,67 @@ def leastqueue(node, nodes, recieving):
 	"""
 	actions = []
 	queues = []
+	moves = {}
 	for n in nodes:
 		queues.append(n.qs())
+		moves[n] = 0
 
 	e = 0
-	if node.excessinflux(recieved=recieving) > 0:
-		e = node.excessinflux(recieved=recieving)
+	if origin.excessinflux(recieved=recieving) > 0:
+		e = origin.excessinflux(recieved=recieving)
 
 	while e >= 1:
 		i = queues.index(min(queues))
-		if nodes[i] != node:
-			actions.append([node, nodes[i], 1])
+		if nodes[i] != origin:
+			moves[nodes[i]] +=1
 		queues[i] +=1
 		e -= 1
+	for n in nodes:
+		if n != origin and moves[n] != 0:
+			actions.append([origin, n, moves[n]])
+	
+	return actions
+
+def nearestnode(origin, nodes, recieving):
+	"""Offloads tasks to the node with the minimum distance to this one, and space on queue
+	
+	Parameters
+	----------
+	origin
+		is the node state being processed, i.e. the one recieving allocations
+	nodes
+		the state of the fog, with queues and everything
+	recieving
+		state of coms (counts as an extra to influx)
+
+	Return
+	------
+	a set of actions to take by this node in this state
+	"""
+	actions = []
+	queues = {}
+	moves = {}
+	distances = {}
+	for n in nodes:
+		if n == origin: continue
+		queues[n] = n.qs()
+		moves[n] = 0
+		distances[n] = node.distance(origin,n)
+
+	e = 0
+	if origin.excessinflux(recieved=recieving) > 0:
+		e = origin.excessinflux(recieved=recieving)
+
+	while e >= 1 and distances:
+		n = min(distances, key=distances.get)
+		if queues[n] >= configs.MAX_QUEUE:
+			distances.pop(n)
+			continue
+		moves[n] += 1
+		queues[n] += 1
+		e -= 1
+	for n in nodes:
+		if n != origin and moves[n] != 0:
+			actions.append([origin, n, moves[n]])
 	
 	return actions

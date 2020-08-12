@@ -8,7 +8,7 @@ N_NODES = 5
 # fog core constants
 MAX_QUEUE = 10
 MAX_INFLUX = 20
-SERVICE_RATE = 1.8# default 1.8
+SERVICE_RATE = 2# default 1.8
 MAX_AREA = (100, 100)
 UTILITY_REWARD = 0.5
 DEFAULT_CPI = 5
@@ -24,7 +24,7 @@ DEFAULT_BANDWIDTH = 2 # MHz
 B1_PATHLOSS = 0.001
 B2_PATHLOSS = 4
 DISTANCE_VECTOR = [] # this one is calculated based on spacial placement
-N0 = 174 # thermal noise power 174 dBm/ Hz ? wrong, but we'll just use 174 dBm
+N0 = -174 # thermal noise power density 174 dBm/ Hz ? wrong, but we'll just use 111 dBm
 
 
 # derivated default constantsw

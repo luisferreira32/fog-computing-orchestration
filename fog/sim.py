@@ -1,7 +1,6 @@
 # external imports
 import random
 import queue
-random.seed(1)
 
 # local imports
 from fog import node
@@ -12,7 +11,8 @@ from utils import utils
 from algorithms import basic
 
 def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MAX_AREA, influx=configs.TASK_ARRIVAL_RATE, sr=configs.SERVICE_RATE, algorithm=None,
-	debug_fog=False, SIM_DEBUG=False, display_q=False, display_wl=False, display_sum=False, display_w=False):
+	algorithm_object=None,
+	debug_fog=False, debug_sim=False, display_q=False, display_wl=False, display_sum=False, display_w=False):
 	"""Simulates a whole set up in a fog computing environment, given an algorithm
 	
 	Parameters
@@ -27,7 +27,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		the arrival rate of tasks in the nodes
 	algorithm
 		the offload algorithm for optimizing
-	debug_fog, SIM_DEBUG
+	debug_fog, debug_sim
 		flags to obtain debug messages
 	display_q, display_wl, display_sum, display_w
 		flags to display simulation graphs
@@ -37,6 +37,8 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 	if algorithm==None:
 		print("[SIM DEBUG] You need a valid algorithm to simulate")
 		return None
+	# and a seed reset to reproduce results
+	random.seed(1)
 
 	# ------------------------------------------------------------ SET UP ------------------------------------------------------------
 	# N randomly placed nodes
@@ -52,7 +54,8 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		for node2 in nodes:
 			if node1 != node2:
 				r12 = coms.transmissionrate(node1, node2)
-				rates12[node1.name, node2.name] = r12 # 
+				rates12[node1.name, node2.name] = r12 #
+				#print("Comtime %.2f at distance %.2f" % (coms.comtime(1, r12), node.distance(node1, node2)))
 
 	#print(rates12)
 
@@ -85,11 +88,10 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 
 	# ------------------------------------------- SIMULATION MAIN LOOP ----------------------------------------------
 	while worldclock < sim_time:
-		if SIM_DEBUG: print("-------------------- second",worldclock,"-",worldclock+1,"--------------------")
+		if debug_sim: print("-------------------- second",worldclock,"-",worldclock+1,"--------------------")
 
 		# ---------------- in each time step, the task arrival rate is a poisson distribution ----------------
 		#for n in nodes:
-		psum = 0
 		x = random.random()
 		nodes[0].setinflux(utils.discreteX(pdistribution, x))
 
@@ -110,9 +112,8 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 				continue
 			if algorithm=="lq": act = basic.leastqueue(n, nodes, recieving[n.name, worldclock])
 			if algorithm=="rd": act = basic.randomalgorithm(n, nodes, recieving[n.name, worldclock])
+			if algorithm=="nn": act = basic.nearestnode(n, nodes, recieving[n.name, worldclock])
 			actions.extend(act)
-							
-			# -- tryout with random algorithm (end) --
 
 		# ---------------------------------- Execute the offloading actions for every node -------------------------------------
 		for (origin, dest, w0) in actions:
@@ -123,7 +124,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 			if arriving_time >= sim_time: # if they arrive after sim end, they won't be taken into account for this sim
 				continue
 
-			if SIM_DEBUG: print("[SIM DEBUG]",origin.name,"offloaded",w0,"tasks to node",dest.name,"arriving at",arriving_time)
+			if debug_sim: print("[SIM DEBUG]",origin.name,"offloaded",w0,"tasks to node",dest.name,"arriving at",arriving_time)
 			for x in range(0,w0):
 				recieving[dest.name, arriving_time].put(origin.clock, False)
 
@@ -136,7 +137,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 			# -- JUST FOR GRAPHS SAKE
 			alldelays.extend(delays)
 			# --
-			if SIM_DEBUG: print("[SIM DEBUG] Node",n.name,"clock at %.2f with task completion delays at"% n.clock,delays)
+			if debug_sim: print("[SIM DEBUG] Node",n.name,"clock at %.2f with task completion delays at"% n.clock,delays)
 
 			# lastly decide which ones we'll work on and queue them
 			totaldiscarded += n.queue(recieved=recieving[n.name, worldclock],offloaded = offload[n.name, worldclock])
@@ -147,13 +148,14 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 
 	# --------------------------------------------- Print all the graphs and stats -----------------------------------------------
 	# -- JUST FOR GRAPHS SAKE
-	if display_q: graphs.graphtime(xclock, queues, ylabel="queues")
+	sumary = "Using algorithm " + str(algorithm) + " with SR " + str(sr) + " and average influx " + str(influx)
+	if display_q: graphs.graphtime(xclock, queues, ylabel="queues", title=sumary)
 	if display_wl: graphs.graphtime(xclock, wLs, ylabel="wLs")
 	if display_w: graphs.graphtime(xclock, ws, ylabel="influx")
 	if display_sum:
-		print("Using algorithm",algorithm,"with SR",sr,"and average influx",influx)
+		print(sumary)
 		print("  Avg delay is", utils.listavg(alldelays))
 		print("  Total processed is", len(alldelays))
 		print("  Total discarded is", totaldiscarded)
-	return (utils.listavg(alldelays), len(alldelays), totaldiscarded)
+	return (utils.listavg(alldelays), len(alldelays), totaldiscarded, algorithm_object)
 	# --

@@ -42,8 +42,6 @@ class Core(object):
 		processes a task in the cpu queue, returning number of cycles needed
 	queue(task=None)
 		adds a task to the CPU queue
-	addcoms(coms=None)
-		adds communication ability to the node
 	"""
 
 	def __init__(self, name="default_node", cpu=(configs.DEFAULT_CPI, configs.DEFAULT_CPS), placement=(0,0), influx=configs.TASK_ARRIVAL_RATE, 
