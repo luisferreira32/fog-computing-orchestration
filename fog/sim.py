@@ -92,10 +92,8 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 
 		# ---------------- in each time step, the task arrival rate is a poisson distribution ----------------
 		# just for two nodes to be connected to clients
-		x = random.random()
-		nodes[0].setinflux(utils.discreteX(pdistribution, x))
-		x = random.random()
-		nodes[1].setinflux(utils.discreteX(pdistribution, x))
+		nodes[0].setinflux(utils.discreteX(pdistribution, random.random()))
+		nodes[3].setinflux(utils.discreteX(pdistribution, random.random()))
 
 		# -- JUST FOR GRAPHS SAKE
 		xclock.append(worldclock)

@@ -20,10 +20,18 @@ def graphtime(xtime=None, lines=None, xlabel="x", ylabel="y", title="default_tit
 	if lines==None or xtime==None:
 		return -1
 
+	miny = 10000
+	maxy = 0
 	for key, line in lines.items():
 		plt.plot(xtime, line, label=key)
+		minya = min(line)
+		maxya = max(line)
+		miny = min(minya, miny)
+		maxy = max(maxya, maxy)
 
 	plt.xlabel(xlabel)
+	plt.xlim(min(xtime), max(xtime))
+	plt.ylim(min(miny,0), maxy+1)
 	plt.ylabel(ylabel)
 	plt.title(title)
 	plt.legend()
