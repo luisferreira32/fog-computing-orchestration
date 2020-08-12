@@ -15,6 +15,10 @@ class Qlearning(object):
 	----------
 	qtable : dict = {state: actions_dict}
 		a dictionary that for each state gives a dict of actions
+	alpha=0.5
+		learning rate of the Q table
+	discount_factor=0.5
+		discount factor of the Q table
 
 	Methods
 	-------
@@ -26,9 +30,11 @@ class Qlearning(object):
 		updates the q values from the table
 	"""
 
-	def __init__(self):
+	def __init__(self, a=0.5, df=0.5):
 		# init with an empty dict table
 		self.qtable = {}
+		self.alpha = a
+		self.discount_factor = df
 
 	def addstate(self, state=None, nodes=None, origin=None):
 		""" Adds a new state if it wasn't here before, with all possible actions zeroed
@@ -91,5 +97,16 @@ class Qlearning(object):
 		else:
 			(w0, dest) = max(self.qtable[state], key=self.qtable[state].get)
 			action = [origin, dest, w0]
-			
+
 		return action
+
+	def update(self, state=None, action=None):
+		""" Updates a Q value, based on a state-action pair
+
+		Parameters
+		----------
+
+		Returns
+		-------
+		"""
+		pass

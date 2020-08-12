@@ -104,7 +104,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		# --
 
 		# ------------------------------------------ THIS IS WHERE THE ALGORITHM RUNS ----------------------------------------
-		# Where it appends actions to the action bar [origin, dest, number_offloaded], given a state [current node, influx, Queue] and possible actions
+		# Where it appends actions to the action bar [origin, dest, number_offloaded], given a state [current node, influx, Queues]
 		actions = []		
 		for n in nodes:
 			# -- run the algorithm only for nodes which have tasks allocated by the user! --
