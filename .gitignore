@@ -3,4 +3,5 @@ venv/*
 *.pyo
 fog/test/*
 utils/test/*
+algorithms/test/*
 playground.py

@@ -73,7 +73,7 @@ def transmissionrate(n1=None, n2=None):
 
 	BHz = n1.getB() * (10**6) # MHz to Hz
 	Power = math.pow( 10 , 0.1*n1.getP())*(configs.B1_PATHLOSS*((node.distance(n1,n2))**(-configs.B2_PATHLOSS))) # convertion from dBm to mW
-	Noise = math.pow( 10 , 0.1*configs.N0) # from dBm to mW
+	Noise = math.pow( 10 , 0.1*configs.N0*4) # from dBm to mW
 	try:
 		# Shannon-hartley theorem ~: r = B log2 ( 1 + SNR )
 		r = BHz*math.log2(1 + (Power/ Noise))

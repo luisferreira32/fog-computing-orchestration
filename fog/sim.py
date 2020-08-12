@@ -38,7 +38,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		print("[SIM DEBUG] You need a valid algorithm to simulate")
 		return None
 	# and a seed reset to reproduce results
-	random.seed(1)
+	random.seed(17)
 
 	# ------------------------------------------------------------ SET UP ------------------------------------------------------------
 	# N randomly placed nodes
@@ -91,9 +91,11 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		if debug_sim: print("-------------------- second",worldclock,"-",worldclock+1,"--------------------")
 
 		# ---------------- in each time step, the task arrival rate is a poisson distribution ----------------
-		#for n in nodes:
+		# just for two nodes to be connected to clients
 		x = random.random()
 		nodes[0].setinflux(utils.discreteX(pdistribution, x))
+		x = random.random()
+		nodes[1].setinflux(utils.discreteX(pdistribution, x))
 
 		# -- JUST FOR GRAPHS SAKE
 		xclock.append(worldclock)
@@ -113,7 +115,8 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 			if algorithm=="lq": act = basic.leastqueue(n, nodes, recieving[n.name, worldclock])
 			if algorithm=="rd": act = basic.randomalgorithm(n, nodes, recieving[n.name, worldclock])
 			if algorithm=="nn": act = basic.nearestnode(n, nodes, recieving[n.name, worldclock])
-			actions.extend(act)
+			if act:
+				actions.append(act)
 
 		# ---------------------------------- Execute the offloading actions for every node -------------------------------------
 		for (origin, dest, w0) in actions:
