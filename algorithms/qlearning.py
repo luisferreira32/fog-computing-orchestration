@@ -50,7 +50,7 @@ class Qlearning(object):
 			for w0 in range(0,configs.MAX_INFLUX+1):
 				for n in nodes:
 					if n != origin:
-						actions[w0,n.name] = 0
+						actions[w0,n] = 0
 			self.qtable[state] = actions
 		else:
 			return 1
@@ -85,5 +85,11 @@ class Qlearning(object):
 		x = random.random()
 		# explore
 		if x < epsilon:
-			return random.choice(list(self.qtable[state]))
-		return "exploit"
+			(w0, dest) = random.choice(list(self.qtable[state]))
+			action = [origin, dest, w0]
+		# exploit
+		else:
+			(w0, dest) = max(self.qtable[state], key=self.qtable[state].get)
+			action = [origin, dest, w0]
+			
+		return action
