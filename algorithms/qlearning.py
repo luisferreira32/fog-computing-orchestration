@@ -72,8 +72,6 @@ class Qlearning(object):
 		action
 			characterized by origin, destination, w0 to be offloaded. or no action if failed
 		"""
-		random.seed(17)
-
 		action = []
 		if epsilon is None or nodes is None or origin is None:
 			return action
@@ -82,8 +80,10 @@ class Qlearning(object):
 		for n in nodes:
 			auxq.append(n.qs())
 		state = tuple([origin.name, origin.influx, tuple(auxq)])
-		addstate(state, nodes, origin)
+		self.addstate(state, nodes, origin)
 
 		x = random.random()
 		# explore
 		if x < epsilon:
+			return random.choice(list(self.qtable[state]))
+		return "exploit"

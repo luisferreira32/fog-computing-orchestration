@@ -21,7 +21,7 @@ def randomalgorithm(origin, nodes, recieving):
 	Return
 	------
 	a set of actions to take by this node in this state
-	"""
+	"""	
 	e = 0
 	action = []
 	if origin.excessinflux(recieved=recieving) > 0:
@@ -50,17 +50,17 @@ def leastqueue(origin, nodes, recieving):
 	------
 	a set of actions to take by this node in this state
 	"""
-	queues = []
+	queues = {}
 	for n in nodes:
-		queues.append(n.qs())
+		if n == origin: continue
+		queues[n] = n.qs()
 
 	action = []
 	e = 0
 	if origin.excessinflux(recieved=recieving) > 0:
 		e = origin.excessinflux(recieved=recieving)
-		i = queues.index(min(queues))
-		if nodes[i] != origin:
-			action = [origin, nodes[i], min(e,configs.MAX_QUEUE-queues[i])]
+		n = min(queues, key=queues.get)
+		action = [origin, n, min(e,configs.MAX_QUEUE-queues[n])]
 	
 	return action
 
