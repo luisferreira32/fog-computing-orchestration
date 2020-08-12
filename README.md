@@ -7,13 +7,15 @@ The objective of this work is to work on the state-of-the-art for Fog Computing 
 
 
 ## Technical details
+  
+DISCLAIMER: each of this libraries is not mine, the authors are as stated in the links below, and they were only used in this work for academic purposes.  
 
 To run this simulations it is necessary to have Tensorflow 2.0 installed, recommended to create a venv in the same folder as the source code:
-[Official TF2 installation guide](https://www.tensorflow.org/install/pip#virtual-environment-install) (link accessed 08/2020)
-
-[Pytest](https://docs.pytest.org/en/stable/getting-started.html) is also an excellent tool for debuging the application
-
-[Matplotlib](https://matplotlib.org/) was used for graphical results
+[Official TF2 installation guide](https://www.tensorflow.org/install/pip#virtual-environment-install) (link accessed 08/2020)  
+  
+[Pytest](https://docs.pytest.org/en/stable/getting-started.html) is also an excellent tool for debuging the application.  
+  
+[Matplotlib](https://matplotlib.org/) was used for graphical results.  
 
 ### Installed package list  
 <pre>
