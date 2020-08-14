@@ -19,6 +19,8 @@ class Qlearning(object):
 		learning rate of the Q table
 	discount_factor=0.5
 		discount factor of the Q table
+	r_utility, x_delay, x_overload
+		are scalar constants for the reward calculation
 
 	Methods
 	-------
@@ -26,6 +28,8 @@ class Qlearning(object):
 		adds a new state if it wasn't here before, with all possible actions zeroed
 	execute()
 		chooses a set of actions for this timestep
+	reward()
+		calculates a reward based on an action and the current state
 	update()
 		updates the q values from the table
 	"""
@@ -35,6 +39,9 @@ class Qlearning(object):
 		self.qtable = {}
 		self.alpha = a
 		self.discount_factor = df
+		self.r_utility = 10
+		self.x_delay = 1
+		self.x_overload = 150
 
 	def addstate(self, state=None, nodes=None, origin=None):
 		""" Adds a new state if it wasn't here before, with all possible actions zeroed
@@ -98,9 +105,26 @@ class Qlearning(object):
 			(w0, dest) = max(self.qtable[state], key=self.qtable[state].get)
 			action = [origin, dest, w0]
 
+		action_reward = reward(nodes, origin, action)
+
 		return action
 
-	def update(self, state=None, action=None):
+
+	def reward(self, nodes=None, origin=None, action=None):
+		""" Calculates the reward of an action in a state R(s,a)
+
+		Parameters
+		----------
+
+		Returns
+		-------
+		"""
+		# U(s,a) = r_u log10( 1 + wL + wO )
+		
+		# R(s,a) = U(s,a) - (D(s,a) + O(s,a))
+		return (U - (D + O))
+
+	def update(self):
 		""" Updates a Q value, based on a state-action pair
 
 		Parameters
