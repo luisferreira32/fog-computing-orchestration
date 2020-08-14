@@ -66,22 +66,25 @@ class Qlearning(object):
 			for w0 in range(0,configs.MAX_INFLUX+1):
 				for n in nodes:
 					if n != origin:
-						actions[w0,n] = 0
+						actionkey = actiontuple(dest=n,w0=w0)
+						actions[actionkey] = 0
 			self.qtable[state] = actions
 		else:
 			return 1
 
 		return 0
 
-	def execute(self, nodes=None, origin=None, epsilon=None):
+	def execute(self, origin=None, nodes=None, epsilon=None):
 		""" Chooses a set of actions to do on the current state
 
 		Parameters
 		----------
-		nodes=None
-			are all the nodes and their current states in the system
 		origin=None
 			is the node that's offloading
+		nodes=None
+			are all the nodes and their current states in the system
+		epsilon=None
+			the exploration/exploitation factor
 
 		Returns
 		-------
@@ -95,16 +98,35 @@ class Qlearning(object):
 		state = statetuple(nodes, origin)
 		self.addstate(state, nodes, origin)
 
+		# can only offload for a lesser queue and the ammount of tasks recieving
+		possibleactions = []
+		possibleactionsq = []
+		for act, qvalue in self.qtable[state].items():
+			(w0, dest) = act
+			if w0 > origin.influx: continue
+			queues = dict(state[2])
+			if queues[dest] > origin.qs(): continue
+			possibleactions.append(act)
+			possibleactionsq.append(qvalue)
+
+		if not possibleactions:
+			return action
+
 		x = random.random()
 		# explore
 		if x < epsilon:
-			(w0, dest) = random.choice(list(self.qtable[state]))
-			action = [origin, dest, w0]
+			(w0, dest) = random.choice(possibleactions)
 		# exploit
 		else:
-			(w0, dest) = max(self.qtable[state], key=self.qtable[state].get)
-			action = [origin, dest, w0]
+			i = possibleactionsq.index(max(possibleactionsq))
+			(w0, dest) = possibleactions[i]
 
+		# find the node based on the name 
+		for n in nodes:
+			if n.name == dest:
+				destnode = n
+
+		action = [origin, destnode, w0]
 		return action
 
 
@@ -169,7 +191,7 @@ class Qlearning(object):
 		# R(s,a) = U(s,a) - (D(s,a) + O(s,a))
 		return (Usa - (Dsa + Osa))
 
-	def update(self, state=None, action=None, nextstate=None, reward=0):
+	def update(self, state=None, action=None, nextstate=None, reward=0, nodes=None):
 		""" Updates a Q value, based on a state-action pair
 
 		Parameters
@@ -178,15 +200,25 @@ class Qlearning(object):
 		Returns
 		-------
 		"""
-		if state is None or action is None or nextstate is None:
+		if state is None or action is None or nextstate is None or nodes is None:
 			print("[Q DEBUG] Invalid parameters to update q table.")
 			return None
+		# add new states that weren't yet visited
+		self.addstate(nextstate, nodes, action[0])
 		# action key doesn't include origin, since that's in the state
 		actionkey = actiontuple(action)
 
 		newQ = (1-self.alpha)*self.qtable[state][actionkey] + self.alpha*(reward + self.discount_factor*max(self.qtable[nextstate].values()))
 		self.qtable[state][actionkey] = newQ
 		return newQ
+
+
+	# ----------------------------------- DISPLAY FUNCTIONS ----------------------------------------------
+	def printQtable(self):
+		for state, actions in self.qtable.items():
+			print("State",state)
+			for action, qvalue in actions.items():
+				print("Action", action, "qvalue",qvalue)
 
 
 
@@ -196,15 +228,20 @@ class Qlearning(object):
 def statetuple(nodes=None, origin=None):
 	""" Creates a state tuple given nodes
 	"""
-	auxq = []
+	auxq = {}
 	for n in nodes:
-		auxq.append(n.qs())
-	state = tuple([origin.name, origin.influx, tuple(auxq)])
+		auxq[n.name] = n.qs()
+	state = tuple([origin.name, origin.influx, frozenset(auxq.items())])
 	return copy.deepcopy(state)
 
-def actiontuple(action=None):
+def actiontuple(action=None, dest=None, w0=None):
 	""" Creates an action tuple (key) given an action list
 	"""
-	(origin, dest, w0) = action
-	actionkey = tuple([w0, dest])
-	return copy.deepcopy(actionkey)
+	if action:
+		(origin, dest, w0) = action
+		actionkey = tuple([w0, dest.name])
+		return copy.deepcopy(actionkey)
+	elif dest is not None and w0 is not None:
+		actionkey = tuple([w0, dest.name])
+		return copy.deepcopy(actionkey)
+	return None

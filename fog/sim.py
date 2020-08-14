@@ -109,7 +109,8 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 
 		# ------------------------------------------ THIS IS WHERE THE ALGORITHM RUNS ----------------------------------------
 		# Where it appends actions to the action bar [origin, dest, number_offloaded], given a state [current node, influx, Queues]
-		actions = []		
+		actions = []
+		state_action_reward = {}
 		for n in nodes:
 			# -- run the algorithm only for nodes which have tasks allocated by the user! --
 			if n.influx == 0:
@@ -117,6 +118,11 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 			if algorithm=="lq": act = basic.leastqueue(n, nodes, recieving[n.name, worldclock])
 			if algorithm=="rd": act = basic.randomalgorithm(n, nodes, recieving[n.name, worldclock])
 			if algorithm=="nn": act = basic.nearestnode(n, nodes, recieving[n.name, worldclock])
+			if algorithm=="ql":
+				act = algorithm_object.execute(n, nodes, 0.7)
+				if act:
+					rw = algorithm_object.qreward(act, r12=rates12[act[0].name, act[1].name], sr=sr)
+					utils.appendict(state_action_reward, n.name, [qlearning.statetuple(nodes, n), act, rw])
 			if act:
 				actions.append(act)
 
@@ -146,6 +152,16 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 
 			# lastly decide which ones we'll work on and queue them
 			totaldiscarded += n.queue(recieved=recieving[n.name, worldclock],offloaded = offload[n.name, worldclock])
+
+		# ------------------- Final rites -------------------
+		if algorithm=="ql":
+			for n in nodes:
+				# cuts out when no actions were taken or where no influx is present
+				if n.name not in state_action_reward: continue
+				# calculate update based on the next state
+				nextstate = qlearning.statetuple(nodes, n)
+				for (state, action, rw) in state_action_reward[n.name]:
+					algorithm_object.update(state, action, nextstate, rw, nodes)
 
 		# end of the second
 		worldclock +=1
