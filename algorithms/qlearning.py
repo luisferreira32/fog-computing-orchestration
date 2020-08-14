@@ -220,7 +220,11 @@ class Qlearning(object):
 			for action, qvalue in actions.items():
 				print("Action", action, "qvalue",qvalue)
 
-
+	def printQtableNZ(self):
+		for state, actions in self.qtable.items():
+			print("State",state)
+			for action, qvalue in actions.items():
+				if qvalue != 0:	print("Action", action, "qvalue",qvalue)
 
 
 # ----------------------------------- AUXILIARY FUNCTIONS ----------------------------------------------
