@@ -1,6 +1,7 @@
 # external imports
 import math
 import random
+import copy
 
 # our module imports
 from fog import configs
@@ -91,10 +92,7 @@ class Qlearning(object):
 		if epsilon is None or nodes is None or origin is None:
 			return action
 
-		auxq = []
-		for n in nodes:
-			auxq.append(n.qs())
-		state = tuple([origin.name, origin.influx, tuple(auxq)])
+		state = statetuple(nodes, origin)
 		self.addstate(state, nodes, origin)
 
 		x = random.random()
@@ -110,16 +108,23 @@ class Qlearning(object):
 		return action
 
 
-	def qreward(self, nodes=None, action=None, r12=None, sr=configs.SERVICE_RATE):
+	def qreward(self, action=None, r12=None, sr=configs.SERVICE_RATE):
 		""" Calculates the reward of an action in a state R(s,a), and some pre-calculated constants
 
 		Parameters
 		----------
+		action=None
+			has origin node, destination node, and number of tasks to be offloaded
+		r12=None
+			pre calculated com ration between origin and destination node
+		sr
+			the service rate of this simulation
 
 		Returns
 		-------
+		a reward calculated based on an action taken in a given state
 		"""
-		if nodes is None or action is None or r12 is None:
+		if action is None or r12 is None:
 			print("[Q DEBUG] Failed to calculate reward, returning zero.")
 			return 0
 
@@ -164,7 +169,7 @@ class Qlearning(object):
 		# R(s,a) = U(s,a) - (D(s,a) + O(s,a))
 		return (Usa - (Dsa + Osa))
 
-	def update(self):
+	def update(self, state=None, action=None, nextstate=None, reward=0):
 		""" Updates a Q value, based on a state-action pair
 
 		Parameters
@@ -173,4 +178,23 @@ class Qlearning(object):
 		Returns
 		-------
 		"""
-		pass
+		if state is None or action is None or nextstate is None:
+			print("[Q DEBUG] Invalid parameters to update q table.")
+			return None
+		# action key doesn't include origin, since that's in the state
+		actionkey = tuple(action[1],action[2])
+
+		newQ = (1-self.alpha)*self.qtable[state][actionkey] + self.alpha*(reward + self.discount_factor*max(self.qtable[nextstate].values()))
+		self.qtable[state][actionkey] = newQ
+		return newQ
+
+
+# ----------------------------------- AUXILIARY FUNCTIONS ----------------------------------------------
+def statetuple(nodes=None, origin=None):
+	""" Creates a state tuple given nodes
+	"""
+	auxq = []
+	for n in nodes:
+		auxq.append(n.qs())
+	state = tuple([origin.name, origin.influx, tuple(auxq)])
+	return copy.deepcopy(state)

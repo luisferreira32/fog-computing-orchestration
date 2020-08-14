@@ -9,6 +9,7 @@ from fog import coms
 from utils import graphs
 from utils import utils
 from algorithms import basic
+from algorithms import qlearning
 
 def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MAX_AREA, influx=configs.TASK_ARRIVAL_RATE, sr=configs.SERVICE_RATE, algorithm=None,
 	algorithm_object=None,
@@ -37,6 +38,9 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 	if algorithm==None:
 		print("[SIM DEBUG] You need a valid algorithm to simulate")
 		return None
+	if algorithm=="ql" and algorithm_object == None:
+		algorithm_object = qlearning.Qlearning()
+		
 	# and a seed reset to reproduce results
 	random.seed(17)
 
