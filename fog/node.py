@@ -28,7 +28,7 @@ class Core(object):
 	influx : int
 		number of tasks allocated per second to this node
 	wL : int
-		number of tasks to be processed in this node
+		number of tasks to be processed in this node in from this timestep
 	placement : int tuple
 		the placement in space of the node (x,y) [meter, meter]
 	coms : dictionary

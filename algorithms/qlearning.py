@@ -4,6 +4,8 @@ import random
 
 # our module imports
 from fog import configs
+from fog import coms
+from fog import node
 
 class Qlearning(object):
 	"""
@@ -28,7 +30,7 @@ class Qlearning(object):
 		adds a new state if it wasn't here before, with all possible actions zeroed
 	execute()
 		chooses a set of actions for this timestep
-	reward()
+	qreward()
 		calculates a reward based on an action and the current state
 	update()
 		updates the q values from the table
@@ -105,13 +107,11 @@ class Qlearning(object):
 			(w0, dest) = max(self.qtable[state], key=self.qtable[state].get)
 			action = [origin, dest, w0]
 
-		action_reward = reward(nodes, origin, action)
-
 		return action
 
 
-	def reward(self, nodes=None, origin=None, action=None):
-		""" Calculates the reward of an action in a state R(s,a)
+	def qreward(self, nodes=None, action=None, r12=None, sr=configs.SERVICE_RATE):
+		""" Calculates the reward of an action in a state R(s,a), and some pre-calculated constants
 
 		Parameters
 		----------
@@ -119,10 +119,50 @@ class Qlearning(object):
 		Returns
 		-------
 		"""
-		# U(s,a) = r_u log10( 1 + wL + wO )
+		if nodes is None or action is None or r12 is None:
+			print("[Q DEBUG] Failed to calculate reward, returning zero.")
+			return 0
+
+		(origin, dest, w0) = action
+
+		# U(s,a) = r_u log( 1 + wL + w0 )  --- log2 ? they don't specify
+		Usa = self.r_utility * math.log2( 1 + origin.wL + w0)
+
+		# t_w = QL/uL if(wL!=0) + (QL/uL + Q0/u0) if(w0!=0)
+		t_w = node.wtime(origin, dest, w0)
+		# t_c = 2*T*wO / r_LO
+		t_c = coms.comtime(w0, r12)
+		# t_e = I*CPI*wL/f_L + I*CPI*w0/f_0
+		t_e = node.extime(origin, dest, w0)
+
+		# D(s,a) = x_d * (t_w + t_c + t_e)/(wL + w0)
+		if origin.wL+w0 != 0:
+			Dsa = self.x_delay * (t_w+t_c+t_e)/(origin.wL + w0)
+		else:
+			Dsa = 0
+
+		# P_overload,i = max(0, y_i - (Q_i,max - Q'_i))/ y_i
+		# Q'_i = min(max(0, Q_i - sr_i) + w_i, Q_i,max)
+		Q_nL = min(max(0,origin.qs()-sr)+origin.influx, configs.MAX_QUEUE)
+		if origin.influx != 0:
+			P_oL = max(0, origin.influx - (configs.MAX_QUEUE - Q_nL)) / origin.influx
+		else:
+			P_oL = 0
+
+		Q_n0 = min(max(0,dest.qs()-sr)+dest.influx, configs.MAX_QUEUE)
+		if dest.influx != 0:
+			P_o0 = max(0, dest.influx - (configs.MAX_QUEUE - Q_n0)) / dest.influx
+		else:
+			P_o0 = 0
+
+		# O(s,a) = x_o * (wL * P_overload,L + w0 * P_overload,0)/(wL + w0)
+		if origin.wL+w0 != 0:
+			Osa = self.x_overload * (origin.wL*P_oL + w0*P_o0)/(origin.wL + w0)
+		else:
+			Osa = 0
 		
 		# R(s,a) = U(s,a) - (D(s,a) + O(s,a))
-		return (U - (D + O))
+		return (Usa - (Dsa + Osa))
 
 	def update(self):
 		""" Updates a Q value, based on a state-action pair
