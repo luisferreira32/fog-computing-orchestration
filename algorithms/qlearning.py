@@ -182,14 +182,17 @@ class Qlearning(object):
 			print("[Q DEBUG] Invalid parameters to update q table.")
 			return None
 		# action key doesn't include origin, since that's in the state
-		actionkey = tuple(action[1],action[2])
+		actionkey = actiontuple(action)
 
 		newQ = (1-self.alpha)*self.qtable[state][actionkey] + self.alpha*(reward + self.discount_factor*max(self.qtable[nextstate].values()))
 		self.qtable[state][actionkey] = newQ
 		return newQ
 
 
+
+
 # ----------------------------------- AUXILIARY FUNCTIONS ----------------------------------------------
+
 def statetuple(nodes=None, origin=None):
 	""" Creates a state tuple given nodes
 	"""
@@ -198,3 +201,10 @@ def statetuple(nodes=None, origin=None):
 		auxq.append(n.qs())
 	state = tuple([origin.name, origin.influx, tuple(auxq)])
 	return copy.deepcopy(state)
+
+def actiontuple(action=None):
+	""" Creates an action tuple (key) given an action list
+	"""
+	(origin, dest, w0) = action
+	actionkey = tuple([w0, dest])
+	return copy.deepcopy(actionkey)
