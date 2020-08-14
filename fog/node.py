@@ -80,11 +80,13 @@ class Core(object):
 
 
 	def setinflux(self, newinflux=0):
-		"""Sets the influx of a node, i.e. tasks allocated per second
+		"""Sets the influx of a node, i.e. tasks allocated per second, and the tasks we're working on this second,
+		IF no decision offloading is made
 		"""
 		if newinflux > configs.MAX_INFLUX:
 			return -1
 		self.influx = newinflux
+		self.wL = min(configs.MAX_QUEUE-self.qs(), self.influx)
 		return self.influx
 
 	def excessinflux(self, recieved=None):
