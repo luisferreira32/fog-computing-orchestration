@@ -1,6 +1,6 @@
 # external imports
 import random
-import queue
+import collections
 
 # local imports
 from fog import node
@@ -40,7 +40,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		return None
 	if algorithm=="ql" and algorithm_object == None:
 		algorithm_object = qlearning.Qlearning()
-		
+
 	# and a seed reset to reproduce results
 	random.seed(17)
 
@@ -68,7 +68,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 	offload = {}
 	for x in nodes:
 		for y in range(0,sim_time):
-			recieving[x.name, y] = queue.Queue(100)
+			recieving[x.name, y] = collections.deque()
 			offload[x.name, y] = 0
 
 	# distribution of probabilities
@@ -102,7 +102,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		# -- JUST FOR GRAPHS SAKE
 		xclock.append(worldclock)
 		for n in nodes:
-			utils.appendict(queues, n.name, n.cpuqueue.qsize())
+			utils.appendict(queues, n.name, n.qs())
 			utils.appendict(wLs, n.name, n.wL)
 			utils.appendict(ws, n.name, n.influx)
 		# --
@@ -131,7 +131,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 
 			if debug_sim: print("[SIM DEBUG]",origin.name,"offloaded",w0,"tasks to node",dest.name,"arriving at",arriving_time)
 			for x in range(0,w0):
-				recieving[dest.name, arriving_time].put(origin.clock, False)
+				recieving[dest.name, arriving_time].append(origin.clock)
 
 		# ------------------- Treat the tasks on the nodes, by queueing them and processing what can be processed -------------------
 		# for every node run the decisions

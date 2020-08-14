@@ -1,6 +1,6 @@
 # external imports
 import math # for distance calculation
-import queue
+import collections
 
 # import necessary fog environment configurations
 from . import configs
@@ -23,7 +23,7 @@ class Core(object):
 		cpu cycles per instruction
 	cps : int
 		cpu cycles per second (cpu frequency) * 10 ^8
-	cpuqueue : int
+	cpuqueue : deque
 		implements a tasks CPU queue
 	influx : int
 		number of tasks allocated per second to this node
@@ -66,7 +66,7 @@ class Core(object):
 		# cpu related
 		self.cpi = cpu[0]
 		self.cps = cpu[1]
-		self.cpuqueue = queue.Queue(maxsize=configs.MAX_QUEUE)
+		self.cpuqueue = collections.deque(maxlen=configs.MAX_QUEUE)
 		self.clock = 0
 		# comunication related
 		self.coms = {
@@ -92,8 +92,8 @@ class Core(object):
 	def excessinflux(self, recieved=None):
 		"""Calculates excess influx in this timestep, only redirect if it's our own tasks
 		"""
-		if self.influx > configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved.qsize():
-			return self.influx - max(configs.MAX_QUEUE - self.cpuqueue.qsize() - recieved.qsize(), 0)
+		if self.influx > configs.MAX_QUEUE - len(self.cpuqueue) - len(recieved):
+			return self.influx - max(configs.MAX_QUEUE - len(self.cpuqueue) - len(recieved), 0)
 		return 0
 
 
@@ -102,17 +102,17 @@ class Core(object):
 	def emptyqueue(self):
 		"""Checks if CPU queue is empty
 		"""
-		return self.cpuqueue.empty()
+		return len(self.cpuqueue) == 0
 
 	def fullqueue(self):
 		"""Checks if CPU queue is full
 		"""
-		return self.cpuqueue.full()
+		return len(self.cpuqueue) == self.cpuqueue.maxlen
 
 	def qs(self):
 		"""Checks CPU queue size
 		"""
-		return self.cpuqueue.qsize()
+		return len(self.cpuqueue)
 
 	def process(self, time=0):
 		"""Process the first task in the CPU queue: fractions of a second for processing a task
@@ -127,7 +127,7 @@ class Core(object):
 		"""
 
 		# we can't accumulate time we're not technically "using" before the next time step
-		if self.cpuqueue.empty():
+		if self.emptyqueue():
 			self.clock += time
 			time = 0
 		if time >= 2:
@@ -135,14 +135,14 @@ class Core(object):
 			time -= 1
 
 		solved = []
-		while not self.cpuqueue.empty() and time - configs.DEFAULT_IL*self.cpi/self.cps >= 0:
+		while not self.emptyqueue() and time - configs.DEFAULT_IL*self.cpi/self.cps >= 0:
 			time -= configs.DEFAULT_IL*self.cpi/self.cps
 			self.clock += configs.DEFAULT_IL*self.cpi/self.cps
-			solved.append(self.clock - self.cpuqueue.get(False))
+			solved.append(self.clock - self.cpuqueue.popleft())
 
 		if configs.FOG_DEBUG:
-			print("[DEBUG] Node "+ self.name +" cpu timer excess is %.2f and queue size %d" % (float(time), self.cpuqueue.qsize()))
-			if self.cpuqueue.empty(): print("[DEBUG] No task to process at node " + self.name)
+			print("[DEBUG] Node "+ self.name +" cpu timer excess is %.2f and queue size %d" % (float(time), len(self.cpuqueue)))
+			if self.emptyqueue(): print("[DEBUG] No task to process at node " + self.name)
 
 		return solved
 
@@ -163,26 +163,26 @@ class Core(object):
 
 		# only count the recieved if there's actually recieved tasks
 		if recieved is None:
-			recieved = queue.Queue() # empty queue
+			recieved = collections.deque() # empty queue
 
 		# figure out how many we're working locally
-		self.wL = self.influx + recieved.qsize() - offloaded
+		self.wL = self.influx + len(recieved) - offloaded
 		mytasks = self.influx - offloaded
 		
-		while not self.cpuqueue.full() and mytasks >= 1:
-			self.cpuqueue.put(self.clock, False)
+		while not self.fullqueue() and mytasks >= 1:
+			self.cpuqueue.append(self.clock)
 			mytasks -= 1
 
-		while not self.cpuqueue.full() and not recieved.empty():
+		while not self.fullqueue() and not len(recieved)==0:
 			# place a task with a com delay already
-			self.cpuqueue.put(recieved.get(False), False)
+			self.cpuqueue.append(recieved.popleft())
 
 		if configs.FOG_DEBUG and self.fullqueue():
 			print("[DEBUG] Full queue at node " + self.name)
 
-		discarded = mytasks+recieved.qsize()
+		discarded = mytasks+len(recieved)
 		self.wL -= discarded
-		if configs.FOG_DEBUG and discarded > 0: print("[DEBUG] Node",self.name,"discarded",discarded,"tasks with",recieved.qsize(),"from other nodes")
+		if configs.FOG_DEBUG and discarded > 0: print("[DEBUG] Node",self.name,"discarded",discarded,"tasks with", len(recieved),"from other nodes")
 
 		return discarded
 
@@ -267,8 +267,8 @@ def wtime(n1=None, n2=None, w0=0):
 		return -1
 
 	wt = 0
-	if n1.wL > 0: wt += n1.cpuqueue.qsize()/configs.SERVICE_RATE
-	if w0 > 0: wt += n1.cpuqueue.qsize()/configs.SERVICE_RATE + n2.cpuqueue.qsize()/configs.SERVICE_RATE
+	if n1.wL > 0: wt += n1.qs()/configs.SERVICE_RATE
+	if w0 > 0: wt += n1.qs()/configs.SERVICE_RATE + n2.qs()/configs.SERVICE_RATE
 	# wt = (QL/srL)[if wL != 0] + (QL/srL + Q0/sr0)[if w0 != 0]
 	return wt
 
