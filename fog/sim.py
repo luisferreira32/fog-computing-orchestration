@@ -12,7 +12,7 @@ from algorithms import basic
 from algorithms import qlearning
 
 def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MAX_AREA, influx=configs.TASK_ARRIVAL_RATE, sr=configs.SERVICE_RATE, algorithm=None,
-	algorithm_object=None,
+	algorithm_object=None, exploration=0.7,
 	debug_fog=False, debug_sim=False, display_q=False, display_wl=False, display_sum=False, display_w=False):
 	"""Simulates a whole set up in a fog computing environment, given an algorithm
 	
@@ -119,7 +119,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 			if algorithm=="rd": act = basic.randomalgorithm(n, nodes, recieving[n.name, worldclock])
 			if algorithm=="nn": act = basic.nearestnode(n, nodes, recieving[n.name, worldclock])
 			if algorithm=="ql":
-				act = algorithm_object.execute(n, nodes, 0.7)
+				act = algorithm_object.execute(n, nodes, exploration)
 				if act:
 					rw = algorithm_object.qreward(act, r12=rates12[act[0].name, act[1].name], sr=sr)
 					utils.appendict(state_action_reward, n.name, [qlearning.statetuple(nodes, n), act, rw])
