@@ -7,7 +7,7 @@ from fog import node
 from fog import configs
 
 def randomalgorithm(origin, nodes, recieving):
-	"""Gives a random action based on the state
+	"""Gives a random action based on the state and possible actions
 	
 	Parameters
 	----------
@@ -22,15 +22,15 @@ def randomalgorithm(origin, nodes, recieving):
 	------
 	a set of actions to take by this node in this state
 	"""	
-	e = 0
+	e = int(random.random()*origin.influx)
 	action = []
-	if origin.excessinflux(recieved=recieving) > 0:
+	if origin.excessinflux(recieved=recieving) > e:
 		# if there is excess, offload the excess and not a random thing
 		e = origin.excessinflux(recieved=recieving)
-		# choose a different node
-		randomoff = random.choice(nodes)
-		if randomoff != origin:
-			action = [origin, randomoff, e]		
+	# choose a different node
+	randomoff = random.choice(nodes)
+	if randomoff != origin:
+		action = [origin, randomoff, e]		
 
 	return action
 
