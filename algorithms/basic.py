@@ -57,10 +57,10 @@ def leastqueue(origin, nodes, recieving):
 
 	action = []
 	e = 0
-	if origin.excessinflux(recieved=recieving) > 0:
+	if origin.excessinflux(recieved=recieving) > e:
 		e = origin.excessinflux(recieved=recieving)
-		n = min(queues, key=queues.get)
-		action = [origin, n, min(e,configs.MAX_QUEUE-queues[n])]
+	n = min(queues, key=queues.get)
+	action = [origin, n, min(e,configs.MAX_QUEUE-queues[n])]
 	
 	return action
 
@@ -89,16 +89,16 @@ def nearestnode(origin, nodes, recieving):
 
 	e = 0
 	action = []
-	if origin.excessinflux(recieved=recieving) > 0:
+	if origin.excessinflux(recieved=recieving) > e:
 		e = origin.excessinflux(recieved=recieving)
 
-		while distances:
-			n = min(distances, key=distances.get)
-			if queues[n] >= configs.MAX_QUEUE:
-				distances.pop(n)
-				continue
-			break
-		if distances:
-			action = [origin, n, min(e,configs.MAX_QUEUE-queues[n])]
+	while distances:
+		n = min(distances, key=distances.get)
+		if queues[n] >= configs.MAX_QUEUE:
+			distances.pop(n)
+			continue
+		break
+	if distances:
+		action = [origin, n, min(e,configs.MAX_QUEUE-queues[n])]
 	
 	return action

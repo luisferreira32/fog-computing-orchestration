@@ -42,7 +42,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		algorithm_object = qlearning.Qlearning()
 
 	# and a seed reset to reproduce results
-	random.seed(17)
+	random.seed(10019)
 
 	# ------------------------------------------------------------ SET UP ------------------------------------------------------------
 	# N randomly placed nodes
