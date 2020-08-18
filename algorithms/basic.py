@@ -22,7 +22,7 @@ def randomalgorithm(origin, nodes, recieving):
 	------
 	a set of actions to take by this node in this state
 	"""	
-	e = int(random.random()*origin.influx)
+	e = 0#int(random.random()*origin.influx)
 	action = []
 	if origin.excessinflux(recieved=recieving) > e:
 		# if there is excess, offload the excess and not a random thing
@@ -56,7 +56,7 @@ def leastqueue(origin, nodes, recieving):
 		queues[n] = n.qs()
 
 	action = []
-	e = 0
+	e = 0#int(random.random()*origin.influx)
 	if origin.excessinflux(recieved=recieving) > e:
 		e = origin.excessinflux(recieved=recieving)
 	n = min(queues, key=queues.get)
@@ -87,7 +87,7 @@ def nearestnode(origin, nodes, recieving):
 		queues[n] = n.qs()
 		distances[n] = node.distance(origin,n)
 
-	e = 0
+	e = 0#int(random.random()*origin.influx)
 	action = []
 	if origin.excessinflux(recieved=recieving) > e:
 		e = origin.excessinflux(recieved=recieving)
