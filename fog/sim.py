@@ -95,7 +95,7 @@ def Simulate(sim_time=configs.SIM_TIME, n_nodes=configs.N_NODES, area=configs.MA
 		if debug_sim: print("-------------------- second",worldclock,"-",worldclock+1,"--------------------")
 
 		# ---------------- in each time step, the task arrival rate is a poisson distribution ----------------
-		# just for two nodes to be connected to clients
+		# Unbalance the tasks to force communication
 		nodes[0].setinflux(utils.discreteX(pdistribution, random.random()))
 		nodes[3].setinflux(utils.discreteX(pdistribution, random.random()))
 

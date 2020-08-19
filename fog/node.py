@@ -83,7 +83,7 @@ class Core(object):
 		"""Sets the influx of a node, i.e. tasks allocated per second, and the tasks we're working on this second,
 		IF no decision offloading is made
 		"""
-		if newinflux > configs.MAX_INFLUX:
+		if newinflux > configs.MAX_INFLUX or newinflux < 0:
 			return -1
 		self.influx = newinflux
 		self.wL = min(configs.MAX_QUEUE-self.qs(), self.influx)
