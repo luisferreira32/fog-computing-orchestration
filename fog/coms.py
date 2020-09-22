@@ -6,11 +6,6 @@ from . import configs
 from . import node
 
 # ------------------------------------------------------ Comunication related classes ------------------------------------------------------
-class Antena(object):
-	def __init__(self, bandwidth=configs.DEFAULT_BANDWIDTH, power=configs.DEFAULT_POWER):
-		self.bandwidth = bandwidth
-		self.power = power
-
 
 class Task(object):
 	def __init__(self, timestamp, size=configs.DEFAULT_DATA, instruction_lines=configs.DEFAULT_IL):
@@ -33,7 +28,7 @@ class Task(object):
 def transmissionrate(n1=None, n2=None):	
 	# Calculate the fog transmission rate given two nodes from n1 - > n2
 
-	if n1 is None or n2 is None or n1.coms is None:
+	if n1 is None or n2 is None:
 		if configs.FOG_DEBUG == 1: print("[DEBUG] None argument in transmissionrate()")
 		return -1
 

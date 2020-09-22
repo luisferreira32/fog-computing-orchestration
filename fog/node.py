@@ -4,6 +4,7 @@ import collections
 
 # import necessary fog environment configurations
 from . import configs
+from . import coms
 
 #------------------------------------------------------ ------------- -----------------------------------------------------
 #--------------------------------------------------- Fog Node Core Class --------------------------------------------------
@@ -27,6 +28,7 @@ class Core(object):
 		self.power = coms[0]
 		self.bandwidth = coms[1]
 		self.sending = False
+		self.comtime = {}
 
 		# and debug if set to do so
 		if configs.FOG_DEBUG:
@@ -76,11 +78,11 @@ class Core(object):
 	def sending():
 		return self.sending
 
-	def finishedsending():
-		self.sending = False
+	def setcomstime(self, nodes):
+		for n in nodes:
+			if n == self: continue
+			self.comtime[n.name] = coms.comtime(1, coms.transmissionrate(self, n))
 
-	def startedsending():
-		self.sending = True
 
 
 #------------------------------------------------------ ------------ -----------------------------------------------------

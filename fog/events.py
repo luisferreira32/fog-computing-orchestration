@@ -11,6 +11,7 @@ class EventQueue(object):
 	def __init__(self):
 		# arbitrary lenghted queue
 		self.q = collections.deque()
+		self.recieving_client = 0
 
 	def __str__(self):
 		times = []
@@ -52,41 +53,31 @@ class Event(object):
 
 
 class Recieving(Event):
-	def __init__(self, time, recieving_node, incoming_task, comtimes=None, decision=None, next_arrival=None):
+	def __init__(self, time, recieving_node, incoming_task, decision=None, sending_node=None):
 		super(Recieving, self).__init__(time, "Recieving")
 		self.rn = recieving_node
 		self.it = incoming_task
 
-		# - this values are None when it's not a client sending a message
-		# a dictionary with communication time between nodes
-		self.ct = comtimes
 		# a set for the decision for the next "w" tasks: [n0, w0] with w0 < w
 		self.decision = decision
-		# the arrival time queue to task arriving
-		self.na = next_arrival
+		self.sn = sending_node
 
 	# allocs a task to node queue, offloads to another or discards.
 	def execute(self, eq):
 		# if it comes from another offloading
-		if self.decision == None:
+		if self.decision is None and self.sn is not None:
+			self.sn.sending = False
 			return self.rn.queue(self.it)
 
 		# if we're meant to offload and we can... do it
 		if self.decision["w0"] > 0 and not self.rn.sending():
 			self.decision["w0"] = self.decision["w0"] - 1
-			self.rn.startedsending()
-			s_time = self.time + self.ct[self.rn.name]
-			ev = Sending(s_time, self.rn, self.decision["n0"], self.it)
+			ev = Sending(self.time, self.rn, self.decision["n0"], self.it)
 			eq.addEvent(ev)
 			t = None
 		else:
-			# queue the task if we didn't offload it
+			# queue the task if we didn't offload it, returns task if queue is full
 			t = self.rn.queue(self.it)
-
-		# set up the next recieving
-		next_arrival = self.na.pop()
-		ev = Recieving(next_arrival, self.rn, coms.Task(next_arrival), self.ct, self.decision, self.na)
-		eq.addEvent(ev)
 
 		# and start processing if it hasn't started already
 		if not self.rn.processing:
@@ -105,8 +96,9 @@ class Sending(Event):
 
 	# sends the task to another node, blocking coms in the meantime
 	def execute(self, eq):
-		self.sn.finishedsending()
-		ev = Recieving(self.time, self.rn,self.ot)
+		self.sn.sending = True
+		# recieves after comm time finished
+		ev = Recieving(self.time+self.sn.comtime[self.rn.name], self.rn,self.ot)
 		eq.addEvent(ev)
 
 
@@ -118,11 +110,15 @@ class Processing(Event):
 
 	# processes first task in node queue and sets other processing events if there's still space
 	def execute(self, eq):
-		self.pn.processing = False
+		self.pn.processing = True
 		t = self.pn.process(self.time)
-		if not self.pn.emptyqueue() and t is not None:
+		# if there was no task to process, we finished processing, so go false
+		if t is None:
+			self.pn.processing = False
+		else:
 			self.pn.processing = True
-			p_time = t.delay + t.timestamp # would be when the processing should be done
+			# p_time is when the task t processing has finished, so starts next processing event
+			p_time = t.delay + t.timestamp
 			ev = Processing(p_time, self.pn)
 			eq.addEvent(ev)
 		return t		
