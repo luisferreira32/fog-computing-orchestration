@@ -5,44 +5,27 @@ import math
 from . import configs
 from . import node
 
-#------------------------------------------------------ ------------- -----------------------------------------------------
-#--------------------------------------------------- Fog Node Coms Class --------------------------------------------------
-#------------------------------------------------------ ------------- -----------------------------------------------------
-# TODO@LUIS : isn't this class useless? check it out
-class Coms(object):
-	"""
-	The communication central of a fog computing node
-	
-	...
-
-	Attributes
-	----------
-	bandwidth : int
-		attributed MHz for the node
-	power : int
-		dBm of transmission power of the node
-
-	Methods
-	-------
-	"""
-
+# ------------------------------------------------------ Comunication related classes ------------------------------------------------------
+class Antena(object):
 	def __init__(self, bandwidth=configs.DEFAULT_BANDWIDTH, power=configs.DEFAULT_POWER):
-		"""
-		Parameters
-		----------
-		name : str
-			The name of the node core
-		"""
-
-		# set up the attributes
 		self.bandwidth = bandwidth
 		self.power = power
 
-		# and debug if set to do so
-		if configs.FOG_DEBUG:
-			print("[DEBUG] Node coms created: "+str(self.__dict__))
 
+class Task(object):
+	def __init__(self, timestamp, size=configs.DEFAULT_DATA, instruction_lines=configs.DEFAULT_IL):
+		self.timestamp = timestamp
+		self.size = size
+		self.il = instruction_lines
+		self.completed = False
+		self.delay = -1
 
+	def process(self, finishing_time):
+		self.completed = True
+		self.delay = finishing_time - self.timestamp
+		return self.delay
+
+		
 #------------------------------------------------------ ------------- -----------------------------------------------------
 #------------------------------------------------ Functions on the network ------------------------------------------------
 #------------------------------------------------------ ------------- -----------------------------------------------------
@@ -70,10 +53,12 @@ def transmissionrate(n1=None, n2=None):
 	if node.distance(n1,n2) == 0:
 		if configs.FOG_DEBUG == 1: print("[DEBUG] No distance between nodes, infinite transmissionrate")
 		return -1
-
-	BHz = n1.getB() * (10**6) # MHz to Hz
-	Power = math.pow( 10 , 0.1*n1.getP())*(configs.B1_PATHLOSS*((node.distance(n1,n2))**(-configs.B2_PATHLOSS))) # convertion from dBm to mW
-	Noise = math.pow( 10 , 0.1*configs.N0)*BHz # from dBm to mW
+ 	
+ 	# MHz to Hz
+	BHz = n1.bandwidth * (10**6)
+	# convertion from dBm to mW in power and noise
+	Power = math.pow( 10 , 0.1*n1.power)*(configs.B1_PATHLOSS*((node.distance(n1,n2))**(-configs.B2_PATHLOSS))) 
+	Noise = math.pow( 10 , 0.1*configs.N0)*BHz
 	try:
 		# Shannon-hartley theorem ~: r = B log2 ( 1 + SNR )
 		r = BHz*math.log2(1 + (Power/ Noise))

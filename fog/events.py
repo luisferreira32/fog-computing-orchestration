@@ -4,6 +4,9 @@ import collections
 # our configs
 from . import configs
 
+# !!!! TODO@LUIS: commet all this classes properly !!!!
+
+
 class EventQueue(object):
 	"""docstring for EventQueue"""
 	def __init__(self):
@@ -43,26 +46,47 @@ class EventQueue(object):
 		
 class Event(object):
 	"""docstring for Event"""
-	def __init__(self, time):
+	def __init__(self, time, classtype=None):
 		self.time = time
+		self.classtype = classtype
 
 
 class Recieving(Event):
 	"""docstring for Recieving"""
-	def __init__(self, time):
-		super(Recieving, self).__init__(time)
+	def __init__(self, time, recieving_node, incoming_task, algorithm, next_interval=None):
+		super(Recieving, self).__init__(time, "Recieving")
+		self.rn = recieving_node
+		self.it = incoming_task
+		self.al = algorithm
+		# the interval til next task arrives
+		self.ni = next_interval
+
+	# allocs a task to node queue, offloads to another or discards.
+	def execute(self):
+		pass
 
 
 class Sending(Event):
 	"""docstring for Sending"""
-	def __init__(self, time):
-		super(Sending, self).__init__(time)
+	def __init__(self, time, sending_node, outbound_task):
+		super(Sending, self).__init__(time, "Sending")
+		self.sn = sending_node
+		self.ot = outbound_task
+
+	# sends the task to another node, blocking coms in the meantime
+	def execute(self):
+		pass
 
 
 class Processing(Event):
 	"""docstring for Processing"""
-	def __init__(self, time):
-		super(Processing, self).__init__(time)
+	def __init__(self, time, processing_node):
+		super(Processing, self).__init__(time, "Processing")
+		self.pn = processing_node
+
+	# processes first task in node queue and sets other processing events if there's still space
+	def execute(self):
+		pass
 
 		
 		

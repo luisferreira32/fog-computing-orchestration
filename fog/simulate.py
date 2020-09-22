@@ -1,0 +1,1 @@
+# 'w' is defined here and passed as argument for the events
