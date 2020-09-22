@@ -22,9 +22,11 @@ class Core(object):
 		self.cpi = cpu[0]
 		self.cps = cpu[1]
 		self.cpuqueue = collections.deque(maxlen=configs.MAX_QUEUE)
+		self.processing = False
 		# comunication related
 		self.power = coms[0]
 		self.bandwidth = coms[1]
+		self.sending = False
 
 		# and debug if set to do so
 		if configs.FOG_DEBUG:
@@ -68,6 +70,17 @@ class Core(object):
 		# else add it to the queue and return None
 		self.cpuqueue.append(t)
 		return None
+
+	# --- Com related functions ---
+
+	def sending():
+		return self.sending
+
+	def finishedsending():
+		self.sending = False
+
+	def startedsending():
+		self.sending = True
 
 
 #------------------------------------------------------ ------------ -----------------------------------------------------

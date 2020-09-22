@@ -31,21 +31,8 @@ class Task(object):
 #------------------------------------------------------ ------------- -----------------------------------------------------
 
 def transmissionrate(n1=None, n2=None):	
-	"""Calculate the fog transmission rate given two nodes from n1 - > n2
+	# Calculate the fog transmission rate given two nodes from n1 - > n2
 
-	Fails with lack of arguments or invalid values
-
-	Parameters
-	----------
-	n1=None
-		origin node n1, using its com device
-	n2=None
-		recieving node
-
-	Return
-	------
-	transmission rate, or -1 if failed
-	"""
 	if n1 is None or n2 is None or n1.coms is None:
 		if configs.FOG_DEBUG == 1: print("[DEBUG] None argument in transmissionrate()")
 		return -1
@@ -69,23 +56,7 @@ def transmissionrate(n1=None, n2=None):
 
 
 def comtime(w0=0, rate12 = 0):
-	"""Calculate the fog transmission time number of offloaded tasks and com rate between nodes
-
-	Fails with lack of arguments or invalid values
-
-	Parameters
-	----------
-	w0=0
-		number of offloaded tasks
-	t1=None
-		task type being transmitted
-	rate12=0
-		transmission rate between n1 and n2
-
-	Return
-	------
-	transmission time, or -1 if failed
-	"""
+	# Calculate the fog transmission time number of offloaded tasks and com rate between nodes
 	if w0 <= 0 or rate12 <=0:
 		if configs.FOG_DEBUG == 1: print("[DEBUG] Argument error in comtime()")
 		return -1
