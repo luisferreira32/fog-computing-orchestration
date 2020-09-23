@@ -40,7 +40,7 @@ def listavg(l=None):
 		return 0
 	return avg
 
-def poissondist(lbd):
+def distOfEventNumber(lbd):
 	"""Returns a list with the poission distribution for 0 - 2*lbd
 	"""
 	dist = []
@@ -48,12 +48,20 @@ def poissondist(lbd):
 		dist.append(((lbd**k) * math.exp(-lbd))/(math.factorial(k)))
 	return dist
 
-def poissonNextEvent(lbd, interval):
+def distOfWaitingTime(lbd, interval):
+	""" List distribution of waiting time according to a poisson process
+	"""
+	dist = []
+	for t in range(1, interval+1):
+		dist.append(1-math.exp(-lbd/interval*t))
+	return dist
+
+def poissonNextEvent(dist):
 	""" gives the next time an event will ocurr acording to the lbd
 	"""
 	uniformrand = rd.random()
-	for i in range(1, interval+1):
-		if uniformrand >= 1 - math.exp(-lbd/interval*i): return i
+	for i in range(1, len(dist)):
+		if uniformrand < dist[i-1]: return i
 	return i
 
 def uniformRandom(m=1):
@@ -64,4 +72,4 @@ def uniformRandom(m=1):
 def initRandom():
 	""" inits the seed with a defined value
 	"""
-	rd.seed(17)
+	rd.seed(10017)

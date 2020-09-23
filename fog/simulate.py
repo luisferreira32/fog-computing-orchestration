@@ -17,10 +17,13 @@ from algorithms import basic
 def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 	# 0. create all necessary information for the simulation to begin
 	# 1. check a state and make decisions
-	# 2. generate round of recieving based on the new 'w' and repeat from 2.
+	# 2. add a new discrete event based on poisson process
 	# 3. run events that generate more events
 
 	# -------------------------------------------- 0. --------------------------------------------
+	
+	# initiate a constant random - simulation consistency
+	utils.initRandom()
 	
 	# create N_NODES with random placements within a limited area and a configured SR
 	nodes = []
@@ -39,6 +42,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 	evq.q.append(events.Event(configs.SIM_TIME+1))
 	ev = None
 	check = 0
+	pdist = utils.distOfWaitingTime(ar, configs.TIME_INTERVAL)
 
 	# -------------------------------------------- 1. 2. 3. --------------------------------------------
 	while evq.hasEvents():
@@ -48,7 +52,6 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 		# Make decision at every interval
 		if ev is None or int(ev.time/configs.TIME_INTERVAL) >= check:
 			check += 1
-			print("CHECK",check)
 			decision = {"w0" : 2, "n0" : nodes[1]}
 			# don't forget to count the 'w' and the 'wL'
 
@@ -58,7 +61,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 		if evq.recieving_client == 0:
 			# if there is no event, this one was the first, else, we processed a recieving, add after interval
 			if ev is None: clock = 0
-			else: clock = ev.time + utils.poissonNextEvent(ar, configs.TIME_INTERVAL)
+			else: clock = ev.time + utils.poissonNextEvent(pdist)
 			newev = events.Recieving(clock, nodes[0], decision=decision, client=True)
 			evq.addEvent(newev)
 				
