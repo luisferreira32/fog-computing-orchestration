@@ -8,19 +8,6 @@ from fog import configs
 
 def randomalgorithm(origin, nodes, recieving):
 	"""Gives a random action based on the state and possible actions
-	
-	Parameters
-	----------
-	origin
-		is the node state being processed, i.e. the one recieving allocations
-	nodes
-		the state of the fog, with queues and everything
-	recieving
-		state of coms (counts as an extra to influx)
-
-	Return
-	------
-	a set of actions to take by this node in this state
 	"""	
 	e = 0#int(random.random()*origin.influx)
 	action = []
@@ -36,19 +23,6 @@ def randomalgorithm(origin, nodes, recieving):
 
 def leastqueue(origin, nodes, recieving):
 	"""Offloads tasks to the node with the minimum queue status
-	
-	Parameters
-	----------
-	origin
-		is the node state being processed, i.e. the one recieving allocations
-	nodes
-		the state of the fog, with queues and everything
-	recieving
-		state of coms (counts as an extra to influx)
-
-	Return
-	------
-	a set of actions to take by this node in this state
 	"""
 	queues = {}
 	for n in nodes:
@@ -66,19 +40,6 @@ def leastqueue(origin, nodes, recieving):
 
 def nearestnode(origin, nodes, recieving):
 	"""Offloads tasks to the node with the minimum distance to this one, and space on queue
-	
-	Parameters
-	----------
-	origin
-		is the node state being processed, i.e. the one recieving allocations
-	nodes
-		the state of the fog, with queues and everything
-	recieving
-		state of coms (counts as an extra to influx)
-
-	Return
-	------
-	a set of actions to take by this node in this state
 	"""
 	queues = {}
 	distances = {}

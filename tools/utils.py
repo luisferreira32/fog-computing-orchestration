@@ -1,5 +1,6 @@
 #external imports
 import math
+import random as rd
 
 def appendict(lines=None, key=None, value=None):
 	"""appends information to a dictionary called lines
@@ -39,7 +40,7 @@ def listavg(l=None):
 		return 0
 	return avg
 
-def poissondist(lbd=5):
+def poissondist(lbd):
 	"""Returns a list with the poission distribution for 0 - 2*lbd
 	"""
 	dist = []
@@ -47,12 +48,20 @@ def poissondist(lbd=5):
 		dist.append(((lbd**k) * math.exp(-lbd))/(math.factorial(k)))
 	return dist
 
-def discreteX(distribution, normalrand):
-	"""Returns the event X in which the probability landed
+def poissonNextEvent(lbd, interval):
+	""" gives the next time an event will ocurr acording to the lbd
 	"""
-	psum = 0
-	for x in range(0,len(distribution)):
-		psum += distribution[x]
-		if normalrand < psum:
-			return x
-	return len(distribution)
+	uniformrand = rd.random()
+	for i in range(1, interval+1):
+		if uniformrand >= 1 - math.exp(-lbd/interval*i): return i
+	return i
+
+def uniformRandom(m=1):
+	""" gives a random number between [0, m]
+	"""
+	return m*rd.random()
+
+def initRandom():
+	""" inits the seed with a defined value
+	"""
+	rd.seed(17)

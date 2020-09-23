@@ -75,9 +75,6 @@ class Core(object):
 
 	# --- Com related functions ---
 
-	def sending():
-		return self.sending
-
 	def setcomstime(self, nodes):
 		for n in nodes:
 			if n == self: continue

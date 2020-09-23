@@ -1,8 +1,9 @@
 # GLOBAL FOG VARIABLES
 
 # auxiliary for the programming
-FOG_DEBUG = 0
-SIM_TIME = 1000
+FOG_DEBUG = 1
+SIM_TIME = 60
+TIME_INTERVAL = 10
 N_NODES = 5
 
 # fog core constants

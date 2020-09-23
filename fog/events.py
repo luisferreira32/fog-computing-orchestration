@@ -22,10 +22,18 @@ class EventQueue(object):
 	def queueSize(self):
 		return len(self.q)
 
+	def hasEvents(self):
+		return len(self.q) > 0
+
 	def addEvent(self, e):
 		# only process events within sim time
-		if e.time > configs.SIM_TIME:
+		if e.time > configs.SIM_TIME or e.time < 0:
 			return
+
+		# if we're gonna add it, just check it it's a client event
+		if e.classtype == "Recieving" and e.client:
+			self.recieving_client +=1
+
 		# if there's no events just add it
 		if len(self.q) == 0:
 			self.q.append(e)
@@ -42,7 +50,11 @@ class EventQueue(object):
 		return
 
 	def popEvent(self):
-		return self.q.pop()
+		e = self.q.pop()
+		# if we're gonna pop it, just check it it's a client event
+		if e.classtype == "Recieving" and e.client:
+			self.recieving_client -=1
+		return e
 
 
 
@@ -51,15 +63,21 @@ class Event(object):
 		self.time = time
 		self.classtype = classtype
 
+	def execute(self, evq):
+		pass
+
 
 class Recieving(Event):
-	def __init__(self, time, recieving_node, incoming_task, decision=None, sending_node=None):
+	def __init__(self, time, recieving_node, incoming_task=None, decision=None, sending_node=None, client=False):
 		super(Recieving, self).__init__(time, "Recieving")
 		self.rn = recieving_node
 		self.it = incoming_task
+		if incoming_task == None: self.it = coms.Task(time)
+		self.client = client
 
 		# a set for the decision for the next "w" tasks: [n0, w0] with w0 < w
 		self.decision = decision
+		# or the node that offloaded here
 		self.sn = sending_node
 
 	# allocs a task to node queue, offloads to another or discards.
@@ -70,7 +88,7 @@ class Recieving(Event):
 			return self.rn.queue(self.it)
 
 		# if we're meant to offload and we can... do it
-		if self.decision["w0"] > 0 and not self.rn.sending():
+		if self.decision["w0"] > 0 and not self.rn.sending:
 			self.decision["w0"] = self.decision["w0"] - 1
 			ev = Sending(self.time, self.rn, self.decision["n0"], self.it)
 			eq.addEvent(ev)
@@ -83,6 +101,9 @@ class Recieving(Event):
 		if not self.rn.processing:
 			ev = Processing(self.time, self.rn)
 			eq.addEvent(ev)
+
+		# debug message
+		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed recieving at", self.time)
 
 		return t
 
@@ -98,8 +119,11 @@ class Sending(Event):
 	def execute(self, eq):
 		self.sn.sending = True
 		# recieves after comm time finished
-		ev = Recieving(self.time+self.sn.comtime[self.rn.name], self.rn,self.ot)
+		ev = Recieving(self.time+self.sn.comtime[self.rn.name], self.rn,self.ot, None, self.sn)
 		eq.addEvent(ev)
+
+		# debug message
+		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed sending at", self.time)
 
 
 
@@ -121,6 +145,10 @@ class Processing(Event):
 			p_time = t.delay + t.timestamp
 			ev = Processing(p_time, self.pn)
 			eq.addEvent(ev)
+
+		# debug message
+		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed processing at", self.time)
+
 		return t		
 		
 		
