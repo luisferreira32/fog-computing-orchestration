@@ -7,6 +7,7 @@ from . import coms
 from tools import utils
 from algorithms import basic
 
+# -------------------------------------------- Event Queue --------------------------------------------
 
 class EventQueue(object):
 	# handles queueing and sorting of events
@@ -50,6 +51,7 @@ class EventQueue(object):
 		return self.q.pop()
 
 
+# -------------------------------------------- Events --------------------------------------------
 
 class Event(object):
 	def __init__(self, time, classtype=None):
@@ -57,9 +59,10 @@ class Event(object):
 		self.classtype = classtype
 
 
+# -------------------------------------------- Decision --------------------------------------------
 
 class Decision(Event):
-	def __init__(self, time, nodes, algorithm="random", time_interval = configs.TIME_INTERVAL, 
+	def __init__(self, time, nodes, algorithm="rd", time_interval = configs.TIME_INTERVAL, 
 		ar=configs.TASK_ARRIVAL_RATE):
 		super(Decision, self).__init__(time, "Decision")
 		self.alg = algorithm
@@ -78,9 +81,9 @@ class Decision(Event):
 			# state = (nL, w, Qsizes)
 			state = (nL, nL.w, Qsizes)
 			# algorithm decision
-			if self.alg == "random":  (w0, nO_index) = basic.randomalgorithm(state)
-			if self.alg == "leastqueue":  (w0, nO_index) = basic.leastqueue(state)
-			if self.alg == "nearestnode":  (w0, nO_index) = basic.nearestnode(state)
+			if self.alg == "rd":  (w0, nO_index) = basic.randomalgorithm(state)
+			if self.alg == "lq":  (w0, nO_index) = basic.leastqueue(state)
+			if self.alg == "nn":  (w0, nO_index) = basic.nearestnode(state)
 
 			# and wrap the new decision
 			new_decisions[nL] = {"w0": w0, "nO": self.nodes[nO_index]}
@@ -96,13 +99,11 @@ class Decision(Event):
 		ev = Decision(self.time + self.ti, self.nodes, self.alg, self.ti, self.ar)
 		eq.addEvent(ev)
 
-		print(state)
-		print(new_decisions)
-
 		# debug message
 		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed decision at %0.2f" % self.time)
 
 
+# -------------------------------------------- Recieving --------------------------------------------
 
 class Recieving(Event):
 	def __init__(self, time, recieving_node, incoming_task=None, decision=None, sending_node=None, 
@@ -155,6 +156,8 @@ class Recieving(Event):
 		return t
 
 
+# -------------------------------------------- Sending --------------------------------------------
+
 class Sending(Event):
 	def __init__(self, time, sending_node, recieving_node, outbound_task):
 		super(Sending, self).__init__(time, "Sending")
@@ -176,6 +179,7 @@ class Sending(Event):
 		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed sending at %0.2f" % self.time)
 
 
+# -------------------------------------------- Processing --------------------------------------------
 
 class Processing(Event):
 	def __init__(self, time, processing_node):
@@ -197,7 +201,8 @@ class Processing(Event):
 			eq.addEvent(ev)
 
 		# debug message
-		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed processing at %0.2f" % self.time)
+		if configs.FOG_DEBUG == 1 and self.pn.processing:
+			print("[DEBUG] Executed processing at %0.2f" % self.time)
 
 		return t		
 		

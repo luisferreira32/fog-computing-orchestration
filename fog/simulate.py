@@ -14,7 +14,7 @@ from tools import utils
 # decision algorithms
 from algorithms import basic
 
-def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
+def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="rd"):
 	# 0. create all necessary information for the simulation to begin
 	# 1. create first round of events (decision and recieving tasks)
 	# 2. run events that generate more events
@@ -41,14 +41,19 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 	# create the event queue
 	evq = events.EventQueue()
 
+	# and for information obtaining
+	delays = []
+
 	# -------------------------------------------- 1. --------------------------------------------
 
 	# begin the first client request, that calls another based on a poisson process
 	pdist = utils.distOfWaitingTime(ar, configs.TIME_INTERVAL)
 	ev = events.Recieving(0, nodes[0], decision={"w0":0, "n0":None}, client_dist=pdist)
 	evq.addEvent(ev)
+	ev = events.Recieving(0, nodes[1], decision={"w0":0, "n0":None}, client_dist=pdist)
+	evq.addEvent(ev)
 	# decision making time
-	ev = events.Decision(0, nodes, ar=ar)
+	ev = events.Decision(0, nodes, algorithm, ar=ar)
 	evq.addEvent(ev)
 
 	# -------------------------------------------- 2. 3. --------------------------------------------
@@ -59,11 +64,13 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 		# execute the first event of the queue
 		t = ev.execute(evq)
 		if t is not None:
-			print(t.delay)
+			delays.append(t.delay)
 
 		# -------------------------------------------- 3. --------------------------------------------
 
 		# It's repeating until queue ends, which is the last event scheduled before simulation limit time
 
 	if configs.FOG_DEBUG == 1: print("[DEBUG] Finished simulation")
+
+	return utils.listavg(delays)
 		
