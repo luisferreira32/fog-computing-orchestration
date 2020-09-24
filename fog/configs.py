@@ -3,7 +3,7 @@
 # auxiliary for the programming
 FOG_DEBUG = 1
 SIM_TIME = 200
-TIME_INTERVAL = 10
+TIME_INTERVAL = 60
 N_NODES = 5
 
 # fog core constants

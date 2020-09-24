@@ -1,65 +1,61 @@
-# external imports
-import random
-random.seed(17)
-
 # imports from our utils and modules
 from fog import node
 from fog import configs
+from tools import utils
 
-def randomalgorithm(origin, nodes, recieving):
-	"""Gives a random action based on the state and possible actions
+def randomalgorithm(state):
+	"""Gives a random action based on the state and limited possible actions
 	"""	
-	e = 0#int(random.random()*origin.influx)
-	action = []
-	if origin.excessinflux(recieved=recieving) > e:
-		# if there is excess, offload the excess and not a random thing
-		e = origin.excessinflux(recieved=recieving)
-	# choose a different node
-	randomoff = random.choice(nodes)
-	if randomoff != origin:
-		action = [origin, randomoff, e]		
+	# unpack it
+	nL = state[0]
+	w = state[1]
+	Qsizes = state[2]
 
-	return action
+	# check possible acitons
+	possible_nO = []
+	for i in range(0, len(Qsizes)):
+		if Qsizes[i] < nL.qs(): possible_nO.append(i)
+	nO_index = utils.randomChoice(possible_nO)
+	# w0 only has to be lower than the recieved w and the queue space
+	w0 = utils.uniformRandom(min(w, configs.MAX_QUEUE-Qsizes[nO_index]))
 
-def leastqueue(origin, nodes, recieving):
+	return [w0, nO_index]
+
+def leastqueue(state):
 	"""Offloads tasks to the node with the minimum queue status
 	"""
-	queues = {}
-	for n in nodes:
-		if n == origin: continue
-		queues[n] = n.qs()
+	# unpack it
+	nL = state[0]
+	w = state[1]
+	Qsizes = state[2]
 
-	action = []
-	e = 0#int(random.random()*origin.influx)
-	if origin.excessinflux(recieved=recieving) > e:
-		e = origin.excessinflux(recieved=recieving)
-	n = min(queues, key=queues.get)
-	action = [origin, n, min(e,configs.MAX_QUEUE-queues[n])]
-	
-	return action
+	# check possible acitons
+	possible_nO = []
+	for i in range(0, len(Qsizes)):
+		if Qsizes[i] < nL.qs(): possible_nO.append(i)
+	nO_index = possible_nO[0]	
+	for nO in possible_nO:
+		if Qsizes[nO] < Qsizes[nO_index]: nO_index=nO
+	# unload as much as you can
+	w0 = min(w, configs.MAX_QUEUE-Qsizes[nO_index])
 
-def nearestnode(origin, nodes, recieving):
+	return [w0, nO_index]
+
+# TODO@ THIS ONE -- DEPEND ON HOW I'M GONNA FORMAT COMS... TEMPTED TO DO WIFI BROADCAST
+def nearestnode(state):
 	"""Offloads tasks to the node with the minimum distance to this one, and space on queue
 	"""
-	queues = {}
-	distances = {}
-	for n in nodes:
-		if n == origin: continue
-		queues[n] = n.qs()
-		distances[n] = node.distance(origin,n)
+	# unpack it
+	nL = state[0]
+	w = state[1]
+	Qsizes = state[2]
 
-	e = 0#int(random.random()*origin.influx)
-	action = []
-	if origin.excessinflux(recieved=recieving) > e:
-		e = origin.excessinflux(recieved=recieving)
+	# check possible acitons
+	possible_nO = []
+	for i in range(0, len(Qsizes)):
+		if Qsizes[i] < nL.qs(): possible_nO.append(i)
+	nO_index = utils.randomChoice(possible_nO)
+	# w0 only has to be lower than the recieved w and the queue space
+	w0 = utils.uniformRandom(min(w, configs.MAX_QUEUE-Qsizes[nO_index]))
 
-	while distances:
-		n = min(distances, key=distances.get)
-		if queues[n] >= configs.MAX_QUEUE:
-			distances.pop(n)
-			continue
-		break
-	if distances:
-		action = [origin, n, min(e,configs.MAX_QUEUE-queues[n])]
-	
-	return action
+	return [w0, nO_index]

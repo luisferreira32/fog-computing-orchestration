@@ -23,6 +23,8 @@ class Core(object):
 		self.cps = cpu[1]
 		self.cpuqueue = collections.deque(maxlen=configs.MAX_QUEUE)
 		self.processing = False
+		# tasks allocated in this node per unit time
+		self.w = 0
 
 		# and debug if set to do so
 		if configs.FOG_DEBUG:

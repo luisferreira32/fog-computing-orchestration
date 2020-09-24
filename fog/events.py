@@ -1,10 +1,11 @@
 # external imports
 import collections
 
-# our configs
+# our imports
 from . import configs
 from . import coms
 from tools import utils
+from algorithms import basic
 
 
 class EventQueue(object):
@@ -55,28 +56,50 @@ class Event(object):
 		self.time = time
 		self.classtype = classtype
 
+
+
 class Decision(Event):
-	def __init__(self, time, nodes, algorithm="random", time_interval = configs.TIME_INTERVAL):
+	def __init__(self, time, nodes, algorithm="random", time_interval = configs.TIME_INTERVAL, 
+		ar=configs.TASK_ARRIVAL_RATE):
 		super(Decision, self).__init__(time, "Decision")
 		self.alg = algorithm
 		self.nodes = nodes
 		self.ti = time_interval
+		self.ar = ar
 
 	def execute(self, eq):
-		# make the decision based on the current state (checked by looking at nodes and edges)
-		new_decision = {"w0": 1, "n0": self.nodes[1]}
+		# make the decision based on the current state of each node (checked by looking at nodes and edges)
+		new_decisions = {}
+		# generate decision for every client connected node
+		for nL in self.nodes:
+			if nL.w == 0: continue
+			Qsizes = []
+			for n in self.nodes: Qsizes.append(n.qs())
+			# state = (nL, w, Qsizes)
+			state = (nL, nL.w, Qsizes)
+			# algorithm decision
+			if self.alg == "random":  (w0, nO_index) = basic.randomalgorithm(state)
+			if self.alg == "leastqueue":  (w0, nO_index) = basic.leastqueue(state)
+			if self.alg == "nearestnode":  (w0, nO_index) = basic.nearestnode(state)
+
+			# and wrap the new decision
+			new_decisions[nL] = {"w0": w0, "nO": self.nodes[nO_index]}
+			nL.w = 0
 
 		# and for every Recieving event in the evq, change it's decision to the new one
 		for ev in eq.q:
 			if ev.classtype == "Recieving" and ev.decision is not None:
-				ev.decision = new_decision
+				for n in self.nodes:
+					if ev.rn == n: ev.decision = new_decisions[n]
 
 		# and add another decision after a time interval
-		ev = Decision(self.time + self.ti, self.nodes, self.alg, self.ti)
+		ev = Decision(self.time + self.ti, self.nodes, self.alg, self.ti, self.ar)
 		eq.addEvent(ev)
 
 		# debug message
 		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed decision at %0.2f" % self.time)
+
+
 
 class Recieving(Event):
 	def __init__(self, time, recieving_node, edges=None, incoming_task=None, decision=None, 
@@ -87,7 +110,7 @@ class Recieving(Event):
 		self.it = incoming_task
 		if incoming_task == None: self.it = coms.Task(time)
 
-		# a set for the decision for the next "w" tasks: [n0, w0] with w0 < w
+		# a set for the decision for the next "w" tasks on this node: [nO, w0] with w0 < w
 		self.decision = decision
 		# or the node that offloaded here
 		self.sn = sending_node
@@ -101,14 +124,16 @@ class Recieving(Event):
 			self.e.busy = False
 			t = self.rn.queue(self.it)
 		# if we're meant to offload and we can... do it
-		elif self.decision["w0"] > 0 and not self.e[self.decision["n0"]].busy:
-			self.decision["w0"] = self.decision["w0"] - 1
-			ev = Sending(self.time, self.rn, self.decision["n0"], self.it, self.e[self.decision["n0"]])
+		elif self.decision["w0"] > 0 and not self.e[self.decision["nO"]].busy:
+			self.decision["w0"] -= 1
+			ev = Sending(self.time, self.rn, self.decision["nO"], self.it, self.e[self.decision["nO"]])
 			eq.addEvent(ev)
 			t = None
+			self.rn.w += 1
 		else:
 			# queue the task if we didn't offload it, returns task if queue is full
 			t = self.rn.queue(self.it)
+			self.rn.w += 1
 
 		# start processing if it hasn't started already
 		if not self.rn.processing:

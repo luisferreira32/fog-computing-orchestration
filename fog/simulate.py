@@ -29,18 +29,19 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 	nodes = []
 	# cycles per second, depends on the TIME INTERVAL of the SERVICE RATE
 	cps = sr*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
-	for i in range(1, configs.N_NODES):
+	for i in range(0, configs.N_NODES):
 		n = node.Core(name="n"+str(i), 
 			placement=(utils.uniformRandom(configs.MAX_AREA[0]),utils.uniformRandom(configs.MAX_AREA[1])),
 			cpu=(configs.DEFAULT_CPI, cps))
 		nodes.append(n)
 	# create M edges between each two nodes
-	edges = {}
+	all_edges = {}
 	for n1 in nodes:
-		edges[n1] = {}
+		# for each node he is connected with all the others except himself
+		all_edges[n1] = {}
 		for n2 in nodes:
 			if n1 == n2: continue
-			edges[n1][n2] = coms.Edge(n1,n2)
+			all_edges[n1][n2] = coms.Edge(n1,n2)
 
 
 	# create the event queue
@@ -50,10 +51,10 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 
 	# begin the first client request, that calls another based on a poisson process
 	pdist = utils.distOfWaitingTime(ar, configs.TIME_INTERVAL)
-	ev = events.Recieving(0, nodes[0], edges[nodes[0]], decision={"w0":0, "n0":None}, client_dist=pdist)
+	ev = events.Recieving(0, nodes[0], all_edges[nodes[0]], decision={"w0":0, "n0":None}, client_dist=pdist)
 	evq.addEvent(ev)
 	# decision making time
-	ev = events.Decision(0, nodes, edges)
+	ev = events.Decision(0, nodes, all_edges, ar=ar)
 	evq.addEvent(ev)
 
 	# -------------------------------------------- 2. 3. --------------------------------------------
