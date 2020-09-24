@@ -72,7 +72,7 @@ def uniformRandom(m=1):
 def randomChoice(list):
 	""" Returning a random element from a list
 	"""
-	return random.choice(list)
+	return rd.choice(list)
 
 def initRandom():
 	""" inits the seed with a defined value

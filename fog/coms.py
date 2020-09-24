@@ -8,13 +8,10 @@ from . import node
 # ------------------------------------------------------ Comunication related classes ------------------------------------------------------
 
 class Edge(object):
-	def __init__(self, n1, n2, bandwidth=configs.DEFAULT_BANDWIDTH, power=configs.DEFAULT_POWER):
-		self.n1 = n1
-		self.n2 = n2
-		self.bandwidth = bandwidth
-		self.power = power
-		self.comtime = comtime(1, transmissionrate(n1, n2, bandwidth, power))
+	def __init__(self, n1, n2, bw, pw):
+		self.neigh = n2
 		self.busy = False
+		self.comtime = comtime(1, transmissionrate(n1, n2, bw, pw))		
 
 
 class Task(object):

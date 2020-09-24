@@ -12,7 +12,8 @@ from . import coms
 
 class Core(object):
 	#The core of a fog computing node has all its attributes.
-	def __init__(self, name="default_node", cpu=(configs.DEFAULT_CPI, configs.DEFAULT_CPS), placement=(0,0)):
+	def __init__(self, name="default_node", cpu=(configs.DEFAULT_CPI, configs.DEFAULT_CPS), placement=(0,0),
+		 bandwidth=configs.DEFAULT_BANDWIDTH, power=configs.DEFAULT_POWER):
 	
 		# set up the attributes
 		# generic
@@ -25,6 +26,10 @@ class Core(object):
 		self.processing = False
 		# tasks allocated in this node per unit time
 		self.w = 0
+		# communications
+		self.bw = bandwidth
+		self.pw = power
+		self.edges = {}
 
 		# and debug if set to do so
 		if configs.FOG_DEBUG:
@@ -68,6 +73,14 @@ class Core(object):
 		# else add it to the queue and return None
 		self.cpuqueue.append(t)
 		return None
+
+	# --- edges related methods ---
+
+	def setedges(self, nodes):
+		# sets the communication edges with other nodes
+		for n in nodes:
+			if n == self: continue
+			self.edges[n] = coms.Edge(self, n, self.bw, self.pw)
 
 
 #------------------------------------------------------ ------------ -----------------------------------------------------

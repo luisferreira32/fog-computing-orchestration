@@ -18,6 +18,7 @@ def randomalgorithm(state):
 	nO_index = utils.randomChoice(possible_nO)
 	# w0 only has to be lower than the recieved w and the queue space
 	w0 = utils.uniformRandom(min(w, configs.MAX_QUEUE-Qsizes[nO_index]))
+	if w0 > 0: w0 = int(w0)
 
 	return [w0, nO_index]
 
