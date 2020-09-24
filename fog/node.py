@@ -12,8 +12,7 @@ from . import coms
 
 class Core(object):
 	#The core of a fog computing node has all its attributes.
-	def __init__(self, name="default_node", cpu=(configs.DEFAULT_CPI, configs.DEFAULT_CPS), placement=(0,0),
-		coms=(configs.DEFAULT_POWER, configs.DEFAULT_BANDWIDTH)):
+	def __init__(self, name="default_node", cpu=(configs.DEFAULT_CPI, configs.DEFAULT_CPS), placement=(0,0)):
 	
 		# set up the attributes
 		# generic
@@ -24,11 +23,6 @@ class Core(object):
 		self.cps = cpu[1]
 		self.cpuqueue = collections.deque(maxlen=configs.MAX_QUEUE)
 		self.processing = False
-		# comunication related
-		self.power = coms[0]
-		self.bandwidth = coms[1]
-		self.sending = False
-		self.comtime = {}
 
 		# and debug if set to do so
 		if configs.FOG_DEBUG:
@@ -72,14 +66,6 @@ class Core(object):
 		# else add it to the queue and return None
 		self.cpuqueue.append(t)
 		return None
-
-	# --- Com related functions ---
-
-	def setcomstime(self, nodes):
-		for n in nodes:
-			if n == self: continue
-			self.comtime[n.name] = coms.comtime(1, coms.transmissionrate(self, n))
-
 
 
 #------------------------------------------------------ ------------ -----------------------------------------------------

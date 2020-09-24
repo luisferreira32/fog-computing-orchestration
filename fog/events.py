@@ -79,9 +79,11 @@ class Decision(Event):
 		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed decision at %0.2f" % self.time)
 
 class Recieving(Event):
-	def __init__(self, time, recieving_node, incoming_task=None, decision=None, sending_node=None, client_dist=None):
+	def __init__(self, time, recieving_node, edges=None, incoming_task=None, decision=None, 
+		sending_node=None, client_dist=None):
 		super(Recieving, self).__init__(time, "Recieving")
 		self.rn = recieving_node
+		self.e = edges
 		self.it = incoming_task
 		if incoming_task == None: self.it = coms.Task(time)
 
@@ -96,12 +98,12 @@ class Recieving(Event):
 	def execute(self, eq):
 		# if it comes from another offloading just try to queue it
 		if self.decision is None and self.sn is not None:
-			self.sn.sending = False
+			self.e.busy = False
 			t = self.rn.queue(self.it)
 		# if we're meant to offload and we can... do it
-		elif self.decision["w0"] > 0 and not self.rn.sending:
+		elif self.decision["w0"] > 0 and not self.e[self.decision["n0"]].busy:
 			self.decision["w0"] = self.decision["w0"] - 1
-			ev = Sending(self.time, self.rn, self.decision["n0"], self.it)
+			ev = Sending(self.time, self.rn, self.decision["n0"], self.it, self.e[self.decision["n0"]])
 			eq.addEvent(ev)
 			t = None
 		else:
@@ -115,7 +117,7 @@ class Recieving(Event):
 
 		# and schedule the next event for recieving (poisson process)
 		if self.client_dist is not None:
-			ev = Recieving(self.time+utils.poissonNextEvent(self.client_dist), self.rn, 
+			ev = Recieving(self.time+utils.poissonNextEvent(self.client_dist), self.rn, self.e,
 				decision=self.decision, client_dist=self.client_dist)
 			eq.addEvent(ev)
 
@@ -126,17 +128,19 @@ class Recieving(Event):
 
 
 class Sending(Event):
-	def __init__(self, time, sending_node, recieving_node, outbound_task):
+	def __init__(self, time, sending_node, recieving_node, outbound_task, edge):
 		super(Sending, self).__init__(time, "Sending")
 		self.sn = sending_node
 		self.rn = recieving_node
 		self.ot = outbound_task
+		self.edge = edge
 
 	# sends the task to another node, blocking coms in the meantime
 	def execute(self, eq):
-		self.sn.sending = True
+		self.edge.busy = True
 		# recieves after comm time finished
-		ev = Recieving(self.time+self.sn.comtime[self.rn.name], self.rn,self.ot, None, self.sn)
+		ev = Recieving(self.time+self.edge.comtime, self.rn, edges=self.edge,
+			incoming_task=self.ot, sending_node=self.sn)
 		eq.addEvent(ev)
 
 		# debug message

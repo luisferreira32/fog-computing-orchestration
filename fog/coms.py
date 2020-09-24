@@ -7,6 +7,16 @@ from . import node
 
 # ------------------------------------------------------ Comunication related classes ------------------------------------------------------
 
+class Edge(object):
+	def __init__(self, n1, n2, bandwidth=configs.DEFAULT_BANDWIDTH, power=configs.DEFAULT_POWER):
+		self.n1 = n1
+		self.n2 = n2
+		self.bandwidth = bandwidth
+		self.power = power
+		self.comtime = comtime(1, transmissionrate(n1, n2, bandwidth, power))
+		self.busy = False
+
+
 class Task(object):
 	def __init__(self, timestamp, size=configs.DEFAULT_DATA, instruction_lines=configs.DEFAULT_IL):
 		self.timestamp = timestamp
@@ -25,7 +35,7 @@ class Task(object):
 #------------------------------------------------ Functions on the network ------------------------------------------------
 #------------------------------------------------------ ------------- -----------------------------------------------------
 
-def transmissionrate(n1=None, n2=None):	
+def transmissionrate(n1=None, n2=None, bw=None, pw=None):	
 	# Calculate the fog transmission rate given two nodes from n1 - > n2
 
 	if n1 is None or n2 is None:
@@ -37,9 +47,9 @@ def transmissionrate(n1=None, n2=None):
 		return -1
  	
  	# MHz to Hz
-	BHz = n1.bandwidth * (10**6)
+	BHz = bw * (10**6)
 	# convertion from dBm to mW in power and noise
-	Power = math.pow( 10 , 0.1*n1.power)*(configs.B1_PATHLOSS*((node.distance(n1,n2))**(-configs.B2_PATHLOSS))) 
+	Power = math.pow( 10 , 0.1*pw)*(configs.B1_PATHLOSS*((node.distance(n1,n2))**(-configs.B2_PATHLOSS))) 
 	Noise = math.pow( 10 , 0.1*configs.N0)*BHz
 	try:
 		# Shannon-hartley theorem ~: r = B log2 ( 1 + SNR )

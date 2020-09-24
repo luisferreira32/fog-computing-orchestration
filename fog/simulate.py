@@ -34,8 +34,14 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 			placement=(utils.uniformRandom(configs.MAX_AREA[0]),utils.uniformRandom(configs.MAX_AREA[1])),
 			cpu=(configs.DEFAULT_CPI, cps))
 		nodes.append(n)
-	for n in nodes:
-		n.setcomstime(nodes)
+	# create M edges between each two nodes
+	edges = {}
+	for n1 in nodes:
+		edges[n1] = {}
+		for n2 in nodes:
+			if n1 == n2: continue
+			edges[n1][n2] = coms.Edge(n1,n2)
+
 
 	# create the event queue
 	evq = events.EventQueue()
@@ -44,10 +50,10 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 
 	# begin the first client request, that calls another based on a poisson process
 	pdist = utils.distOfWaitingTime(ar, configs.TIME_INTERVAL)
-	ev = events.Recieving(0, nodes[0], decision={"w0":0, "n0":None}, client_dist=pdist)
+	ev = events.Recieving(0, nodes[0], edges[nodes[0]], decision={"w0":0, "n0":None}, client_dist=pdist)
 	evq.addEvent(ev)
 	# decision making time
-	ev = events.Decision(0, nodes)
+	ev = events.Decision(0, nodes, edges)
 	evq.addEvent(ev)
 
 	# -------------------------------------------- 2. 3. --------------------------------------------
