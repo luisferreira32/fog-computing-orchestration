@@ -2,7 +2,7 @@
 
 # auxiliary for the programming
 FOG_DEBUG = 1
-SIM_TIME = 60
+SIM_TIME = 200
 TIME_INTERVAL = 10
 N_NODES = 5
 
@@ -17,7 +17,7 @@ DEFAULT_CPI = 5
 # task constants
 DEFAULT_DATA = 50 # Mbytes
 DEFAULT_IL = 200 # * 10**8 instruction lines
-TASK_ARRIVAL_RATE = 5 # default 5.2
+TASK_ARRIVAL_RATE = 5.2 # default 5.2
 
 # comunications constants
 DEFAULT_POWER = 20 # dBm

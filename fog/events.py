@@ -4,6 +4,7 @@ import collections
 # our configs
 from . import configs
 from . import coms
+from tools import utils
 
 
 class EventQueue(object):
@@ -11,7 +12,6 @@ class EventQueue(object):
 	def __init__(self):
 		# arbitrary lenghted queue
 		self.q = collections.deque()
-		self.recieving_client = 0
 
 	def __str__(self):
 		times = []
@@ -30,10 +30,6 @@ class EventQueue(object):
 		if e.time > configs.SIM_TIME or e.time < 0:
 			return
 
-		# if we're gonna add it, just check it it's a client event
-		if e.classtype == "Recieving" and e.client:
-			self.recieving_client +=1
-
 		# if there's no events just add it
 		if len(self.q) == 0:
 			self.q.append(e)
@@ -50,11 +46,7 @@ class EventQueue(object):
 		return
 
 	def popEvent(self):
-		e = self.q.pop()
-		# if we're gonna pop it, just check it it's a client event
-		if e.classtype == "Recieving" and e.client:
-			self.recieving_client -=1
-		return e
+		return self.q.pop()
 
 
 
@@ -63,22 +55,20 @@ class Event(object):
 		self.time = time
 		self.classtype = classtype
 
-	def execute(self, evq):
-		pass
-
 
 class Recieving(Event):
-	def __init__(self, time, recieving_node, incoming_task=None, decision=None, sending_node=None, client=False):
+	def __init__(self, time, recieving_node, incoming_task=None, decision=None, sending_node=None, client_dist=None):
 		super(Recieving, self).__init__(time, "Recieving")
 		self.rn = recieving_node
 		self.it = incoming_task
 		if incoming_task == None: self.it = coms.Task(time)
-		self.client = client
 
 		# a set for the decision for the next "w" tasks: [n0, w0] with w0 < w
 		self.decision = decision
 		# or the node that offloaded here
 		self.sn = sending_node
+		# mass distribution to set up next client event 
+		self.client_dist = client_dist
 
 	# allocs a task to node queue, offloads to another or discards.
 	def execute(self, eq):
@@ -97,13 +87,19 @@ class Recieving(Event):
 			# queue the task if we didn't offload it, returns task if queue is full
 			t = self.rn.queue(self.it)
 
-		# and start processing if it hasn't started already
+		# start processing if it hasn't started already
 		if not self.rn.processing:
 			ev = Processing(self.time, self.rn)
 			eq.addEvent(ev)
 
+		# and schedule the next event for recieving (poisson process)
+		if self.client_dist is not None:
+			ev = Recieving(self.time+utils.poissonNextEvent(self.client_dist), self.rn, 
+				decision=self.decision, client_dist=self.client_dist)
+			eq.addEvent(ev)
+
 		# debug message
-		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed recieving at", self.time)
+		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed recieving at %0.2f" % self.time)
 
 		return t
 
@@ -123,7 +119,7 @@ class Sending(Event):
 		eq.addEvent(ev)
 
 		# debug message
-		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed sending at", self.time)
+		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed sending at %0.2f" % self.time)
 
 
 
@@ -147,7 +143,7 @@ class Processing(Event):
 			eq.addEvent(ev)
 
 		# debug message
-		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed processing at", self.time)
+		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed processing at %0.2f" % self.time)
 
 		return t		
 		

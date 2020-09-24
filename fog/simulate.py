@@ -16,15 +16,15 @@ from algorithms import basic
 
 def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 	# 0. create all necessary information for the simulation to begin
-	# 1. check a state and make decisions
-	# 2. add a new discrete event based on poisson process
-	# 3. run events that generate more events
+	# 1. check a state and make decisions within DECISION events
+	# 2. run events that generate more events
+	# 3. repeat from 1
 
 	# -------------------------------------------- 0. --------------------------------------------
 	
 	# initiate a constant random - simulation consistency
 	utils.initRandom()
-	
+
 	# create N_NODES with random placements within a limited area and a configured SR
 	nodes = []
 	# cycles per second, depends on the TIME INTERVAL of the SERVICE RATE
@@ -37,41 +37,32 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 	for n in nodes:
 		n.setcomstime(nodes)
 
-	# create the event queue and cheat to start the loop
+	# create the event queue
 	evq = events.EventQueue()
-	evq.q.append(events.Event(configs.SIM_TIME+1))
-	ev = None
-	check = 0
+	# begin the first client request, that calls another based on a poisson process
 	pdist = utils.distOfWaitingTime(ar, configs.TIME_INTERVAL)
+	ev = events.Recieving(0, nodes[0], decision={"w0":0, "n0":None}, client_dist=pdist)
+	evq.addEvent(ev)
+	# decision making time
+	check = 0
 
 	# -------------------------------------------- 1. 2. 3. --------------------------------------------
 	while evq.hasEvents():
+		ev = evq.popEvent()
 
 		# -------------------------------------------- 1. --------------------------------------------
 
-		# Make decision at every interval
-		if ev is None or int(ev.time/configs.TIME_INTERVAL) >= check:
-			check += 1
-			decision = {"w0" : 2, "n0" : nodes[1]}
-			# don't forget to count the 'w' and the 'wL'
 
 		# -------------------------------------------- 2. --------------------------------------------
-
-		# Only need to add new tasks when there are none already
-		if evq.recieving_client == 0:
-			# if there is no event, this one was the first, else, we processed a recieving, add after interval
-			if ev is None: clock = 0
-			else: clock = ev.time + utils.poissonNextEvent(pdist)
-			newev = events.Recieving(clock, nodes[0], decision=decision, client=True)
-			evq.addEvent(newev)
-				
+		
+		# execute the first event of the queue
+		t = ev.execute(evq)
+		if t is not None:
+			print(t.delay)
 
 		# -------------------------------------------- 3. --------------------------------------------
 
-		# pop and execute the first event that should be executed
-		ev = evq.popEvent()
-		t = ev.execute(evq)
-		print(t)
+		# It's repeating until queue ends, which is the last event scheduled before simulation limit time
 
 	if configs.FOG_DEBUG == 1: print("[DEBUG] Finished simulation")
 		
