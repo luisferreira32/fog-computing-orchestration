@@ -55,6 +55,28 @@ class Event(object):
 		self.time = time
 		self.classtype = classtype
 
+class Decision(Event):
+	def __init__(self, time, nodes, algorithm="random", time_interval = configs.TIME_INTERVAL):
+		super(Decision, self).__init__(time, "Decision")
+		self.alg = algorithm
+		self.nodes = nodes
+		self.ti = time_interval
+
+	def execute(self, eq):
+		# make the decision based on the current state (checked by looking at nodes and edges)
+		new_decision = {"w0": 1, "n0": self.nodes[1]}
+
+		# and for every Recieving event in the evq, change it's decision to the new one
+		for ev in eq.q:
+			if ev.classtype == "Recieving" and ev.decision is not None:
+				ev.decision = new_decision
+
+		# and add another decision after a time interval
+		ev = Decision(self.time + self.ti, self.nodes, self.alg, self.ti)
+		eq.addEvent(ev)
+
+		# debug message
+		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed decision at %0.2f" % self.time)
 
 class Recieving(Event):
 	def __init__(self, time, recieving_node, incoming_task=None, decision=None, sending_node=None, client_dist=None):
@@ -72,13 +94,12 @@ class Recieving(Event):
 
 	# allocs a task to node queue, offloads to another or discards.
 	def execute(self, eq):
-		# if it comes from another offloading
+		# if it comes from another offloading just try to queue it
 		if self.decision is None and self.sn is not None:
 			self.sn.sending = False
-			return self.rn.queue(self.it)
-
+			t = self.rn.queue(self.it)
 		# if we're meant to offload and we can... do it
-		if self.decision["w0"] > 0 and not self.rn.sending:
+		elif self.decision["w0"] > 0 and not self.rn.sending:
 			self.decision["w0"] = self.decision["w0"] - 1
 			ev = Sending(self.time, self.rn, self.decision["n0"], self.it)
 			eq.addEvent(ev)

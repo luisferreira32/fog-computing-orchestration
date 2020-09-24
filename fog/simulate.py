@@ -16,9 +16,9 @@ from algorithms import basic
 
 def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 	# 0. create all necessary information for the simulation to begin
-	# 1. check a state and make decisions within DECISION events
+	# 1. create first round of events (decision and recieving tasks)
 	# 2. run events that generate more events
-	# 3. repeat from 1
+	# 3. repeat from 2
 
 	# -------------------------------------------- 0. --------------------------------------------
 	
@@ -39,20 +39,20 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
 
 	# create the event queue
 	evq = events.EventQueue()
+
+	# -------------------------------------------- 1. --------------------------------------------
+
 	# begin the first client request, that calls another based on a poisson process
 	pdist = utils.distOfWaitingTime(ar, configs.TIME_INTERVAL)
 	ev = events.Recieving(0, nodes[0], decision={"w0":0, "n0":None}, client_dist=pdist)
 	evq.addEvent(ev)
 	# decision making time
-	check = 0
+	ev = events.Decision(0, nodes)
+	evq.addEvent(ev)
 
-	# -------------------------------------------- 1. 2. 3. --------------------------------------------
+	# -------------------------------------------- 2. 3. --------------------------------------------
 	while evq.hasEvents():
 		ev = evq.popEvent()
-
-		# -------------------------------------------- 1. --------------------------------------------
-
-
 		# -------------------------------------------- 2. --------------------------------------------
 		
 		# execute the first event of the queue
