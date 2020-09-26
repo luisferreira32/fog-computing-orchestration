@@ -52,19 +52,17 @@ def distOfWaitingTime(lbd, interval):
 	""" P(T <= t) of waiting time according to a poisson process
 	"""
 	dist = []
-	for s in range(1, interval+1):
+	for s in range(0, interval):
 		for ms in range(0, 1000):
 			t = s + ms/1000
 			dist.append(1-math.exp(-lbd/interval*t))
 	return dist
 
-def poissonNextEvent(dist):
+def poissonNextEvent(lbd, interval):
 	""" gives the next time an event will ocurr acording to the lbd
 	"""
 	uniformrand = rd.random()
-	for i in range(1, len(dist)):
-		if uniformrand < dist[i-1]: return i/1000
-	return i/1000
+	return interval*(-math.log(1-uniformrand))/lbd
 
 def uniformRandom(m=1):
 	""" gives a random number between [0, m]

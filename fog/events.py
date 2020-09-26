@@ -110,7 +110,7 @@ class Decision(Event):
 
 class Recieving(Event):
 	def __init__(self, time, recieving_node, incoming_task=None, decision=None, sending_node=None, 
-		client_dist=None):
+		ar=None, interval=None):
 		super(Recieving, self).__init__(time, "Recieving")
 		self.rn = recieving_node
 		self.e = recieving_node.edges
@@ -121,8 +121,9 @@ class Recieving(Event):
 		self.decision = decision
 		# or the node that offloaded here
 		self.sn = sending_node
-		# mass distribution to set up next client event 
-		self.client_dist = client_dist
+		# average arrival rate and interval in which we are considering
+		self.ar = ar
+		self.interval = interval
 
 	# allocs a task to node queue, offloads to another or discards.
 	def execute(self, eq):
@@ -148,9 +149,9 @@ class Recieving(Event):
 			eq.addEvent(ev)
 
 		# and schedule the next event for recieving (poisson process)
-		if self.client_dist is not None:
-			ev = Recieving(self.time+utils.poissonNextEvent(self.client_dist), self.rn,
-				decision=self.decision, client_dist=self.client_dist)
+		if self.ar is not None:
+			ev = Recieving(self.time+utils.poissonNextEvent(self.ar, self.interval), self.rn,
+				decision=self.decision, ar=self.ar, interval=self.interval)
 			eq.addEvent(ev)
 
 		# debug message
