@@ -2,6 +2,6 @@ venv/*
 *.pyc
 *.pyo
 fog/test/*
-utils/test/*
+tools/test/*
 algorithms/test/*
 playground.py

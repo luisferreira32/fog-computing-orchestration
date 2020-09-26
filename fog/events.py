@@ -63,12 +63,13 @@ class Event(object):
 
 class Decision(Event):
 	def __init__(self, time, nodes, algorithm="rd", time_interval = configs.TIME_INTERVAL, 
-		ar=configs.TASK_ARRIVAL_RATE):
+		ar=configs.TASK_ARRIVAL_RATE, display=False):
 		super(Decision, self).__init__(time, "Decision")
 		self.alg = algorithm
 		self.nodes = nodes
 		self.ti = time_interval
 		self.ar = ar
+		self.display = display
 
 	def execute(self, eq):
 		# make the decision based on the current state of each node (checked by looking at nodes and edges)
@@ -101,6 +102,8 @@ class Decision(Event):
 
 		# debug message
 		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed decision at %0.2f" % self.time)
+
+		# if we're going to display the messages until now
 
 
 # -------------------------------------------- Recieving --------------------------------------------
