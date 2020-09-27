@@ -4,7 +4,7 @@ import collections
 # our imports
 from . import configs
 from . import coms
-from tools import utils
+from tools import utils, graphs
 from algorithms import basic
 
 # -------------------------------------------- Event Queue --------------------------------------------
@@ -76,7 +76,7 @@ class Decision(Event):
 		new_decisions = {}
 		# generate decision for every client connected node
 		for nL in self.nodes:
-			if nL.w == 0: continue
+			#if nL.w == 0: continue
 			Qsizes = []
 			for n in self.nodes: Qsizes.append(n.qs())
 			# state = (nL, w, Qsizes)
@@ -94,14 +94,17 @@ class Decision(Event):
 		for ev in eq.q:
 			if ev.classtype == "Recieving" and ev.decision is not None:
 				for n in self.nodes:
-					if ev.rn == n: ev.decision = new_decisions[n]
+					if ev.rn == n: 
+						if n in new_decisions:
+							ev.decision = new_decisions[n]
 
 		# and add another decision after a time interval
 		ev = Decision(self.time + self.ti, self.nodes, self.alg, self.ti, self.ar)
 		eq.addEvent(ev)
 
 		# debug message
-		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed decision at %0.2f" % self.time)
+		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Decision]" % self.time)
+		if configs.FOG_DEBUG == 1: graphs.displayState(self.time,self.nodes, new_decisions)
 
 		# if we're going to display the messages until now
 
@@ -110,7 +113,7 @@ class Decision(Event):
 
 class Recieving(Event):
 	def __init__(self, time, recieving_node, incoming_task=None, decision=None, sending_node=None, 
-		ar=None, interval=None):
+		ar=None, interval=None, nodes=None):
 		super(Recieving, self).__init__(time, "Recieving")
 		self.rn = recieving_node
 		self.e = recieving_node.edges
@@ -124,6 +127,7 @@ class Recieving(Event):
 		# average arrival rate and interval in which we are considering
 		self.ar = ar
 		self.interval = interval
+		self.nodes = nodes
 
 	# allocs a task to node queue, offloads to another or discards.
 	def execute(self, eq):
@@ -131,8 +135,8 @@ class Recieving(Event):
 		if self.decision is None and self.sn is not None:
 			self.sn.edges[self.rn].busy = False
 			t = self.rn.queue(self.it)
-		# if we're meant to offload and we can... do it
-		elif self.decision["w0"] > 0 and not self.e[self.decision["nO"]].busy:
+		# if we're meant to offload try to do it
+		elif self.decision["w0"] > 0 and self.decision["nO"] != self.rn:
 			self.decision["w0"] -= 1
 			ev = Sending(self.time, self.rn, self.decision["nO"], self.it)
 			eq.addEvent(ev)
@@ -150,12 +154,13 @@ class Recieving(Event):
 
 		# and schedule the next event for recieving (poisson process)
 		if self.ar is not None:
-			ev = Recieving(self.time+utils.poissonNextEvent(self.ar, self.interval), self.rn,
-				decision=self.decision, ar=self.ar, interval=self.interval)
+			ev = Recieving(self.time+utils.poissonNextEvent(self.ar, self.interval), utils.randomChoice(self.nodes),
+				decision=self.decision, ar=self.ar, interval=self.interval, nodes=self.nodes)
 			eq.addEvent(ev)
 
 		# debug message
-		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed recieving at %0.2f" % self.time)
+		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Recieving]" % self.time, "node", self.rn.name,
+			"task timestamp %.2f" % self.it.timestamp, "task discarded", t)
 
 		return t
 
@@ -168,19 +173,23 @@ class Sending(Event):
 		self.sn = sending_node
 		self.rn = recieving_node
 		self.ot = outbound_task
-		self.edge = self.sn.edges[self.rn]
+		self.edge = sending_node.edges[recieving_node]
 
 	# sends the task to another node, blocking coms in the meantime
 	def execute(self, eq):
-		self.edge.busy = True
+		# if it was already sending... discard
+		if self.edge.busy: return self.ot
 		# if there is no connection, it fails
-		if self.edge.comtime == -1: return outbound_task
+		if self.edge.comtime == -1: return self.ot
+		# then get busy
+		self.edge.busy = True
 		# recieves after comm time finished
 		ev = Recieving(self.time+self.edge.comtime, self.rn, incoming_task=self.ot, sending_node=self.sn)
 		eq.addEvent(ev)
 
 		# debug message
-		if configs.FOG_DEBUG == 1: print("[DEBUG] Executed sending at %0.2f" % self.time)
+		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Sending]" % self.time, "from", self.sn.name,"to",
+			self.rn.name,"task timestamp %.2f" % self.ot.timestamp, "arriving %.2f" % (self.time+self.edge.comtime))
 
 
 # -------------------------------------------- Processing --------------------------------------------
@@ -206,8 +215,9 @@ class Processing(Event):
 
 		# debug message
 		if configs.FOG_DEBUG == 1 and self.pn.processing:
-			print("[DEBUG] Executed processing at %0.2f" % self.time)
+			tstring = ("task timestamp %.2f" % t.timestamp)  + (" and delay %.2f" % t.delay)
+			print("[DEBUG] [%.2f Processing]" % (self.time), "node", self.pn.name, tstring)
 
-		return t		
+		return t
 		
 		

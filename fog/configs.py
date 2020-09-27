@@ -1,8 +1,8 @@
 # GLOBAL FOG VARIABLES
 
 # auxiliary for the programming
-FOG_DEBUG = 0
-SIM_TIME = 500
+FOG_DEBUG = 1
+SIM_TIME = 200
 TIME_INTERVAL = 10
 N_NODES = 5
 

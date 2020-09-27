@@ -47,7 +47,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 	# -------------------------------------------- 1. --------------------------------------------
 
 	# begin the first client request, that calls another based on a poisson process
-	ev = events.Recieving(0, nodes[0], decision={"w0":0, "n0":None}, ar=ar, interval=configs.TIME_INTERVAL)
+	ev = events.Recieving(0, nodes[0], decision={"w0":0, "n0":None}, ar=ar, interval=configs.TIME_INTERVAL, nodes=nodes)
 	evq.addEvent(ev)
 	# decision making time
 	ev = events.Decision(0, nodes, algorithm, ar=ar)

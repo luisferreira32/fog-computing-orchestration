@@ -59,7 +59,7 @@ class Core(object):
 
 		# and it takes a while to process a task
 		t = self.cpuqueue.popleft()
-		time = time + configs.DEFAULT_IL*self.cpi/self.cps
+		time = time + t.il*self.cpi/self.cps
 		t.process(time)
 		return t
 
