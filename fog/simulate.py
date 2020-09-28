@@ -43,6 +43,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 
 	# and for information obtaining
 	delays = []
+	discarded = 0
 
 	# -------------------------------------------- 1. --------------------------------------------
 
@@ -61,7 +62,8 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 		# execute the first event of the queue
 		t = ev.execute(evq)
 		if t is not None:
-			delays.append(t.delay)
+			if t.delay == -1: discarded += 1
+			else: delays.append(t.delay)
 
 		# -------------------------------------------- 3. --------------------------------------------
 
@@ -69,5 +71,5 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 
 	if configs.FOG_DEBUG == 1: print("[DEBUG] Finished simulation")
 
-	return utils.listavg(delays)
+	return (utils.listavg(delays), len(delays),discarded)
 		

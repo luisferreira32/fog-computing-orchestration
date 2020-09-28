@@ -40,9 +40,14 @@ def graphtime(xtime=None, lines=None, xlabel="x", ylabel="y", title="default_tit
 	return 0
 
 
-def displayState(time,nodes, new_decisions):
+def displayState(time,nodes, new_decisions, evq):
 	# nodes state
 	print("---------------------------------[%.2f]----------------------------------" % time)
+	evqstring = ""
+	for e in evq.q:
+		evqstring += " --> " + str(e)
+	print(evqstring)	
+	print("-------------------------------------------------------------------------")
 	for n in nodes:
 		print("Node",n.name,"has decision: {w0:",new_decisions[n]["w0"]," nO:",new_decisions[n]["nO"].name,"}")
 		# queue states

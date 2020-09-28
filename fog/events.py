@@ -1,5 +1,6 @@
 # external imports
 import collections
+import sys
 
 # our imports
 from . import configs
@@ -71,6 +72,9 @@ class Decision(Event):
 		self.ar = ar
 		self.display = display
 
+	def __str__(self):
+		return "Decision["+("%.2f"%self.time)+"]"
+
 	def execute(self, eq):
 		# make the decision based on the current state of each node (checked by looking at nodes and edges)
 		new_decisions = {}
@@ -80,7 +84,7 @@ class Decision(Event):
 			Qsizes = []
 			for n in self.nodes: Qsizes.append(n.qs())
 			# state = (nL, w, Qsizes)
-			state = (nL, nL.w, Qsizes)
+			state = (nL, self.ar, Qsizes)
 			# algorithm decision
 			if self.alg == "rd":  (w0, nO_index) = basic.randomalgorithm(state)
 			if self.alg == "lq":  (w0, nO_index) = basic.leastqueue(state)
@@ -95,8 +99,7 @@ class Decision(Event):
 			if ev.classtype == "Recieving" and ev.decision is not None:
 				for n in self.nodes:
 					if ev.rn == n: 
-						if n in new_decisions:
-							ev.decision = new_decisions[n]
+						ev.decision = new_decisions[n]
 
 		# and add another decision after a time interval
 		ev = Decision(self.time + self.ti, self.nodes, self.alg, self.ti, self.ar)
@@ -104,7 +107,7 @@ class Decision(Event):
 
 		# debug message
 		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Decision]" % self.time)
-		if configs.FOG_DEBUG == 1: graphs.displayState(self.time,self.nodes, new_decisions)
+		if configs.FOG_DEBUG == 1: graphs.displayState(self.time,self.nodes, new_decisions, eq)
 
 		# if we're going to display the messages until now
 
@@ -129,14 +132,23 @@ class Recieving(Event):
 		self.interval = interval
 		self.nodes = nodes
 
+	def __str__(self):
+		retval = "Recieving["+("%.2f"%self.time)+"]["+self.rn.name+"]"
+		if self.decision and self.decision["w0"] > 0:
+			retval += "{w0:"+str(self.decision["w0"])+" nO:"+self.decision["nO"].name+"}"
+		else:
+			retval += "{"+"-----}"
+		retval += "[t:"+("%.2f"%self.it.timestamp)+"]"
+		return retval
+
 	# allocs a task to node queue, offloads to another or discards.
 	def execute(self, eq):
 		# if it comes from another offloading just try to queue it
 		if self.decision is None and self.sn is not None:
 			self.sn.edges[self.rn].busy = False
 			t = self.rn.queue(self.it)
-		# if we're meant to offload try to do it
-		elif self.decision["w0"] > 0 and self.decision["nO"] != self.rn:
+		# if we're meant to offload try to do it #and self.decision["nO"] != self.rn 
+		elif self.decision["w0"] > 0 and not self.rn.edges[self.decision["nO"]].busy:
 			self.decision["w0"] -= 1
 			ev = Sending(self.time, self.rn, self.decision["nO"], self.it)
 			eq.addEvent(ev)
@@ -154,7 +166,7 @@ class Recieving(Event):
 
 		# and schedule the next event for recieving (poisson process)
 		if self.ar is not None:
-			ev = Recieving(self.time+utils.poissonNextEvent(self.ar, self.interval), utils.randomChoice(self.nodes),
+			ev = Recieving(self.time+utils.poissonNextEvent(self.ar, self.interval), self.rn,
 				decision=self.decision, ar=self.ar, interval=self.interval, nodes=self.nodes)
 			eq.addEvent(ev)
 
@@ -175,16 +187,19 @@ class Sending(Event):
 		self.ot = outbound_task
 		self.edge = sending_node.edges[recieving_node]
 
+	def __str__(self):
+		retval = "Sending["+("%.2f"%self.time)+"]["+self.sn.name+"->"+self.rn.name+"]"
+		retval += "[t:"+("%.2f"%self.ot.timestamp)+"]"
+		return retval
+
 	# sends the task to another node, blocking coms in the meantime
 	def execute(self, eq):
-		# if it was already sending... discard
-		if self.edge.busy: return self.ot
 		# if there is no connection, it fails
 		if self.edge.comtime == -1: return self.ot
 		# then get busy
 		self.edge.busy = True
 		# recieves after comm time finished
-		ev = Recieving(self.time+self.edge.comtime, self.rn, incoming_task=self.ot, sending_node=self.sn)
+		ev = Recieving(self.time+self.edge.comtime, self.rn, self.ot, None, self.sn)
 		eq.addEvent(ev)
 
 		# debug message
@@ -199,6 +214,9 @@ class Processing(Event):
 		super(Processing, self).__init__(time, "Processing")
 		self.pn = processing_node
 
+	def __str__(self):
+		return "Processing["+("%.2f"%self.time)+"]["+self.pn.name+"][qs:"+str(self.pn.qs())+"]"
+
 	# processes first task in node queue and sets other processing events if there's still space
 	def execute(self, eq):
 		self.pn.processing = True
@@ -212,6 +230,8 @@ class Processing(Event):
 			p_time = t.delay + t.timestamp
 			ev = Processing(p_time, self.pn)
 			eq.addEvent(ev)
+			# if the delay is negative break the code.
+			if t.delay < 0: sys.exit()
 
 		# debug message
 		if configs.FOG_DEBUG == 1 and self.pn.processing:
