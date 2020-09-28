@@ -1,7 +1,4 @@
 venv/*
 *.pyc
 *.pyo
-fog/test/*
-tools/test/*
-algorithms/test/*
 playground.py
