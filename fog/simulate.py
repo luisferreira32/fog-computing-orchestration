@@ -64,7 +64,8 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 		# execute the first event of the queue
 		t = ev.execute(evq)
 		if t is not None:
-			if t.delay == -1: discarded += 1
+			if ev.classtype == "Decision": discarded += t
+			elif t.delay == -1: discarded += 1
 			else: delays.append(t.delay)
 
 		# -------------------------------------------- 3. --------------------------------------------

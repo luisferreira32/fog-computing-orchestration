@@ -26,6 +26,18 @@ def test_one_send():
 	assert e.classtype == "Recieving"
 	assert e.time == n1.comtime[n2]
 
+def test_impossible_send():
+	evq = events.EventQueue()
+	n1 = node.Core(placement=(0,0))
+	n2 = node.Core(placement=(0,0))
+	n1.setcomtime([n1, n2])
+	n2.setcomtime([n1, n2])
+	t1 = coms.Task(0)
+	n1.send(t1,n2)
+	e1 = events.Sending(0,n1)
+	assert e1.execute(evq) == t1
+	assert evq.hasEvents() == False
+
 def test_sending_arrival():
 	evq = events.EventQueue()
 	n1 = node.Core(placement=(0,0))

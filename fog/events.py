@@ -99,6 +99,8 @@ class Decision(Event):
 				eq.addEvent(ev)
 
 		# what to do with the rest of the w?
+		discarded = len(self.nL.w)
+		self.nL.w.clear()
 
 		# and add another decision after a time interval
 		ev = Decision(self.time + self.ti, self.nL, self.nodes, self.alg, self.ti, self.ar)
@@ -106,6 +108,8 @@ class Decision(Event):
 
 		# debug message
 		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Decision]" % self.time)
+		
+		return discarded
 
 
 # -------------------------------------------- Recieving --------------------------------------------
