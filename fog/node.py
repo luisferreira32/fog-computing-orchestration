@@ -25,11 +25,13 @@ class Core(object):
 		self.cpuqueue = collections.deque(maxlen=configs.MAX_QUEUE)
 		self.processing = False
 		# tasks allocated in this node per unit time
-		self.w = 0
+		self.w = collections.deque(maxlen=configs.MAX_W)
 		# communications
 		self.bw = bandwidth
 		self.pw = power
-		self.edges = {}
+		self.comtime = {}
+		self.transmitting = False
+		self.sendq = collections.deque()
 
 		# and debug if set to do so
 		if configs.FOG_DEBUG:
@@ -65,22 +67,43 @@ class Core(object):
 
 	def queue(self, t):
 		#Add a task to the cpu queue and set the locally processed tasks number
-
 		# queue is full, give the task back
 		if self.fullqueue():
 			return t
-
 		# else add it to the queue and return None
 		self.cpuqueue.append(t)
 		return None
 
-	# --- edges related methods ---
+	# --- communication related methods ---
 
-	def setedges(self, nodes):
-		# sets the communication edges with other nodes
+	def setcomtime(self, nodes):
+		# sets the communication edges time with other nodes
 		for n in nodes:
 			if n == self: continue
-			self.edges[n] = coms.Edge(self, n, self.bw, self.pw)
+			self.comtime[n] = coms.comtime(1, coms.transmissionrate(self, n, self.bw, self.pw))
+
+	def recieve(self, t):
+		# if W_MAX exceeded, discard task, else get it
+		if len(self.w) == configs.MAX_W:
+			return t
+		self.w.append(t)
+		return None
+
+	def decide(self):
+		if len(self.w) == 0:
+			return None
+		return self.w.popleft()
+
+	def send(self, task, destination):
+		self.sendq.append([task, destination])
+
+	def popsendq(self):
+		return self.sendq.popleft()
+
+	def tosend(self):
+		if len(self.sendq) > 0:
+			return True
+		return False
 
 
 #------------------------------------------------------ ------------ -----------------------------------------------------

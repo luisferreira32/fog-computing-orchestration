@@ -63,111 +63,97 @@ class Event(object):
 # -------------------------------------------- Decision --------------------------------------------
 
 class Decision(Event):
-	def __init__(self, time, nodes, algorithm="rd", time_interval = configs.TIME_INTERVAL, 
+	def __init__(self, time, nL, nodes, algorithm="rd", time_interval = configs.TIME_INTERVAL, 
 		ar=configs.TASK_ARRIVAL_RATE, display=False):
 		super(Decision, self).__init__(time, "Decision")
 		self.alg = algorithm
+		self.nL = nL
 		self.nodes = nodes
 		self.ti = time_interval
 		self.ar = ar
-		self.display = display
 
 	def __str__(self):
-		return "Decision["+("%.2f"%self.time)+"]"
+		return "Decision["+("%.2f"%self.time)+"]["+self.nL.name+"]"
 
 	def execute(self, eq):
-		# make the decision based on the current state of each node (checked by looking at nodes and edges)
-		new_decisions = {}
-		# generate decision for every client connected node
-		for nL in self.nodes:
-			#if nL.w == 0: continue
+		# decide for current node with incoming tasks
+		if len(self.nL.w) > 0:
 			Qsizes = []
 			for n in self.nodes: Qsizes.append(n.qs())
 			# state = (nL, w, Qsizes)
-			state = (nL, self.ar, Qsizes)
+			state = (self.nL, len(self.nL.w), Qsizes)
 			# algorithm decision
-			if self.alg == "rd":  (w0, nO_index) = basic.randomalgorithm(state)
-			if self.alg == "lq":  (w0, nO_index) = basic.leastqueue(state)
-			if self.alg == "nn":  (w0, nO_index) = basic.nearestnode(state)
+			if self.alg == "rd":  (w0, nO) = basic.randomalgorithm(state, self.nodes)
+			if self.alg == "lq":  (w0, nO) = basic.leastqueue(state, self.nodes)
+			if self.alg == "nn":  (w0, nO) = basic.nearestnode(state, self.nodes)
 
-			# and wrap the new decision
-			new_decisions[nL] = {"w0": w0, "nO": self.nodes[nO_index]}
-			nL.w = 0
+			# and execute the decision
+			for i in range(w0):
+				self.nL.send(self.nL.decide(), nO)
+			for j in range(len(self.nL.w)):
+				if not self.nL.fullqueue(): self.nL.queue(self.nL.decide())
 
-		# and for every Recieving event in the evq, change it's decision to the new one
-		for ev in eq.q:
-			if ev.classtype == "Recieving" and ev.decision is not None:
-				for n in self.nodes:
-					if ev.rn == n: 
-						ev.decision = new_decisions[n]
+			# if there is something to send, start the event
+			if not self.nL.transmitting and self.nL.tosend():
+				ev = Sending(self.time, self.nL)
+				eq.addEvent(ev)
+
+		# what to do with the rest of the w?
 
 		# and add another decision after a time interval
-		ev = Decision(self.time + self.ti, self.nodes, self.alg, self.ti, self.ar)
+		ev = Decision(self.time + self.ti, self.nL, self.nodes, self.alg, self.ti, self.ar)
 		eq.addEvent(ev)
 
 		# debug message
 		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Decision]" % self.time)
-		if configs.FOG_DEBUG == 1: graphs.displayState(self.time,self.nodes, new_decisions, eq)
-
-		# if we're going to display the messages until now
 
 
 # -------------------------------------------- Recieving --------------------------------------------
 
 class Recieving(Event):
-	def __init__(self, time, recieving_node, incoming_task=None, decision=None, sending_node=None, 
-		ar=None, interval=None, nodes=None):
+	def __init__(self, time, recieving_node, incoming_task=None, sending_node=None, ar=None,
+		interval=configs.TIME_INTERVAL, nodes=None):
 		super(Recieving, self).__init__(time, "Recieving")
 		self.rn = recieving_node
-		self.e = recieving_node.edges
 		self.it = incoming_task
 		if incoming_task == None: self.it = coms.Task(time)
 
-		# a set for the decision for the next "w" tasks on this node: [nO, w0] with w0 < w
-		self.decision = decision
-		# or the node that offloaded here
+		# the node that offloaded here
 		self.sn = sending_node
-		# average arrival rate and interval in which we are considering
+		# or average arrival rate and interval in which we are considering
 		self.ar = ar
 		self.interval = interval
 		self.nodes = nodes
 
 	def __str__(self):
 		retval = "Recieving["+("%.2f"%self.time)+"]["+self.rn.name+"]"
-		if self.decision and self.decision["w0"] > 0:
-			retval += "{w0:"+str(self.decision["w0"])+" nO:"+self.decision["nO"].name+"}"
-		else:
-			retval += "{"+"-----}"
-		retval += "[t:"+("%.2f"%self.it.timestamp)+"]"
 		return retval
 
-	# allocs a task to node queue, offloads to another or discards.
+	# recieves the tasks either from a client or from an offloading node
 	def execute(self, eq):
 		# if it comes from another offloading just try to queue it
-		if self.decision is None and self.sn is not None:
-			self.sn.edges[self.rn].busy = False
+		if self.sn is not None:
 			t = self.rn.queue(self.it)
-		# if we're meant to offload try to do it #and self.decision["nO"] != self.rn 
-		elif self.decision["w0"] > 0 and not self.rn.edges[self.decision["nO"]].busy:
-			self.decision["w0"] -= 1
-			ev = Sending(self.time, self.rn, self.decision["nO"], self.it)
-			eq.addEvent(ev)
-			t = None
-			self.rn.w += 1
+			self.sn.transmitting = False
+		# else just recieve it for this time step
 		else:
-			# queue the task if we didn't offload it, returns task if queue is full
-			t = self.rn.queue(self.it)
-			self.rn.w += 1
+			t = self.rn.recieve(self.it)
 
 		# start processing if it hasn't started already
-		if not self.rn.processing:
+		if not self.rn.processing and not self.rn.emptyqueue():
 			ev = Processing(self.time, self.rn)
 			eq.addEvent(ev)
 
+		# start sending if there is stuff to send
+		if not self.rn.transmitting and self.rn.tosend() > 0:
+			ev = Sending(self.time, self.rn)
+			eq.addEvent(ev)
+
+
 		# and schedule the next event for recieving (poisson process)
 		if self.ar is not None:
-			ev = Recieving(self.time+utils.poissonNextEvent(self.ar, self.interval), self.rn,
-				decision=self.decision, ar=self.ar, interval=self.interval, nodes=self.nodes)
+			ev = Recieving(self.time+utils.poissonNextEvent(self.ar, self.interval), utils.randomChoice(self.nodes),
+				ar=self.ar, interval=self.interval, nodes=self.nodes)
 			eq.addEvent(ev)
 
 		# debug message
@@ -180,31 +166,27 @@ class Recieving(Event):
 # -------------------------------------------- Sending --------------------------------------------
 
 class Sending(Event):
-	def __init__(self, time, sending_node, recieving_node, outbound_task):
+	def __init__(self, time, sending_node):
 		super(Sending, self).__init__(time, "Sending")
 		self.sn = sending_node
-		self.rn = recieving_node
-		self.ot = outbound_task
-		self.edge = sending_node.edges[recieving_node]
 
 	def __str__(self):
-		retval = "Sending["+("%.2f"%self.time)+"]["+self.sn.name+"->"+self.rn.name+"]"
-		retval += "[t:"+("%.2f"%self.ot.timestamp)+"]"
-		return retval
+		return "Sending["+("%.2f"%self.time)+"]["+self.sn.name+"]"
 
 	# sends the task to another node, blocking coms in the meantime
 	def execute(self, eq):
-		# if there is no connection, it fails
-		if self.edge.comtime == -1: return self.ot
+		# take from the coms queue a task
+		[t, rn] = self.sn.popsendq()
+		# if it cannot transmit, it fails
+		if self.sn.comtime[rn] == -1: return t
 		# then get busy
-		self.edge.busy = True
-		# recieves after comm time finished
-		ev = Recieving(self.time+self.edge.comtime, self.rn, self.ot, None, self.sn)
+		self.sn.transmitting = True
+		# recieves after comtime finished
+		ev = Recieving(self.time+self.sn.comtime[rn], rn, t, self.sn)
 		eq.addEvent(ev)
 
 		# debug message
-		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Sending]" % self.time, "from", self.sn.name,"to",
-			self.rn.name,"task timestamp %.2f" % self.ot.timestamp, "arriving %.2f" % (self.time+self.edge.comtime))
+		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Sending]" % self.time, "from", self.sn.name,"to", rn.name)
 
 
 # -------------------------------------------- Processing --------------------------------------------

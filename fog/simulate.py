@@ -9,7 +9,7 @@ from . import events
 from . import coms
 
 # tools
-from tools import utils
+from tools import utils, graphs
 
 # decision algorithms
 from algorithms import basic
@@ -36,7 +36,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 		nodes.append(n)
 	# create M edges between each two nodes
 	for n in nodes:
-		n.setedges(nodes)
+		n.setcomtime(nodes)
 
 	# create the event queue
 	evq = events.EventQueue()
@@ -44,15 +44,17 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 	# and for information obtaining
 	delays = []
 	discarded = 0
+	c=0
 
 	# -------------------------------------------- 1. --------------------------------------------
 
 	# begin the first client request, that calls another based on a poisson process
-	ev = events.Recieving(0, nodes[0], decision={"w0":0, "n0":None}, ar=ar, interval=configs.TIME_INTERVAL, nodes=nodes)
+	ev = events.Recieving(0, nodes[0], ar=ar, interval=configs.TIME_INTERVAL, nodes=nodes)
 	evq.addEvent(ev)
 	# decision making time
-	ev = events.Decision(0, nodes, algorithm, ar=ar)
-	evq.addEvent(ev)
+	for nL in nodes:
+		ev = events.Decision(0, nL, nodes, algorithm, ar=ar)
+		evq.addEvent(ev)
 
 	# -------------------------------------------- 2. 3. --------------------------------------------
 	while evq.hasEvents():
@@ -68,8 +70,13 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 		# -------------------------------------------- 3. --------------------------------------------
 
 		# It's repeating until queue ends, which is the last event scheduled before simulation limit time
+		if configs.DISPLAY == True and ev.time==c: 
+			graphs.displayState(ev.time,nodes, evq)
+			c+=10
 
 	if configs.FOG_DEBUG == 1: print("[DEBUG] Finished simulation")
 
+	for n in nodes:
+		discarded += len(n.w) + len(n.sendq)
 	return (utils.listavg(delays), len(delays),discarded)
 		

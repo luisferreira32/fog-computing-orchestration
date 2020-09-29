@@ -7,13 +7,6 @@ from . import node
 
 # ------------------------------------------------------ Comunication related classes ------------------------------------------------------
 
-class Edge(object):
-	def __init__(self, n1, n2, bw, pw):
-		self.neigh = n2
-		self.busy = False
-		self.comtime = comtime(1, transmissionrate(n1, n2, bw, pw))		
-
-
 class Task(object):
 	def __init__(self, timestamp, size=configs.DEFAULT_DATA, instruction_lines=configs.DEFAULT_IL):
 		self.timestamp = timestamp

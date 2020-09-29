@@ -10,11 +10,12 @@ def test_one_send():
 	evq = events.EventQueue()
 	n1 = node.Core(placement=(0,0))
 	n2 = node.Core(placement=(0,1))
-	n1.setedges([n1, n2])
-	n2.setedges([n1, n2])
+	n1.setcomtime([n1, n2])
+	n2.setcomtime([n1, n2])
 	t1 = coms.Task(0)
 
-	e1 = events.Sending(0, n1, n2, t1)
+	n1.send(t1, n2)
+	e1 = events.Sending(0, n1)
 	assert evq.hasEvents() == False
 	evq.addEvent(e1)
 	e = evq.popEvent()
@@ -23,21 +24,23 @@ def test_one_send():
 	assert evq.hasEvents() == True
 	e = evq.popEvent()
 	assert e.classtype == "Recieving"
-	assert e.time == e1.edge.comtime
+	assert e.time == n1.comtime[n2]
 
 def test_sending_arrival():
 	evq = events.EventQueue()
 	n1 = node.Core(placement=(0,0))
 	n2 = node.Core(placement=(0,1))
 	n3 = node.Core(placement=(0,3))
-	n1.setedges([n1, n2, n3])
-	n2.setedges([n1, n2, n3])
-	n3.setedges([n1, n2, n3])
+	n1.setcomtime([n1, n2, n3])
+	n2.setcomtime([n1, n2, n3])
+	n3.setcomtime([n1, n2, n3])
 	t1 = coms.Task(0)
 	t2 = coms.Task(0)
 
-	e1 = events.Sending(0, n1, n3, t1)
-	e2 = events.Sending(0, n1, n2, t2)
+	n1.send(t1, n3)
+	e1 = events.Sending(0, n1)
+	n1.send(t2, n2)
+	e2 = events.Sending(0, n1)
 	assert evq.hasEvents() == False
 	evq.addEvent(e1)
 	evq.addEvent(e2)

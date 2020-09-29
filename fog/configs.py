@@ -1,14 +1,15 @@
 # GLOBAL FOG VARIABLES
 
 # auxiliary for the programming
-FOG_DEBUG = 1
+FOG_DEBUG = 0
+DISPLAY = False
 SIM_TIME = 200
-TIME_INTERVAL = 10
+TIME_INTERVAL = 1
 N_NODES = 5
 
 # fog core constants
 MAX_QUEUE = 10
-MAX_INFLUX = 20
+MAX_W = 20
 SERVICE_RATE = 1.8 # default 1.8
 MAX_AREA = (100, 100)
 UTILITY_REWARD = 0.5
