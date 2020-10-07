@@ -1,5 +1,6 @@
 import sys
-sys.path.append("/home/yourself/fog-computing-orchestration")
+if "/home/yourself/fog-computing-orchestration" not in sys.path:
+	sys.path.append("/home/yourself/fog-computing-orchestration")
 
 from tools import utils
 

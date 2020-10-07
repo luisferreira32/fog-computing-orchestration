@@ -117,7 +117,7 @@ class Decision(Event):
 				eq.addEvent(ev)
 
 		# what to do with the rest of the w?
-		discarded = len(self.nL.w)
+		discarded += len(self.nL.w)
 		self.nL.w.clear()
 
 		# and add another decision after a time interval
