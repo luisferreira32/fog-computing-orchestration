@@ -37,7 +37,7 @@ def transmissionrate(n1=None, n2=None, bw=None, pw=None):
 		return -1
  	
  	# MHz to Hz
-	BHz = bw * (10**6)
+	BHz = bw * (1000000)
 	# convertion from dBm to mW in power and noise
 	Power = math.pow( 10 , 0.1*pw)*(configs.B1_PATHLOSS*((node.distance(n1,n2))**(-configs.B2_PATHLOSS))) 
 	Noise = math.pow( 10 , 0.1*configs.N0)*BHz
@@ -57,6 +57,6 @@ def comtime(w0=0, rate12 = 0):
 		return -1
 
 	# 2*Mbytes*w0/rate
-	c = 2*(configs.DEFAULT_DATA*(10**6))*w0/rate12
+	c = 2*(configs.DEFAULT_DATA*(1000000))*w0/rate12
 	if configs.FOG_DEBUG == 1: print("[DEBUG] Com time is ", c)
 	return c

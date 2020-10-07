@@ -29,9 +29,9 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 	nodes = []
 	for i in range(0, configs.N_NODES):
 		# set random sr based on the average
-		sr_i = utils.uniformRandom(sr*2)
+		#sr_i = utils.uniformRandom(sr*2)
 		# cycles per second, depends on the TIME INTERVAL of the SERVICE RATE
-		cps = sr_i*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
+		cps = sr*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
 		n = node.Core(name="n"+str(i), 
 			placement=(utils.uniformRandom(configs.MAX_AREA[0]),utils.uniformRandom(configs.MAX_AREA[1])),
 			cpu=(configs.DEFAULT_CPI, cps))
@@ -75,7 +75,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 		# It's repeating until queue ends, which is the last event scheduled before simulation limit time
 		if configs.DISPLAY == True and ev.time==c: 
 			graphs.displayState(ev.time,nodes, evq)
-			c+=10
+			c+=1
 
 	if configs.FOG_DEBUG == 1: print("[DEBUG] Finished simulation")
 

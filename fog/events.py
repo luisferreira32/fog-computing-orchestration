@@ -105,9 +105,10 @@ class Decision(Event):
 				instant_reward = self.ao.qreward(self.nL, [w0, nO])
 				self.past = [past_state, action, instant_reward]
 
-			# and execute the decision
-			for i in range(w0):
-				self.nL.send(self.nL.decide(), nO)
+			# and execute the decision, but since there's no sending queue, only when not transmitting
+			if not self.nL.transmitting:
+				for i in range(w0):
+					self.nL.send(self.nL.decide(), nO)
 			for j in range(len(self.nL.w)):
 				if not self.nL.fullqueue(): self.nL.queue(self.nL.decide())
 
@@ -158,10 +159,6 @@ class Recieving(Event):
 		if self.sn is not None:
 			t = self.rn.queue(self.it)
 			self.sn.transmitting = False
-			# and keep emptying outbound queue
-			if self.sn.tosend() > 0:
-				ev = Sending(self.time, self.sn)
-				eq.addEvent(ev)
 		# else just recieve it for this time step
 		else:
 			t = self.rn.recieve(self.it)
@@ -202,15 +199,18 @@ class Sending(Event):
 
 	# sends the task to another node, blocking coms in the meantime
 	def execute(self, eq):
-		# take from the coms queue a task
-		[t, rn] = self.sn.popsendq()
-		# if it cannot transmit, it fails
-		if self.sn.comtime[rn] == -1: return t
-		# then get busy
-		self.sn.transmitting = True
-		# recieves after comtime finished
-		ev = Recieving(self.time+self.sn.comtime[rn], rn, t, self.sn)
-		eq.addEvent(ev)
+		# send all tasks to the offloading node in a pack
+		total_n = len(self.sn.sendq)
+		while self.sn.tosend():
+			# take from the coms queue a task
+			[t, rn] = self.sn.popsendq()
+			# if it cannot transmit, it fails
+			if self.sn.comtime[rn] == -1: return t
+			# then get busy
+			self.sn.transmitting = True
+			# recieves after comtime finished - bandiwth divided by number of tasks
+			ev = Recieving(self.time+self.sn.comtime[rn]*total_n, rn, t, self.sn)
+			eq.addEvent(ev)
 
 		# debug message
 		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Sending]" % self.time, "from", self.sn.name,"to", rn.name)
