@@ -14,7 +14,7 @@ from tools import utils, graphs
 # decision algorithms
 from algorithms import basic
 
-def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="rd"):
+def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="rd", algorithm_object=None):
 	# 0. create all necessary information for the simulation to begin
 	# 1. create first round of events (decision and recieving tasks)
 	# 2. run events that generate more events
@@ -27,9 +27,11 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 
 	# create N_NODES with random placements within a limited area and a configured SR
 	nodes = []
-	# cycles per second, depends on the TIME INTERVAL of the SERVICE RATE
-	cps = sr*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
 	for i in range(0, configs.N_NODES):
+		# set random sr based on the average
+		sr_i = utils.uniformRandom(sr*2)
+		# cycles per second, depends on the TIME INTERVAL of the SERVICE RATE
+		cps = sr_i*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
 		n = node.Core(name="n"+str(i), 
 			placement=(utils.uniformRandom(configs.MAX_AREA[0]),utils.uniformRandom(configs.MAX_AREA[1])),
 			cpu=(configs.DEFAULT_CPI, cps))
@@ -53,7 +55,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 	evq.addEvent(ev)
 	# decision making time
 	for nL in nodes:
-		ev = events.Decision(0, nL, nodes, algorithm, ar=ar)
+		ev = events.Decision(0, nL, nodes, algorithm, ar=ar, algorithm_object=algorithm_object)
 		evq.addEvent(ev)
 
 	# -------------------------------------------- 2. 3. --------------------------------------------
@@ -64,7 +66,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 		# execute the first event of the queue
 		t = ev.execute(evq)
 		if t is not None:
-			if ev.classtype == "Decision": discarded += t
+			if isinstance(t, int): discarded += t
 			elif t.delay == -1: discarded += 1
 			else: delays.append(t.delay)
 

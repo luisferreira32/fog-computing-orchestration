@@ -6,14 +6,6 @@ from tools import utils
 def test_poisson():
 	utils.initRandom()
 
-	# average 5 events each 10 seconds
-	pdist = utils.distOfWaitingTime(5, 10)
-
-	# it should have each mili second
-	assert len(pdist) == 10*1000
-
-	assert round(pdist[len(pdist)-1]) == 1
-
 	# for 1000 of simulation time
 	t=0
 	counts = []
@@ -26,4 +18,6 @@ def test_poisson():
 
 
 	assert round(utils.listavg(counts)) == 5
+
+		
 

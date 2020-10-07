@@ -6,7 +6,7 @@ import sys
 from . import configs
 from . import coms
 from tools import utils, graphs
-from algorithms import basic
+from algorithms import basic, qlearning
 
 # -------------------------------------------- Event Queue --------------------------------------------
 
@@ -64,11 +64,16 @@ class Event(object):
 
 class Decision(Event):
 	def __init__(self, time, nL, nodes, algorithm="rd", time_interval = configs.TIME_INTERVAL, 
-		ar=configs.TASK_ARRIVAL_RATE, display=False):
+		ar=configs.TASK_ARRIVAL_RATE, algorithm_object=None, past_info=None):
 		super(Decision, self).__init__(time, "Decision")
+
 		self.alg = algorithm
+		self.ao = algorithm_object
+		self.past = past_info
+
 		self.nL = nL
 		self.nodes = nodes
+
 		self.ti = time_interval
 		self.ar = ar
 
@@ -76,6 +81,7 @@ class Decision(Event):
 		return "Decision["+("%.2f"%self.time)+"]["+self.nL.name+"]"
 
 	def execute(self, eq):
+		discarded = 0
 		# decide for current node with incoming tasks
 		if len(self.nL.w) > 0:
 			Qsizes = []
@@ -86,6 +92,18 @@ class Decision(Event):
 			if self.alg == "rd":  (w0, nO) = basic.randomalgorithm(state, self.nodes)
 			if self.alg == "lq":  (w0, nO) = basic.leastqueue(state, self.nodes)
 			if self.alg == "nn":  (w0, nO) = basic.nearestnode(state, self.nodes)
+			if self.alg == "ql":
+				# update based on the previous iteration if there was a previous iteration
+				next_state = qlearning.statetuple(self.nodes, self.nL)
+				if self.past is not None:
+					self.ao.update(self.past[0], self.past[1], next_state, self.past[2], self.nodes)
+				
+				# choose a new action and save it
+				(w0, nO) = self.ao.execute(self.nL, self.nodes)
+				past_state = next_state
+				action = [w0, nO]
+				instant_reward = self.ao.qreward(self.nL, [w0, nO])
+				self.past = [past_state, action, instant_reward]
 
 			# and execute the decision
 			for i in range(w0):
@@ -103,7 +121,8 @@ class Decision(Event):
 		self.nL.w.clear()
 
 		# and add another decision after a time interval
-		ev = Decision(self.time + self.ti, self.nL, self.nodes, self.alg, self.ti, self.ar)
+		ev = Decision(self.time + self.ti, self.nL, self.nodes, self.alg, self.ti, self.ar,
+			self.ao, self.past)
 		eq.addEvent(ev)
 
 		# debug message
@@ -139,6 +158,10 @@ class Recieving(Event):
 		if self.sn is not None:
 			t = self.rn.queue(self.it)
 			self.sn.transmitting = False
+			# and keep emptying outbound queue
+			if self.sn.tosend() > 0:
+				ev = Sending(self.time, self.sn)
+				eq.addEvent(ev)
 		# else just recieve it for this time step
 		else:
 			t = self.rn.recieve(self.it)

@@ -4,19 +4,6 @@ import random as rd
 
 def appendict(lines=None, key=None, value=None):
 	"""appends information to a dictionary called lines
-	
-	Parameters
-	----------
-	lines=None
-		the dictionary with information
-	key=None
-		the key of the dictionary
-	value=None
-		the value to append
-
-	Return
-	------
-	-1 if failed, 0 otherwise
 	"""
 	if lines == None or key == None or value == None:
 		return -1
@@ -40,23 +27,6 @@ def listavg(l=None):
 		return 0
 	return avg
 
-def distOfEventNumber(lbd):
-	"""Returns probability distribution of number of events in an interval
-	"""
-	dist = []
-	for k in range(0,2*lbd+1):
-		dist.append(((lbd**k) * math.exp(-lbd))/(math.factorial(k)))
-	return dist
-
-def distOfWaitingTime(lbd, interval):
-	""" P(T <= t) of waiting time according to a poisson process
-	"""
-	dist = []
-	for s in range(0, interval):
-		for ms in range(0, 1000):
-			t = s + ms/1000
-			dist.append(1-math.exp(-lbd/interval*t))
-	return dist
 
 def poissonNextEvent(lbd, interval):
 	""" gives the next time an event will ocurr acording to the lbd
