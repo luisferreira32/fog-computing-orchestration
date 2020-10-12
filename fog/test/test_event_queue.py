@@ -1,5 +1,6 @@
 import sys
 sys.path.append("/home/yourself/fog-computing-orchestration")
+sys.path.append("C:/fog-computing-orchestration")
 
 from fog import events
 
