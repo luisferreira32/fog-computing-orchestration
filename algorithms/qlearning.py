@@ -1,12 +1,12 @@
 # external imports
 import math
-import random
 import copy
 
 # our module imports
 from fog import configs
 from fog import coms
 from fog import node
+from tools import utils
 
 class Qlearning(object):
 	"""
@@ -49,24 +49,29 @@ class Qlearning(object):
 		self.sr=sr
 		self.ar=ar
 
+		# for the sim specific variables
+		self.nodes = None
+		self.updatable = True
+
 	def changeiter(self, epsilon=None, ar=None,sr=None):
 		if epsilon is not None: self.epsilon = epsilon
 		if sr is not None: self.sr=sr
 		if ar is not None: self.ar=ar
 
-	def addstate(self, state=None, nodes=None):
+	def setnodes(self,nodes):
+		self.nodes = nodes
 
-		if nodes is None or state is None:
-			return -1
+	def addstate(self, state=None):
+		state = statetuple(state)
 
 		# if the new key is not in the qtable
 		if state not in self.qtable:
 			# create the dict of q zeroed actions
 			actions = {}
 			for w0 in range(0,configs.MAX_W+1):
-				for n in nodes:
-					if n.name != state[0]:
-						actionkey = actiontuple(nO=n,w0=w0)
+				for n in self.nodes:
+					if n != state[0]:
+						actionkey = actiontuple(w0=w0, nO=n)
 						actions[actionkey] = 0
 			self.qtable[state] = actions
 		else:
@@ -74,14 +79,16 @@ class Qlearning(object):
 
 		return 0
 
-	def execute(self, nL=None, nodes=None):
+	def execute(self, state = None):
 
 		action = [0, None]
-		if nodes is None or nL is None:
+		if state is None:
 			return action
 
-		state = statetuple(nodes, nL)
-		self.addstate(state, nodes)
+		(nL, w, Qs) = state
+		Qs = list(Qs)
+		self.addstate(state)
+		state = statetuple(state)
 
 		# can only offload for a lesser queue
 		possibleactions = []
@@ -93,40 +100,53 @@ class Qlearning(object):
 				possibleactionsq.append(qvalue)
 				continue
 			if w0 > len(nL.w): continue
-			queues = dict(state[2])
-			if queues[nO] > nL.qs(): continue
+			if Qs[nO.index] > nL.qs(): continue
 			possibleactions.append(act)
 			possibleactionsq.append(qvalue)
 
 		if not possibleactions:
 			return action
 
-		x = random.random()
+		x = utils.uniformRandom()
 		# explore
 		if x < self.epsilon:
-			(w0, nO) = random.choice(possibleactions)
+			(w0, nO) = utils.randomChoice(possibleactions)
 		# exploit
 		else:
 			i = possibleactionsq.index(max(possibleactionsq))
 			(w0, nO) = possibleactions[i]
 
-		# find the node based on the name 
-		for n in nodes:
-			if n.name == nO:
-				destnode = n
+		return [w0, nO]
 
-		action = [w0, destnode]
-		return action
+	def update(self, state=None, action=None, nextstate=None, reward=0, nodes=None):
+		""" Updates a q-table entry based on a state transition and instant reward
+		"""
+
+		if state is None or action is None or nextstate is None or nodes is None:
+			print("[Q DEBUG] Invalid parameters to update q table.")
+			return None
+		# add new states that weren't yet visited
+		self.addstate(nextstate)
+		# and tuple them to do keys
+		statekey = statetuple(state)
+		actionkey = actiontuple(action)
+		nextstatekey = statetuple(nextstate)
+
+		newQ = (1-self.alpha)*self.qtable[statekey][actionkey] + self.alpha*(reward 
+			+ self.discount_factor*max(self.qtable[nextstatekey].values()))
+		self.qtable[statekey][actionkey] = newQ
+		return newQ
 
 
-	def qreward(self, nL, action=None):
+	def reward(self, state=None, action=None):
 		""" Calculates an instant reward based on an action taken
 		"""
 
-		if action is None:
+		if action is None or state is None:
 			print("[Q DEBUG] Failed to calculate reward, returning zero.")
 			return 0
 
+		nL= state[0]
 		(w0, nO) = action
 
 		# U(s,a) = r_u log( 1 + wL + w0 )  --- log2 ? they don't specify
@@ -169,57 +189,41 @@ class Qlearning(object):
 		# R(s,a) = U(s,a) - (D(s,a) + O(s,a))
 		return (Usa - (Dsa + Osa))
 
-	def update(self, state=None, action=None, nextstate=None, reward=0, nodes=None):
-		""" Updates a q-table entry based on a state transition and instant reward
-		"""
-
-		if state is None or action is None or nextstate is None or nodes is None:
-			print("[Q DEBUG] Invalid parameters to update q table.")
-			return None
-		# add new states that weren't yet visited
-		self.addstate(nextstate, nodes)
-		# action key doesn't include nL, since that's in the state
-		actionkey = actiontuple(action)
-
-		newQ = (1-self.alpha)*self.qtable[state][actionkey] + self.alpha*(reward 
-			+ self.discount_factor*max(self.qtable[nextstate].values()))
-		self.qtable[state][actionkey] = newQ
-		return newQ
-
 
 	# ----------------------------------- DISPLAY FUNCTIONS ----------------------------------------------
 	def printQtable(self):
 		for state, actions in self.qtable.items():
-			print("State",state)
+			print("State",state[0].name, state[1:])
 			for action, qvalue in actions.items():
-				print("Action", action, "qvalue",qvalue)
+				print("Action", action[0],action[1].name, "qvalue",qvalue)
 
 	def printQtableNZ(self):
 		for state, actions in self.qtable.items():
-			print("State",state)
+			print("State",state[0].name, state[1:])
 			for action, qvalue in actions.items():
-				if qvalue != 0:	print("Action", action, "qvalue",qvalue)
+				if qvalue != 0:	print("Action",  action[0],action[1].name, "qvalue",qvalue)
 
 
 # ----------------------------------- AUXILIARY FUNCTIONS ----------------------------------------------
 
-def statetuple(nodes=None, nL=None):
+def statetuple(state=None,nodes=None, nL=None):
 	""" Creates a state tuple given nodes
 	"""
-	auxq = {}
-	for n in nodes:
-		auxq[n.name] = n.qs()
-	state = tuple([nL.name, len(nL.w), frozenset(auxq.items())])
-	return copy.deepcopy(state)
+	if state is not None:
+		if isinstance(state[2], list):
+			state[2] = tuple(state[2])
+		return tuple(state)
+	elif nodes is not None and nL is not None:
+		Qs = []
+		for n in nodes:	Qs.append(n.qs())
+		return tuple([nL.name, len(nL.w), tuple(Qs)])
+	return None
 
 def actiontuple(action=None, nO=None, w0=None):
 	""" Creates an action tuple (key) given an action list
 	"""
 	if action:
-		(w0, nO) = action
-		actionkey = tuple([w0, nO.name])
-		return copy.deepcopy(actionkey)
+		return tuple(action)
 	elif nO is not None and w0 is not None:
-		actionkey = tuple([w0, nO.name])
-		return copy.deepcopy(actionkey)
+		return tuple([w0, nO])
 	return None

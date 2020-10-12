@@ -3,7 +3,7 @@
 # auxiliary for the programming
 FOG_DEBUG = 0
 DISPLAY = False
-SIM_TIME = 1000
+SIM_TIME = 10000
 TIME_INTERVAL = 1
 N_NODES = 5
 

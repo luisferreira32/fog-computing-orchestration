@@ -1,0 +1,69 @@
+from . import configs
+from algorithms import basic, qlearning
+
+class Controller(object):
+	"""docstring for Controller"""
+	def __init__(self, nodes, algorithm_object):
+		self.nodes = nodes
+		self.algorithm_object = algorithm_object
+		self.past = {}
+
+	def assert_state(self, nL):
+		Qs = []
+		for n in self.nodes: Qs.append(n.qs())
+		return [nL, len(nL.w), Qs]
+
+	def decide(self):
+		discarded = 0
+
+		for nL in self.nodes:
+			# decide for current node with incoming tasks
+			if len(nL.w) > 0:
+				# state = (nL, w, Qsizes)
+				state = self.assert_state(nL)
+				instant_reward = 0
+				# if it is updatable do it before taking a new action with the trio (s, a, s')
+				if self.algorithm_object.updatable and nL in self.past:
+					self.algorithm_object.update(self.past[nL][0], self.past[nL][1], state, 
+						self.past[nL][2], self.nodes)
+
+				# run the algorithm
+				(w0, nO) = self.algorithm_object.execute(state)
+				# and save past state
+				if self.algorithm_object.updatable and nL in self.past:
+					instant_reward = self.algorithm_object.reward(state, [w0, nO])
+				self.past[nL] = [state, [w0, nO], instant_reward]
+
+
+				"""
+				# algorithm decision
+				if self.algorithm == "rd":  (w0, nO) = basic.randomalgorithm(state, self.nodes)
+				if self.algorithm == "lq":  (w0, nO) = basic.leastqueue(state, self.nodes)
+				if self.algorithm == "nn":  (w0, nO) = basic.nearestnode(state, self.nodes)
+				if self.algorithm == "ql":
+					# update based on the previous iteration if there was a previous iteration
+					next_state = qlearning.statetuple(self.nodes, nL)
+					if nL in self.past:
+						self.algorithm_object.update(self.past[nL][0], self.past[nL][1], next_state, 
+							self.past[nL][2], self.nodes)
+					
+					# choose a new action and save it
+					(w0, nO) = self.algorithm_object.execute(nL, self.nodes)
+					past_state = next_state
+					action = [w0, nO]
+					instant_reward = self.algorithm_object.qreward(nL, [w0, nO])
+					self.past[nL] = [past_state, action, instant_reward]
+				"""
+
+				# and execute the decision, but since there's no sending queue, only when not transmitting
+				if not nL.transmitting:
+					for i in range(w0):
+						nL.send(nL.decide(), nO)
+				for j in range(len(nL.w)):
+					if not nL.fullqueue(): nL.queue(nL.decide())
+
+			# what to do with the rest of the w?
+			discarded += len(nL.w)
+			nL.w.clear()
+
+		return discarded

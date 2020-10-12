@@ -7,6 +7,7 @@ from . import configs
 from . import node
 from . import events
 from . import coms
+from .controller import Controller
 
 # tools
 from tools import utils, graphs
@@ -32,7 +33,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 		#sr_i = utils.uniformRandom(sr*2)
 		# cycles per second, depends on the TIME INTERVAL of the SERVICE RATE
 		cps = sr*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
-		n = node.Core(name="n"+str(i), 
+		n = node.Core(name="n"+str(i), index=i,
 			placement=(utils.uniformRandom(configs.MAX_AREA[0]),utils.uniformRandom(configs.MAX_AREA[1])),
 			cpu=(configs.DEFAULT_CPI, cps))
 		nodes.append(n)
@@ -48,15 +49,20 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 	discarded = 0
 	c=0
 
+	# lastly the controller that'll run the algorithm
+	if algorithm == "rd": algorithm_object = basic.RandomAlgorithm(nodes)
+	elif algorithm == "lq": algorithm_object = basic.LeastQueueAlgorithm(nodes)
+	elif algorithm == "nn": algorithm_object = basic.NearestNodeAlgorithm(nodes)
+	elif algorithm == "ql": algorithm_object.setnodes(nodes)
+	ctr = Controller(nodes, algorithm_object)
+
 	# -------------------------------------------- 1. --------------------------------------------
 
 	# begin the first client request, that calls another based on a poisson process
 	ev = events.Recieving(0, nodes[0], ar=ar, interval=configs.TIME_INTERVAL, nodes=nodes)
 	evq.addEvent(ev)
-	# decision making time
-	for nL in nodes:
-		ev = events.Decision(0, nL, nodes, algorithm, ar=ar, algorithm_object=algorithm_object)
-		evq.addEvent(ev)
+	ev = events.Decision(0, ctr)
+	evq.addEvent(ev)
 
 	# -------------------------------------------- 2. 3. --------------------------------------------
 	while evq.hasEvents():
@@ -72,10 +78,10 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 
 		# -------------------------------------------- 3. --------------------------------------------
 
-		# It's repeating until queue ends, which is the last event scheduled before simulation limit time
-		if configs.DISPLAY == True and ev.time==c: 
-			graphs.displayState(ev.time,nodes, evq)
-			c+=1
+		# To do periodic updates to algorithms
+		if ev.time==c and algorithm == "ql":
+			algorithm_object.changeiter(epsilon=algorithm_object.epsilon-0.7/configs.SIM_TIME)
+			c+=configs.TIME_INTERVAL
 
 	if configs.FOG_DEBUG == 1: print("[DEBUG] Finished simulation")
 

@@ -12,12 +12,13 @@ from . import coms
 
 class Core(object):
 	#The core of a fog computing node has all its attributes.
-	def __init__(self, name="default_node", cpu=(configs.DEFAULT_CPI, configs.DEFAULT_CPS), placement=(0,0),
+	def __init__(self, name="default_node", index=-1, cpu=(configs.DEFAULT_CPI, configs.DEFAULT_CPS), placement=(0,0),
 		 bandwidth=configs.DEFAULT_BANDWIDTH, power=configs.DEFAULT_POWER):
 	
 		# set up the attributes
 		# generic
 		self.name = name
+		self.index = index
 		self.placement = placement
 		# cpu related
 		self.cpi = cpu[0]

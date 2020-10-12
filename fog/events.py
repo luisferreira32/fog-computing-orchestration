@@ -6,7 +6,6 @@ import sys
 from . import configs
 from . import coms
 from tools import utils, graphs
-from algorithms import basic, qlearning
 
 # -------------------------------------------- Event Queue --------------------------------------------
 
@@ -63,72 +62,34 @@ class Event(object):
 # -------------------------------------------- Decision --------------------------------------------
 
 class Decision(Event):
-	def __init__(self, time, nL, nodes, algorithm="rd", time_interval = configs.TIME_INTERVAL, 
-		ar=configs.TASK_ARRIVAL_RATE, algorithm_object=None, past_info=None):
+	def __init__(self, time, controller, time_interval = configs.TIME_INTERVAL):
 		super(Decision, self).__init__(time, "Decision")
 
-		self.alg = algorithm
-		self.ao = algorithm_object
-		self.past = past_info
-
-		self.nL = nL
-		self.nodes = nodes
-
-		self.ti = time_interval
-		self.ar = ar
+		self.controller = controller
+		self.time_interval = time_interval
 
 	def __str__(self):
-		return "Decision["+("%.2f"%self.time)+"]["+self.nL.name+"]"
+		return "Decision["+("%.2f"%self.time)+"]"
 
 	def execute(self, eq):
-		discarded = 0
-		# decide for current node with incoming tasks
-		if len(self.nL.w) > 0:
-			Qsizes = []
-			for n in self.nodes: Qsizes.append(n.qs())
-			# state = (nL, w, Qsizes)
-			state = (self.nL, len(self.nL.w), Qsizes)
-			# algorithm decision
-			if self.alg == "rd":  (w0, nO) = basic.randomalgorithm(state, self.nodes)
-			if self.alg == "lq":  (w0, nO) = basic.leastqueue(state, self.nodes)
-			if self.alg == "nn":  (w0, nO) = basic.nearestnode(state, self.nodes)
-			if self.alg == "ql":
-				# update based on the previous iteration if there was a previous iteration
-				next_state = qlearning.statetuple(self.nodes, self.nL)
-				if self.past is not None:
-					self.ao.update(self.past[0], self.past[1], next_state, self.past[2], self.nodes)
-				
-				# choose a new action and save it
-				(w0, nO) = self.ao.execute(self.nL, self.nodes)
-				past_state = next_state
-				action = [w0, nO]
-				instant_reward = self.ao.qreward(self.nL, [w0, nO])
-				self.past = [past_state, action, instant_reward]
+		discarded = self.controller.decide()
 
-			# and execute the decision, but since there's no sending queue, only when not transmitting
-			if not self.nL.transmitting:
-				for i in range(w0):
-					self.nL.send(self.nL.decide(), nO)
-			for j in range(len(self.nL.w)):
-				if not self.nL.fullqueue(): self.nL.queue(self.nL.decide())
-
-			# if there is something to send, start the event
-			if not self.nL.transmitting and self.nL.tosend():
-				ev = Sending(self.time, self.nL)
+		# if there is something to send, start the event
+		for nL in self.controller.nodes:
+			if not nL.transmitting and nL.tosend():
+				ev = Sending(self.time, nL)
 				eq.addEvent(ev)
 
-		# what to do with the rest of the w?
-		discarded += len(self.nL.w)
-		self.nL.w.clear()
-
 		# and add another decision after a time interval
-		ev = Decision(self.time + self.ti, self.nL, self.nodes, self.alg, self.ti, self.ar,
-			self.ao, self.past)
+		ev = Decision(self.time + self.time_interval, self.controller)
 		eq.addEvent(ev)
 
 		# debug message
 		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Decision]" % self.time)
+
+		if configs.DISPLAY == True: graphs.displayState(self.time,self.controller.nodes, eq)
 		
+		# returns number of discarded tasks
 		return discarded
 
 
