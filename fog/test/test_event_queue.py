@@ -3,7 +3,7 @@ sys.path.append("C:/fog-computing-orchestration")
 if "/home/yourself/fog-computing-orchestration" not in sys.path:
 	sys.path.append("/home/yourself/fog-computing-orchestration")
 
-from fog import events
+from fog import events, configs
 
 def test_standard_sorting():
 	eq = events.EventQueue()
@@ -43,7 +43,7 @@ def test_inverted_sorting():
 def test_boundary_cases():
 	eq = events.EventQueue()
 	# check if boundaries are respected	
-	e6 = events.Event(10000)
+	e6 = events.Event(configs.SIM_TIME+1)
 	e7 = events.Event(-1)
 
 	eq.addEvent(e6)
