@@ -18,7 +18,7 @@ def randomalgorithm(state, nodes):
 	if possible_nO:
 		nO_index = utils.randomChoice(possible_nO)
 		n0 = nodes[nO_index]
-		#  unload a random within the possible
+		#  unload a random within the possible round(utils.uniformRandom(w))
 		w0 = round(utils.uniformRandom(w))
 	else:
 		w0 = 0
@@ -46,7 +46,8 @@ def leastqueue(state, nodes):
 			n0 = nodes[nO]
 	
 	w0 = 0
-	if n0 is not None: w0 = round(utils.uniformRandom(w))
+	if n0 is not None:
+		w0 = round(utils.uniformRandom(w))
 
 	return [w0, n0]
 
@@ -69,6 +70,7 @@ def nearestnode(state, nodes):
 			e0 = e
 	
 	w0 = 0
-	if n0 is not None: w0 = round(utils.uniformRandom(w))
+	if n0 is not None:
+		w0 = round(utils.uniformRandom(w))
 
 	return [w0, n0]

@@ -3,7 +3,7 @@
 # auxiliary for the programming
 FOG_DEBUG = 0
 DISPLAY = False
-SIM_TIME = 100
+SIM_TIME = 1000
 TIME_INTERVAL = 1
 N_NODES = 5
 
@@ -16,8 +16,8 @@ UTILITY_REWARD = 0.5
 DEFAULT_CPI = 5
 
 # task constants
-DEFAULT_DATA = 5 # 500 Mbytes
-DEFAULT_IL = 200 # * 10**8 instruction lines
+DEFAULT_DATA = 5*8 # ?500 Mbytes = 500 * 8 M bits
+DEFAULT_IL = 200 # * 10**6 instruction lines
 TASK_ARRIVAL_RATE = 5.2 # default 5.2
 
 # comunications constants

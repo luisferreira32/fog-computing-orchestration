@@ -111,7 +111,7 @@ class Core(object):
 #------------------------------------------------------ ------------ -----------------------------------------------------
 
 def avgcps(n=Core(), sr=configs.SERVICE_RATE):
-	#Calculate cycles per second (*10^8) considering a model node, model task and a model service rate
+	#Calculate cycles per second (*10^6) considering a model node, model task and a model service rate
 	return sr*n.cpi*configs.DEFAULT_IL
 
 def extime(n1=None, n2=None, wL=0, w0=0):
