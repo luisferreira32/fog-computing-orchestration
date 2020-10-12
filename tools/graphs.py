@@ -40,7 +40,7 @@ def graphtime(xtime=None, lines=None, xlabel="x", ylabel="y", title="default_tit
 	return 0
 
 
-def displayState(time,nodes, new_decisions, evq):
+def displayState(time,nodes, evq):
 	# nodes state
 	print("---------------------------------[%.2f]----------------------------------" % time)
 	evqstring = ""
@@ -49,19 +49,19 @@ def displayState(time,nodes, new_decisions, evq):
 	print(evqstring)	
 	print("-------------------------------------------------------------------------")
 	for n in nodes:
-		print("Node",n.name,"has decision: {w0:",new_decisions[n]["w0"]," nO:",new_decisions[n]["nO"].name,"}")
+		print("Node",n.name)
 		# queue states
 		qstring = "queue timestamps: "
 		for t in n.cpuqueue:
 			qstring += str(round(t.timestamp, 2)) + " "
 		print(qstring)
 		print("processing:",n.processing)
-		# edges state
-		estring = "edges: "
-		for n, e in n.edges.items():
-			if e.busy: estring += "1 "
-			else: estring += "0 "
-		print(estring)
+		# com state
+		sq = "sendingq: "
+		for t in n.sendq:
+			sq += str(round(t[0].timestamp,2))+"->"+t[1].name+ "  "
+		print(sq)
+		print("transmitting:",n.transmitting)
 
 		print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -")
 	print("-------------------------------------------------------------------------")

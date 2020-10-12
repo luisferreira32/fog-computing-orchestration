@@ -1,5 +1,6 @@
 import sys
-sys.path.append("/home/yourself/fog-computing-orchestration")
+if "/home/yourself/fog-computing-orchestration" not in sys.path:
+	sys.path.append("/home/yourself/fog-computing-orchestration")
 
 from fog import configs
 from fog import node
@@ -48,13 +49,12 @@ def test_edges_creation():
 		nodes.append(n)
 	# create M edges between each two nodes
 	for n in nodes:
-		n.setedges(nodes)
+		n.setcomtime(nodes)
 
 	for n1 in nodes:
 		for n2 in nodes:
 			if n1 == n2: continue
 			# check if there are edges and the time is between 0 and infinite
-			assert n1.edges[n2] != None
-			assert n1.edges[n2].neigh == n2
-			assert n1.edges[n2].comtime > 0
-			assert n1.edges[n2].comtime < 999999
+			assert n1.comtime[n2] != None
+			assert n1.comtime[n2] > 0
+			assert n1.comtime[n2] < 99999

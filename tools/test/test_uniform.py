@@ -7,18 +7,10 @@ from tools import utils
 def test_poisson():
 	utils.initRandom()
 
-	# for 1000 of simulation time
-	t=0
-	counts = []
+	samples = []
 	for i in range(0, 1000):
-		counts.append(0)
-	while t < 10000:
-		t += utils.poissonNextEvent(5, 10)
-		if t >= 10000: break
-		counts[int(t/10)] += 1
+		samples.append(utils.uniformRandom(3.6))
 
-
-	assert round(utils.listavg(counts)) == 5
-
-		
-
+	assert max(samples) < 3.6
+	assert min(samples) > 0
+	assert round(utils.listavg(samples), 2) == 1.8

@@ -1,22 +1,23 @@
 # GLOBAL FOG VARIABLES
 
 # auxiliary for the programming
-FOG_DEBUG = 1
-SIM_TIME = 200
-TIME_INTERVAL = 10
+FOG_DEBUG = 0
+DISPLAY = False
+SIM_TIME = 10000
+TIME_INTERVAL = 1
 N_NODES = 5
 
 # fog core constants
 MAX_QUEUE = 10
-MAX_INFLUX = 20
+MAX_W = 20
 SERVICE_RATE = 1.8 # default 1.8
 MAX_AREA = (100, 100)
 UTILITY_REWARD = 0.5
 DEFAULT_CPI = 5
 
 # task constants
-DEFAULT_DATA = 50 # Mbytes
-DEFAULT_IL = 200 # * 10**8 instruction lines
+DEFAULT_DATA = 500*8 # ?500 Mbytes = 500 * 8 M bits
+DEFAULT_IL = 200 # * 10**6 instruction lines
 TASK_ARRIVAL_RATE = 5.2 # default 5.2
 
 # comunications constants
