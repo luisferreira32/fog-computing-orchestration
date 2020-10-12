@@ -16,7 +16,7 @@ UTILITY_REWARD = 0.5
 DEFAULT_CPI = 5
 
 # task constants
-DEFAULT_DATA = 5*8 # ?500 Mbytes = 500 * 8 M bits
+DEFAULT_DATA = 500*8 # ?500 Mbytes = 500 * 8 M bits
 DEFAULT_IL = 200 # * 10**6 instruction lines
 TASK_ARRIVAL_RATE = 5.2 # default 5.2
 

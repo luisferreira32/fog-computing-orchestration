@@ -29,10 +29,11 @@ class Controller(object):
 
 				# run the algorithm
 				(w0, nO) = self.algorithm_object.execute(state)
-				# and save past state
-				if self.algorithm_object.updatable and nL in self.past:
-					instant_reward = self.algorithm_object.reward(state, [w0, nO])
-				self.past[nL] = [state, [w0, nO], instant_reward]
+				# and save past state if there was an action taken
+				if w0 > 0:
+					if self.algorithm_object.updatable and nL in self.past:
+						instant_reward = self.algorithm_object.reward(state, [w0, nO])
+					self.past[nL] = [state, [w0, nO], instant_reward]
 
 
 				"""

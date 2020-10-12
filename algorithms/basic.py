@@ -14,9 +14,7 @@ class RandomAlgorithm(object):
 		"""Gives a random action based on the state and limited possible actions
 		"""	
 		# unpack it
-		nL = state[0]
-		w = state[1]
-		Qsizes = state[2]
+		(nL, w, Qsizes) = state
 
 		# check possible acitons
 		possible_nO = []
@@ -44,9 +42,7 @@ class LeastQueueAlgorithm(object):
 		"""Offloads tasks to the node with the minimum queue status
 		"""
 		# unpack it
-		nL = state[0]
-		w = state[1]
-		Qsizes = state[2]
+		(nL, w, Qsizes) = state
 
 		# check possible acitons
 		possible_nO = []
@@ -54,10 +50,10 @@ class LeastQueueAlgorithm(object):
 			if Qsizes[i] < nL.qs(): possible_nO.append(i)
 		n0 = None
 		if possible_nO: nO_index = possible_nO[0]	
-		for nO in possible_nO:
-			if Qsizes[nO] < Qsizes[nO_index]:
-				nO_index=nO
-				n0 = self.nodes[nO]
+		for i in possible_nO:
+			if Qsizes[i] < Qsizes[nO_index]:
+				nO_index=i
+				n0 = self.nodes[i]
 		
 		w0 = 0
 		if n0 is not None:
@@ -75,16 +71,19 @@ class NearestNodeAlgorithm(object):
 		"""Offloads tasks to the node with the minimum distance to this one, and space on queue
 		"""
 		# unpack it
-		nL = state[0]
-		w = state[1]
-		Qsizes = state[2]
+		(nL, w, Qsizes) = state
+
+		# check possible actions
+		possible_nO = []
+		for i in range(0, len(Qsizes)):
+			if Qsizes[i] < nL.qs(): possible_nO.append(i)
 
 		# send to nearest with a lesser queue
 		e0 = 9999999
 		n0 = None
+		if possible_nO: nO_index = possible_nO[0]
 		for n,e in nL.comtime.items():
-			if n.qs() >= nL.qs(): continue
-			if e < e0:
+			if n.index in possible_nO and e < e0:
 				n0 = n
 				e0 = e
 		
