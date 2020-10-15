@@ -78,7 +78,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_ob
 
 		# To do periodic updates to algorithms
 		if ev.time==c and algorithm_object.updatable:
-			algorithm_object.changeiter(epsilon=algorithm_object.epsilon-0.7/configs.SIM_TIME)
+			algorithm_object.changeiter(epsilon=algorithm_object.epsilon-0.2/configs.SIM_TIME)
 			c+=configs.TIME_INTERVAL
 
 	if configs.FOG_DEBUG == 1: print("[DEBUG] Finished simulation")

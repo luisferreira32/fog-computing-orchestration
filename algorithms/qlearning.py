@@ -75,7 +75,7 @@ class Qlearning(object):
 		if state not in self.qtable:
 			# create the dict of q zeroed actions
 			actions = {}
-			for w0 in range(1,configs.MAX_W+1):
+			for w0 in range(0,configs.MAX_W+1):
 				for n in self.nodes:
 					if n != state[0]:
 						actionkey = actiontuple(w0=w0, nO=n)
@@ -102,7 +102,8 @@ class Qlearning(object):
 		possibleactionsq = []
 		for act, qvalue in self.qtable[state].items():
 			(w0, nO) = act
-			if w0 > len(nL.w): continue
+			# since the actions are ordered from 1 -> W_max
+			if w0 > len(nL.w): break
 			if Qs[nO.index] > nL.qs(): continue
 			possibleactions.append(act)
 			possibleactionsq.append(qvalue)
