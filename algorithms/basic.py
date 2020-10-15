@@ -5,9 +5,12 @@ from tools import utils
 
 class RandomAlgorithm(object):
 	"""docstring for RandomAlgorithm"""
-	def __init__(self, nodes):
+	def __init__(self, nodes = None):
 		self.nodes = nodes
 		self.updatable = False
+
+	def setnodes(self, nodes):
+		self.nodes = nodes
 
 
 	def execute(self,state):
@@ -34,9 +37,12 @@ class RandomAlgorithm(object):
 
 class LeastQueueAlgorithm(object):
 	"""docstring for LeastQueueAlgorithm"""
-	def __init__(self, nodes):
+	def __init__(self, nodes=None):
 		self.nodes = nodes
 		self.updatable = False
+
+	def setnodes(self, nodes):
+		self.nodes = nodes
 		
 	def execute(self,state):
 		"""Offloads tasks to the node with the minimum queue status
@@ -63,9 +69,12 @@ class LeastQueueAlgorithm(object):
 
 class NearestNodeAlgorithm(object):
 	"""docstring for NearestNodeAlgorithm"""
-	def __init__(self, nodes):
+	def __init__(self, nodes=None):
 		self.nodes = nodes
 		self.updatable = False
+
+	def setnodes(self, nodes):
+		self.nodes = nodes
 		
 	def execute(self,state):
 		"""Offloads tasks to the node with the minimum distance to this one, and space on queue

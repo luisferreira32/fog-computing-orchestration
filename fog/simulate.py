@@ -15,7 +15,7 @@ from tools import utils, graphs
 # decision algorithms
 from algorithms import basic
 
-def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="rd", algorithm_object=None):
+def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_object=None):
 	# 0. create all necessary information for the simulation to begin
 	# 1. create first round of events (decision and recieving tasks)
 	# 2. run events that generate more events
@@ -50,10 +50,8 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 	c=0
 
 	# lastly the controller that'll run the algorithm
-	if algorithm == "rd": algorithm_object = basic.RandomAlgorithm(nodes)
-	elif algorithm == "lq": algorithm_object = basic.LeastQueueAlgorithm(nodes)
-	elif algorithm == "nn": algorithm_object = basic.NearestNodeAlgorithm(nodes)
-	elif algorithm == "ql": algorithm_object.setnodes(nodes)
+	if algorithm_object is None: algorithm_object = basic.RandomAlgorithm(nodes)
+	algorithm_object.setnodes(nodes)
 	ctr = Controller(nodes, algorithm_object)
 
 	# -------------------------------------------- 1. --------------------------------------------
@@ -79,7 +77,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm="r
 		# -------------------------------------------- 3. --------------------------------------------
 
 		# To do periodic updates to algorithms
-		if ev.time==c and algorithm == "ql":
+		if ev.time==c and algorithm_object.updatable:
 			algorithm_object.changeiter(epsilon=algorithm_object.epsilon-0.7/configs.SIM_TIME)
 			c+=configs.TIME_INTERVAL
 
