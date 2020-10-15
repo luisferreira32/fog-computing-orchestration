@@ -53,6 +53,11 @@ class Qlearning(object):
 		self.nodes = None
 		self.updatable = True
 
+	def __str__(self):
+		return "QL [r_u: "+str(self.r_utility)+" x_d: "+str(self.x_delay)+" x_o: "+str(self.x_overload)+"]"
+
+	# -- for start up ---
+
 	def changeiter(self, epsilon=None, ar=None,sr=None):
 		if epsilon is not None: self.epsilon = epsilon
 		if sr is not None: self.sr=sr
@@ -60,6 +65,8 @@ class Qlearning(object):
 
 	def setnodes(self,nodes):
 		self.nodes = nodes
+
+	# --- q-table related ---
 
 	def addstate(self, state=None):
 		state = statetuple(state)
@@ -195,9 +202,17 @@ class Qlearning(object):
 
 	def printQtableNZ(self):
 		for state, actions in self.qtable.items():
-			print("State",state[0].name, state[1:])
 			for action, qvalue in actions.items():
-				if qvalue != 0:	print("Action",  action[0],action[1].name, "qvalue",qvalue)
+				if qvalue != 0:
+					print("State",state[0].name, state[1:])
+					print("Action",  action[0],action[1].name, "qvalue",qvalue)
+
+	def printQtablePV(self):
+		for state, actions in self.qtable.items():
+			for action, qvalue in actions.items():
+				if qvalue > 0:
+					print("State",state[0].name, state[1:])
+					print("Action",  action[0],action[1].name, "qvalue",qvalue)
 
 
 # ----------------------------------- AUXILIARY FUNCTIONS ----------------------------------------------

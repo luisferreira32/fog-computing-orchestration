@@ -9,6 +9,9 @@ class RandomAlgorithm(object):
 		self.nodes = nodes
 		self.updatable = False
 
+	def __str__(self):
+		return "Random Algorithm"
+
 	def setnodes(self, nodes):
 		self.nodes = nodes
 
