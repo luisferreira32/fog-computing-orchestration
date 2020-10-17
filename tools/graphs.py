@@ -67,4 +67,4 @@ def displayState(time,nodes, evq):
 	print("-------------------------------------------------------------------------")
 
 	input("Press a enter to continue...")
-	os.system("clear")
+	#os.system("clear")

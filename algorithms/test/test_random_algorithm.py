@@ -48,6 +48,7 @@ def test_rd_simple():
 		elif n0 == n4:
 			n4c +=1
 		else:
+			# make sure it only offloads to possible destinations, never to himself
 			assert 0==1
 
 	totalnc = n2c + n3c + n4c

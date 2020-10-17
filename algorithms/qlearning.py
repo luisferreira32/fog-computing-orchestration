@@ -37,7 +37,7 @@ class Qlearning(object):
 		updates the q values from the table
 	"""
 
-	def __init__(self, a=0.5, df=0.5, sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
+	def __init__(self, a=0.5, df=0.5, sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, epsilon=0.9):
 		# init with an empty dict table
 		self.qtable = {}
 		self.alpha = a
@@ -45,7 +45,7 @@ class Qlearning(object):
 		self.r_utility = 10
 		self.x_delay = 1
 		self.x_overload = 150
-		self.epsilon = 0.9
+		self.epsilon = epsilon
 		self.sr=sr
 		self.ar=ar
 
@@ -75,7 +75,7 @@ class Qlearning(object):
 		if state not in self.qtable:
 			# create the dict of q zeroed actions
 			actions = {}
-			for w0 in range(0,configs.MAX_W+1):
+			for w0 in range(1,configs.MAX_W+1):
 				for n in self.nodes:
 					if n != state[0]:
 						actionkey = actiontuple(w0=w0, nO=n)
@@ -104,7 +104,7 @@ class Qlearning(object):
 			(w0, nO) = act
 			# since the actions are ordered from 1 -> W_max
 			if w0 > len(nL.w): break
-			if Qs[nO.index] > nL.qs(): continue
+			if nO.qs() > nL.qs(): continue
 			possibleactions.append(act)
 			possibleactionsq.append(qvalue)
 

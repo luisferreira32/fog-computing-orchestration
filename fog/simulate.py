@@ -44,9 +44,8 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_ob
 	evq = events.EventQueue()
 
 	# and for information obtaining
-	delays = []
-	discarded = 0
-	x=0
+	delays = []; discarded = 0; x=0;
+	sends = 0; recieves = 0; processes = 0;
 
 	# lastly the controller that'll run the algorithm
 	if algorithm_object is None: algorithm_object = basic.RandomAlgorithm(nodes)
@@ -75,12 +74,17 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_ob
 
 		# -------------------------------------------- 3. --------------------------------------------
 
+		# some info
+		if ev.classtype == "Recieving": recieves +=1
+		elif ev.classtype == "Sending": sends +=1
+		elif ev.classtype == "Processing": processes +=1
 		# just a loading display
 		if ev.time == x:
 			print(".", end="",flush=True)
 			x += int(configs.SIM_TIME/5)
 
 	if configs.FOG_DEBUG == 1: print("[DEBUG] Finished simulation")
+	#print("[INFO] Ran",sends,"SENDING",recieves,"RECIEVINGS",processes,"PROCESSING events")
 
 	for n in nodes:
 		discarded += len(n.w) + len(n.sendq)

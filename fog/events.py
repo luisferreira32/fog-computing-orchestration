@@ -84,6 +84,13 @@ class Decision(Event):
 		ev = Decision(self.time + self.time_interval, self.controller)
 		eq.addEvent(ev)
 
+		# 
+		for n in self.controller.nodes:
+			# start processing if it hasn't started already
+			if not n.processing and not n.emptyqueue():
+				ev = Processing(self.time, n)
+				eq.addEvent(ev)
+
 		# debug message
 		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Decision]" % self.time)
 
