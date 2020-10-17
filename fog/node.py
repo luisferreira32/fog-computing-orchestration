@@ -143,6 +143,7 @@ def distance(n1=None, n2=None):
 		if configs.FOG_DEBUG == 1: print("[DEBUG] None argument in distance()")
 		return -1
 	try:
-		return math.sqrt((n1.placement[0] - n2.placement[0])**2 + (n1.placement[1] - n2.placement[1])**2)
+		return math.sqrt((n1.placement[0] - n2.placement[0])*(n1.placement[0] - n2.placement[0]) 
+			+ (n1.placement[1] - n2.placement[1])*(n1.placement[1] - n2.placement[1]))
 	except Exception as InvalidParameters:
 		raise InvalidParameters

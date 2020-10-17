@@ -19,3 +19,9 @@ def test_q_setnodes():
 
 def return_nodes():
 	return [Core("n0"), Core("n1")]
+
+def test_q_iter():
+	ql = Qlearning()
+	assert ql.epsilon == 0.9
+	ql.changeiter(epsilon =1)
+	assert ql.epsilon == 1

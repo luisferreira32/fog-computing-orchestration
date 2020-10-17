@@ -15,7 +15,7 @@ from tools import utils, graphs
 # decision algorithms
 from algorithms import basic
 
-def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_object=None):
+def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_object=None, placements=None):
 	# 0. create all necessary information for the simulation to begin
 	# 1. create first round of events (decision and recieving tasks)
 	# 2. run events that generate more events
@@ -25,17 +25,16 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_ob
 	
 	# initiate a constant random - simulation consistency
 	utils.initRandom()
+	cps = sr*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
+	if placements is None:
+		placements = []
+		for i in range(0, configs.N_NODES):
+			placements.append((utils.uniformRandom(configs.MAX_AREA[0]),utils.uniformRandom(configs.MAX_AREA[1])))
 
 	# create N_NODES with random placements within a limited area and a configured SR
 	nodes = []
 	for i in range(0, configs.N_NODES):
-		# set random sr based on the average
-		#sr_i = utils.uniformRandom(sr*2)
-		# cycles per second, depends on the TIME INTERVAL of the SERVICE RATE
-		cps = sr*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
-		n = node.Core(name="n"+str(i), index=i,
-			placement=(utils.uniformRandom(configs.MAX_AREA[0]),utils.uniformRandom(configs.MAX_AREA[1])),
-			cpu=(configs.DEFAULT_CPI, cps))
+		n = node.Core(name="n"+str(i), index=i,	placement=placements[i], cpu=(configs.DEFAULT_CPI, cps))
 		nodes.append(n)
 	# create M edges between each two nodes
 	for n in nodes:
@@ -47,7 +46,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_ob
 	# and for information obtaining
 	delays = []
 	discarded = 0
-	c=0
+	x=0
 
 	# lastly the controller that'll run the algorithm
 	if algorithm_object is None: algorithm_object = basic.RandomAlgorithm(nodes)
@@ -76,10 +75,10 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_ob
 
 		# -------------------------------------------- 3. --------------------------------------------
 
-		# To do periodic updates to algorithms
-		if ev.time==c and algorithm_object.updatable:
-			algorithm_object.changeiter(epsilon=algorithm_object.epsilon-0.2/configs.SIM_TIME)
-			c+=configs.TIME_INTERVAL
+		# just a loading display
+		if ev.time == x:
+			print(".", end="",flush=True)
+			x += int(configs.SIM_TIME/5)
 
 	if configs.FOG_DEBUG == 1: print("[DEBUG] Finished simulation")
 

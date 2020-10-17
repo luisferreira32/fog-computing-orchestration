@@ -15,6 +15,9 @@ class Controller(object):
 
 	def decide(self):
 		discarded = 0
+		# each timestep
+		if self.algorithm_object.updatable:
+			self.algorithm_object.changeiter(epsilon=self.algorithm_object.epsilon-0.2/(configs.SIM_TIME/configs.TIME_INTERVAL))
 
 		for nL in self.nodes:
 			# decide for current node with incoming tasks

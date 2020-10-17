@@ -33,7 +33,7 @@ def transmissionrate(n1=None, n2=None, bw=None, pw=None):
 		return -1
 
 	if node.distance(n1,n2) == 0:
-		if configs.FOG_DEBUG == 1: print("[DEBUG] No distance between nodes, infinite transmissionrate")
+		if configs.FOG_DEBUG == 1: print("[DEBUG] No distance between nodes",n1.name, n2.name)
 		return -1
  	
  	# MHz to Hz
@@ -44,7 +44,7 @@ def transmissionrate(n1=None, n2=None, bw=None, pw=None):
 	try:
 		# Shannon-hartley theorem ~: r = B log2 ( 1 + SNR )
 		r = BHz*math.log2(1 + (Power/ Noise))
-		if configs.FOG_DEBUG == 1: print("[DEBUG] transmission rate calculated is",r)
+		if configs.FOG_DEBUG == 1: print("[DEBUG] transmission rate calculated Mb/s",r/1000000)
 		return r
 	except Exception as InvalidParameters:
 		raise InvalidParameters
