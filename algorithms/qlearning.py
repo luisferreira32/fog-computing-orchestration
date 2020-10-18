@@ -75,7 +75,7 @@ class Qlearning(object):
 		if state not in self.qtable:
 			# create the dict of q zeroed actions
 			actions = {}
-			for w0 in range(1,configs.MAX_W+1):
+			for w0 in range(0,configs.MAX_W+1):
 				for n in self.nodes:
 					if n != state[0]:
 						actionkey = actiontuple(w0=w0, nO=n)
@@ -103,8 +103,9 @@ class Qlearning(object):
 		for act, qvalue in self.qtable[state].items():
 			(w0, nO) = act
 			# since the actions are ordered from 1 -> W_max
-			if w0 > len(nL.w): break
-			if nO.qs() > nL.qs(): continue
+			if w0 > w: break
+			if Qs[nO.index] > Qs[nL.index]: continue
+			if nO == nL: continue
 			possibleactions.append(act)
 			possibleactionsq.append(qvalue)
 
@@ -150,15 +151,15 @@ class Qlearning(object):
 			print("[Q DEBUG] Failed to calculate reward, returning zero.")
 			return 0
 
-		nL= state[0]
+		(nL, w, Qs)= state
 		(w0, nO) = action
 
 		# U(s,a) = r_u log( 1 + wL + w0 )  --- log2 ? they don't specify
-		wL = min(configs.MAX_QUEUE-nL.qs(), len(nL.w) - w0)
+		wL = min(configs.MAX_QUEUE-Qs[nL.index], w - w0)
 		Usa = self.r_utility * math.log2( 1 + wL + w0)
 
 		# t_w = QL/uL if(wL!=0) + (QL/uL + Q0/u0) if(w0!=0)
-		t_w = node.wtime(nL, nO, wL, w0)
+		t_w = node.wtime(nL, nO, wL, w0, self.sr)
 		# t_c = 2*T*wO / r_LO
 		t_c = w0*nL.comtime[nO]
 		# t_e = I*CPI*wL/f_L + I*CPI*w0/f_0
@@ -172,13 +173,13 @@ class Qlearning(object):
 
 		# P_overload,i = max(0, y_i - (Q_i,max - Q'_i))/ y_i
 		# Q'_i = min(max(0, Q_i - sr_i) + w_i, Q_i,max)
-		Q_nL = min(max(0,nL.qs()-self.sr)+len(nL.w), configs.MAX_QUEUE)
+		Q_nL = min(max(0,Qs[nL.index]-self.sr)+w, configs.MAX_QUEUE)
 		if self.ar/configs.N_NODES != 0:
 			P_oL = max(0, (self.ar/configs.N_NODES) - (configs.MAX_QUEUE - Q_nL)) / (self.ar/configs.N_NODES)
 		else:
 			P_oL = 0
 
-		Q_n0 = min(max(0,nO.qs()-self.sr)+len(nO.w), configs.MAX_QUEUE)
+		Q_n0 = min(max(0,Qs[nO.index]-self.sr)+len(nO.w), configs.MAX_QUEUE)
 		if (self.ar/configs.N_NODES) != 0:
 			P_o0 = max(0, (self.ar/configs.N_NODES) - (configs.MAX_QUEUE - Q_n0)) / (self.ar/configs.N_NODES)
 		else:

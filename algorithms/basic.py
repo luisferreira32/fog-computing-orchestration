@@ -25,7 +25,7 @@ class RandomAlgorithm(object):
 		# check possible acitons
 		possible_nO = []
 		for i in range(0, len(Qsizes)):
-			if Qsizes[i] < nL.qs(): possible_nO.append(i)
+			if Qsizes[i] < Qsizes[nL.index]: possible_nO.append(i)
 		if possible_nO:
 			nO_index = utils.randomChoice(possible_nO)
 			n0 = self.nodes[nO_index]
@@ -44,6 +44,9 @@ class LeastQueueAlgorithm(object):
 		self.nodes = nodes
 		self.updatable = False
 
+	def __str__(self):
+		return "Least Queue Algorithm"
+
 	def setnodes(self, nodes):
 		self.nodes = nodes
 		
@@ -56,7 +59,7 @@ class LeastQueueAlgorithm(object):
 		# check possible acitons
 		possible_nO = []
 		for i in range(0, len(Qsizes)):
-			if Qsizes[i] < nL.qs(): possible_nO.append(i)
+			if Qsizes[i] < Qsizes[nL.index]: possible_nO.append(i)
 		n0 = None
 		if possible_nO: nO_index = possible_nO[0]	
 		for i in possible_nO:
@@ -75,6 +78,9 @@ class NearestNodeAlgorithm(object):
 	def __init__(self, nodes=None):
 		self.nodes = nodes
 		self.updatable = False
+
+	def __str__(self):
+		return "Nearest Node Algorithm"
 
 	def setnodes(self, nodes):
 		self.nodes = nodes
