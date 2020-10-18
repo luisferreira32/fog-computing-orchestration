@@ -90,6 +90,10 @@ class Decision(Event):
 			if not n.processing and not n.emptyqueue():
 				ev = Processing(self.time, n)
 				eq.addEvent(ev)
+			# and sending if not sending already
+			if not n.transmitting and n.tosend() > 0:
+				ev = Sending(self.time, n)
+				eq.addEvent(ev)
 
 		# debug message
 		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Decision]" % self.time)
