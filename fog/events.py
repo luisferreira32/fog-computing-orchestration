@@ -74,17 +74,7 @@ class Decision(Event):
 	def execute(self, eq):
 		discarded = self.controller.decide()
 
-		# if there is something to send, start the event
-		for nL in self.controller.nodes:
-			if not nL.transmitting and nL.tosend():
-				ev = Sending(self.time, nL)
-				eq.addEvent(ev)
-
-		# and add another decision after a time interval
-		ev = Decision(self.time + self.time_interval, self.controller)
-		eq.addEvent(ev)
-
-		# 
+		# if there is something to send or process, do it
 		for n in self.controller.nodes:
 			# start processing if it hasn't started already
 			if not n.processing and not n.emptyqueue():
@@ -94,6 +84,11 @@ class Decision(Event):
 			if not n.transmitting and n.tosend() > 0:
 				ev = Sending(self.time, n)
 				eq.addEvent(ev)
+
+
+		# and add another decision after a time interval
+		ev = Decision(self.time + self.time_interval, self.controller)
+		eq.addEvent(ev)
 
 		# debug message
 		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Decision]" % self.time)
@@ -131,6 +126,7 @@ class Recieving(Event):
 		if self.sn is not None:
 			t = self.rn.queue(self.it)
 			self.sn.transmitting = False
+			self.rn.recieving = False
 		# else just recieve it for this time step
 		else:
 			t = self.rn.recieve(self.it)
@@ -173,14 +169,20 @@ class Sending(Event):
 	def execute(self, eq):
 		# send all tasks to the offloading node in a pack
 		total_n = len(self.sn.sendq)
+		tasks = [];
 		while self.sn.tosend():
 			# take from the coms queue a task
 			[t, rn] = self.sn.popsendq()
-			# if it cannot transmit, it fails
-			if self.sn.comtime[rn] == -1: return t
-			# then get busy
-			self.sn.transmitting = True
-			# recieves after comtime finished - bandiwth divided by number of tasks
+			tasks.append(t)
+
+		# if it cannot transmit, it fails
+		if self.sn.comtime[rn] == -1: return total_n
+		if rn.recieving == True: return total_n
+		# then get busy
+		self.sn.transmitting = True
+		rn.recieving = True
+		# recieves after comtime finished - bandiwth divided by number of tasks
+		for t in tasks:
 			ev = Recieving(self.time+self.sn.comtime[rn]*total_n, rn, t, self.sn)
 			eq.addEvent(ev)
 

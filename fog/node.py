@@ -32,6 +32,7 @@ class Core(object):
 		self.pw = power
 		self.comtime = {}
 		self.transmitting = False
+		self.recieving = False
 		self.sendq = collections.deque()
 
 		# and debug if set to do so

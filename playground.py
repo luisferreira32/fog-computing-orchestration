@@ -37,7 +37,7 @@ ao2 = qlearning.Qlearning(sr=1, ar=5.2)
 ao2.r_utility = 0
 ao2.x_delay = 0
 ao2.x_overload = 0
-algs.append(ao2)
+#algs.append(ao2)
 
 
 avg_delay_sr = {}

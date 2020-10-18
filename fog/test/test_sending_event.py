@@ -36,7 +36,7 @@ def test_impossible_send():
 	t1 = coms.Task(0)
 	n1.send(t1,n2)
 	e1 = events.Sending(0,n1)
-	assert e1.execute(evq) == t1
+	assert e1.execute(evq) == 1 # discarded 1
 	assert evq.hasEvents() == False
 
 def test_sending_arrival():
@@ -50,15 +50,15 @@ def test_sending_arrival():
 	t1 = coms.Task(0)
 	t2 = coms.Task(0)
 
+	# send two tasks at 0, to two different nodes
 	n1.send(t1, n3)
 	e1 = events.Sending(0, n1)
+	e1.execute(evq)
+	# force transmitting, since antena should be busy
+	n1.transmitting = False
 	n1.send(t2, n2)
 	e2 = events.Sending(0, n1)
-	assert evq.hasEvents() == False
-	evq.addEvent(e1)
-	evq.addEvent(e2)
-	evq.popEvent().execute(evq)
-	evq.popEvent().execute(evq)
+	e2.execute(evq)
 	assert evq.hasEvents() == True
 	e3 = evq.popEvent()
 	e4 = evq.popEvent()

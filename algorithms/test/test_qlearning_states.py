@@ -27,4 +27,4 @@ def test_state_creation():
 	ql.addstate(state)
 	assert len(ql.qtable) == 1
 	statekey = statetuple(state)
-	assert len(ql.qtable[statekey]) == (configs.MAX_W)*2
+	assert len(ql.qtable[statekey]) == (configs.MAX_W+1)*2

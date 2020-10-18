@@ -22,10 +22,10 @@ def return_nodes():
 
 # with one task Queue and three empty nodes, see unform choosing of distribution for 1 incoming task
 def test_rd_simple():
-	n1 = Core()
-	n2 = Core()
-	n3 = Core()
-	n4 = Core(placement=[10, 10])
+	n1 = Core(index=0)
+	n2 = Core(index=1)
+	n3 = Core(index=2)
+	n4 = Core(placement=[10, 10], index=3)
 	nodes = [n1, n2, n3, n4]
 	r = RandomAlgorithm(nodes)
 
@@ -58,10 +58,10 @@ def test_rd_simple():
 
 # if it doesn't offload to really busy nodes
 def test_rd_busy():
-	n1 = Core()
-	n2 = Core()
-	n3 = Core()
-	n4 = Core(placement=[10, 10])
+	n1 = Core(index=0)
+	n2 = Core(index=1)
+	n3 = Core(index=2)
+	n4 = Core(placement=[10, 10], index=3)
 	nodes = [n1, n2, n3, n4]
 	r = RandomAlgorithm(nodes)
 
