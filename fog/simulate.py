@@ -88,5 +88,6 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_ob
 
 	for n in nodes:
 		discarded += len(n.w) + len(n.sendq)
-	return (utils.listavg(delays), len(delays),discarded)
+	# return avg reward, avg delay, and overload probability
+	return (utils.listavg(ctr.rewards), utils.listavg(delays), round(discarded/(len(delays)+discarded),3))
 		

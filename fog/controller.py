@@ -8,6 +8,8 @@ class Controller(object):
 		self.algorithm_object = algorithm_object
 		self.past = {}
 
+		self.rewards = []
+
 	def decide(self):
 		discarded = 0
 		# each timestep
@@ -32,9 +34,11 @@ class Controller(object):
 				# run the algorithm
 				(w0, nO) = self.algorithm_object.execute(state)
 				# and save past state if there was an action taken
-				if self.algorithm_object.updatable and nO is not None:
-					instant_reward = self.algorithm_object.reward(state, [w0, nO])
+				if nO is not None:
+					instant_reward = qlearning.reward(self.algorithm_object, state, [w0, nO])
 					self.past[nL] = [state, [w0, nO], instant_reward]
+
+					self.rewards.append(instant_reward)
 
 				#print("State[",nL,len(nL.w),Qs,"] > Action[",w0,nO,"]")
 
