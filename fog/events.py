@@ -126,7 +126,7 @@ class Recieving(Event):
 		if self.sn is not None:
 			t = self.rn.queue(self.it)
 			self.sn.transmitting = False
-			self.rn.recieving = False
+			#self.rn.recieving = False
 		# else just recieve it for this time step
 		else:
 			t = self.rn.recieve(self.it)
@@ -177,10 +177,10 @@ class Sending(Event):
 
 		# if it cannot transmit, it fails
 		if self.sn.comtime[rn] == -1: return total_n
-		if rn.recieving == True: return total_n
+		#if rn.recieving == True: return total_n
 		# then get busy
 		self.sn.transmitting = True
-		rn.recieving = True
+		#rn.recieving = True
 		# recieves after comtime finished - bandiwth divided by number of tasks
 		for t in tasks:
 			ev = Recieving(self.time+self.sn.comtime[rn]*total_n, rn, t, self.sn)

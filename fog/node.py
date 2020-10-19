@@ -32,13 +32,15 @@ class Core(object):
 		self.pw = power
 		self.comtime = {}
 		self.transmitting = False
-		self.recieving = False
+		#self.recieving = False
 		self.sendq = collections.deque()
 
 		# and debug if set to do so
 		if configs.FOG_DEBUG:
 			print("[DEBUG] Node core "+self.name+" created: "+str(self.__dict__))
 
+	def __str__(self):
+		return self.name
 
 	# --- CPU related methods --- 
 

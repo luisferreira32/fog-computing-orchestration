@@ -25,7 +25,8 @@ class RandomAlgorithm(object):
 		# check possible acitons
 		possible_nO = []
 		for i in range(0, len(Qsizes)):
-			if Qsizes[i] < Qsizes[nL.index]: possible_nO.append(i)
+			if Qsizes[i] <= Qsizes[nL.index] and i != nL.index:
+				possible_nO.append(i)
 		if possible_nO:
 			nO_index = utils.randomChoice(possible_nO)
 			n0 = self.nodes[nO_index]
@@ -58,14 +59,17 @@ class LeastQueueAlgorithm(object):
 
 		# check possible acitons
 		possible_nO = []
-		for i in range(0, len(Qsizes)):
-			if Qsizes[i] < Qsizes[nL.index]: possible_nO.append(i)
+		possible_nO_q = []
+		for i in range(0,len(Qsizes)):
+			if Qsizes[i] <= Qsizes[nL.index] and i != nL.index: 
+				possible_nO.append(self.nodes[i])
+				possible_nO_q.append(Qsizes[i])
 		n0 = None
-		if possible_nO: nO_index = possible_nO[0]	
-		for i in possible_nO:
-			if Qsizes[i] < Qsizes[nO_index]:
-				nO_index=i
-				n0 = self.nodes[i]
+		if possible_nO:
+			min_value = min(possible_nO_q)
+			indeces = [index for index, value in enumerate(possible_nO_q) if value == min_value]
+			i = utils.randomChoice(indeces)
+			n0 = possible_nO[i]
 		
 		w0 = 0
 		if n0 is not None:
@@ -94,7 +98,8 @@ class NearestNodeAlgorithm(object):
 		# check possible actions
 		possible_nO = []
 		for i in range(0, len(Qsizes)):
-			if Qsizes[i] < nL.qs(): possible_nO.append(i)
+			if Qsizes[i] <= nL.qs() and i != nL.index:
+				possible_nO.append(i)
 
 		# send to nearest with a lesser queue
 		e0 = 9999999

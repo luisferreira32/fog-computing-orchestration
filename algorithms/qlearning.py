@@ -75,7 +75,7 @@ class Qlearning(object):
 		if state not in self.qtable:
 			# create the dict of q zeroed actions
 			actions = {}
-			for w0 in range(0,configs.MAX_W+1):
+			for w0 in range(1,configs.MAX_W+1):
 				for n in self.nodes:
 					if n != state[0]:
 						actionkey = actiontuple(w0=w0, nO=n)
@@ -118,7 +118,9 @@ class Qlearning(object):
 			(w0, nO) = utils.randomChoice(possibleactions)
 		# exploit
 		else:
-			i = possibleactionsq.index(max(possibleactionsq))
+			max_value = max(possibleactionsq)
+			indeces = [index for index, value in enumerate(possibleactionsq) if value == max_value]
+			i = utils.randomChoice(indeces)
 			(w0, nO) = possibleactions[i]
 
 		return [w0, nO]

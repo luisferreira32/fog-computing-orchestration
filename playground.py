@@ -14,8 +14,8 @@ placements= [(0,0), (10,10), (100,15), (95,85), (100,100)]
 if len(sys.argv) > 1 and sys.argv[1] == "display":
 	configs.DISPLAY = True
 	configs.SIM_TIME = 100
-	ao = qlearning.Qlearning(sr=8, ar=5.2)
-	simulate(sr=8, ar=5.2, algorithm_object=algs[0])
+	ao = qlearning.Qlearning(sr=7, ar=5.2)
+	simulate(sr=8, ar=5.2, algorithm_object=ao)
 	configs.DISPLAY = False
 	sys.exit()
 
@@ -37,7 +37,7 @@ ao2 = qlearning.Qlearning(sr=1, ar=5.2)
 ao2.r_utility = 0
 ao2.x_delay = 0
 ao2.x_overload = 0
-#algs.append(ao2)
+algs.append(ao2)
 
 
 avg_delay_sr = {}
@@ -45,7 +45,7 @@ for sr in srs:
 	for alg in algs:
 		if alg.updatable:
 			alg.changeiter(epsilon=0.9,sr=sr, ar=5.2)
-		(avg_delay, processed, discarded)= simulate(sr=sr, algorithm_object=alg, placements=placements)
+		(avg_delay, processed, discarded)= simulate(sr=sr, algorithm_object=alg)
 		utils.appendict(avg_delay_sr, alg, avg_delay)
 		print("[SR",sr,"]",alg, "total",processed+discarded, "overloaded", round(discarded/(processed+discarded),3))
 		
@@ -55,7 +55,7 @@ for ar in ars:
 	for alg in algs:
 		if alg.updatable:
 			alg.changeiter(epsilon=0.9,ar=ar, sr=1.8)
-		(avg_delay, processed, discarded)= simulate(ar=ar, algorithm_object=alg, placements=placements)
+		(avg_delay, processed, discarded)= simulate(ar=ar, algorithm_object=alg)
 		utils.appendict(avg_delay_ar, alg, avg_delay)
 		print("[AR",ar, "]",alg ,"total",processed+discarded, "overloaded", round(discarded/(processed+discarded),3))
 
