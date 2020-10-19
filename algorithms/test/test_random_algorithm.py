@@ -95,11 +95,12 @@ def test_rd_busy():
 
 # and if it can refuse offloadings
 def test_rd_no_offload():
-	n1 = Core()
-	n2 = Core()
+	n1 = Core(index=0)
+	n2 = Core(index=1)
 	r = RandomAlgorithm([n1,n2])
 	n1.recieve(Task(0))
-	state = (n1, len(n1.w), [n1.qs(), n2.qs()])
+	n2.queue(Task(0))
+	state = (n1, len(n1.w), [0, 1])
 	(w0, n0) = r.execute(state)
 	assert n0 == None
 	assert w0 == 0
