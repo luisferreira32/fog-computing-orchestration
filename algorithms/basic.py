@@ -2,12 +2,14 @@
 from fog import node
 from fog import configs
 from tools import utils
+from . import qlearning
 
 class RandomAlgorithm(object):
 	"""docstring for RandomAlgorithm"""
 	def __init__(self, nodes = None):
 		self.nodes = nodes
 		self.updatable = False
+		self.reward_fun = qlearning.reward
 
 	def __str__(self):
 		return "Random Algorithm"
@@ -44,6 +46,7 @@ class LeastQueueAlgorithm(object):
 	def __init__(self, nodes=None):
 		self.nodes = nodes
 		self.updatable = False
+		self.reward_fun = qlearning.reward
 
 	def __str__(self):
 		return "Least Queue Algorithm"
@@ -82,6 +85,7 @@ class NearestNodeAlgorithm(object):
 	def __init__(self, nodes=None):
 		self.nodes = nodes
 		self.updatable = False
+		self.reward_fun = qlearning.reward
 
 	def __str__(self):
 		return "Nearest Node Algorithm"

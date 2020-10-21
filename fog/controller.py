@@ -14,7 +14,7 @@ class Controller(object):
 		discarded = 0
 		# each timestep
 		if self.algorithm_object.updatable:
-			self.algorithm_object.changeiter(epsilon=self.algorithm_object.epsilon-0.2/(configs.SIM_TIME/configs.TIME_INTERVAL))
+			self.algorithm_object.epsilon_update(configs.SIM_TIME,configs.TIME_INTERVAL)
 
 		# get the state half ready
 		Qs = []
@@ -35,7 +35,7 @@ class Controller(object):
 				(w0, nO) = self.algorithm_object.execute(state)
 				# and save past state if there was an action taken
 				if nO is not None:
-					instant_reward = qlearning.reward(self.algorithm_object, state, [w0, nO])
+					instant_reward = self.algorithm_object.reward_fun(self.algorithm_object,state, [w0, nO])
 					self.past[nL] = [state, [w0, nO], instant_reward]
 
 					self.rewards.append(instant_reward)

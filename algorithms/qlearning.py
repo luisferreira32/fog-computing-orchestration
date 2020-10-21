@@ -42,15 +42,19 @@ class Qlearning(object):
 		updates the q values from the table
 	"""
 
-	def __init__(self, a=0.5, df=0.5, sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, epsilon=0.9):
+	def __init__(self, a=0.5, df=0.5, sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, epsilon=0.9, evar=0.2):
 		# init with an empty dict table
 		self.qtable = {}
+		# for update
 		self.alpha = a
 		self.discount_factor = df
 		self.r_utility = R_UTILITY_
 		self.x_delay = X_DELAY_
 		self.x_overload = X_OVERLOAD_
+		self.reward_fun = reward
+		# for policy
 		self.epsilon = epsilon
+		self.epsilon_variation = evar
 		self.sr=sr
 		self.ar=ar
 
@@ -68,8 +72,11 @@ class Qlearning(object):
 		self.x_delay = xd
 		self.x_overload = xo
 
-	def changeiter(self, epsilon=None, ar=None,sr=None):
-		if epsilon is not None: self.epsilon = epsilon
+	def epsilon_update(self, sim_time=configs.SIM_TIME, timestep=configs.TIME_INTERVAL):
+		self.epsilon -= self.epsilon_variation*timestep / sim_time
+
+	def changeiter(self, epsilon=0.9, ar=None,sr=None):
+		self.epsilon = epsilon
 		if sr is not None: self.sr=sr
 		if ar is not None: self.ar=ar
 

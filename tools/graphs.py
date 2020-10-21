@@ -23,7 +23,7 @@ def all_graphtime(xtimes, liness, xlabels, ylabels, titles, rows=2, columns=3):
 
 		axs[r,c].set(xlabel=xlabels[i], ylabel=ylabels[i])
 		axs[r,c].set_xlim(min(xtime), max(xtime))
-		axs[r,c].set_ylim(min(miny,0), maxy*1.1)
+		axs[r,c].set_ylim(min(miny*1.1,0), maxy*1.1)
 		axs[r,c].set_title(titles[i])
 		if r < rows-1:
 			r +=1

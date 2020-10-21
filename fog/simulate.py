@@ -84,7 +84,7 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_ob
 			x += int(configs.SIM_TIME/5)
 
 	if configs.FOG_DEBUG == 1: print("[DEBUG] Finished simulation")
-	#print(" [INFO]",algorithm_object," Ran",sends,"SENDING")#,recieves,"RECIEVINGS",processes,"PROCESSING events")
+	if configs.INFO == 1: print(" [INFO]",algorithm_object," Ran",sends,"SENDING")#,recieves,"RECIEVINGS",processes,"PROCESSING events")
 
 	for n in nodes:
 		discarded += len(n.w) + len(n.sendq)
