@@ -109,6 +109,15 @@ class Core(object):
 			return True
 		return False
 
+	# -- reset function --
+	def reset(self):
+		self.cpuqueue.clear()
+		self.w.clear()
+		self.sendq.clear()
+		self.processing = False
+		self.transmitting = False
+
+
 
 #------------------------------------------------------ ------------ -----------------------------------------------------
 #--------------------------------------------------- Functions on nodes --------------------------------------------------

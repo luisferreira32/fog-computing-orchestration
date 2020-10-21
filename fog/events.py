@@ -50,6 +50,9 @@ class EventQueue(object):
 	def popEvent(self):
 		return self.q.pop()
 
+	def reset(self):
+		self.q.clear()
+
 
 # -------------------------------------------- Events --------------------------------------------
 
