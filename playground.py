@@ -6,7 +6,7 @@ import sys
 
 algs = [basic.RandomAlgorithm(), basic.LeastQueueAlgorithm(), basic.NearestNodeAlgorithm()]
 #algs = [basic.RandomAlgorithm()]
-algs = []
+#algs = []
 srs = [1, 3, 5, 7]
 ars = [3, 5, 7, 9]
 #placements= [(0,0), (10,10), (100,15), (95,85), (100,100)]
@@ -44,7 +44,7 @@ algs.append(ao1)
 
 ao3 = qlearning.Qlearning(sr=1, ar=5.2)
 ao3.change_reward_coeficients(1,0.1,10)
-algs.append(ao3)
+#algs.append(ao3)
 
 
 avg_reward_sr = {}

@@ -22,7 +22,8 @@ class RandomAlgorithm(object):
 		"""Gives a random action based on the state and limited possible actions
 		"""	
 		# unpack it
-		(nL, w, Qsizes) = state
+		(nL, Ws, Qsizes) = state
+		w = Ws[nL.index]
 
 		# check possible acitons
 		possible_nO = []
@@ -58,7 +59,8 @@ class LeastQueueAlgorithm(object):
 		"""Offloads tasks to the node with the minimum queue status
 		"""
 		# unpack it
-		(nL, w, Qsizes) = state
+		(nL, Ws, Qsizes) = state
+		w = Ws[nL.index]
 
 		# check possible acitons
 		possible_nO = []
@@ -97,7 +99,8 @@ class NearestNodeAlgorithm(object):
 		"""Offloads tasks to the node with the minimum distance to this one, and space on queue
 		"""
 		# unpack it
-		(nL, w, Qsizes) = state
+		(nL, Ws, Qsizes) = state
+		w = Ws[nL.index]
 
 		# check possible actions
 		possible_nO = []

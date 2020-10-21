@@ -17,14 +17,16 @@ class Controller(object):
 			self.algorithm_object.epsilon_update(configs.SIM_TIME,configs.TIME_INTERVAL)
 
 		# get the state half ready
-		Qs = []
-		for n in self.nodes: Qs.append(n.qs())
+		Qs = []; Ws = []
+		for n in self.nodes: 
+			Qs.append(n.qs())
+			Ws.append(len(n.w))
 
 		for nL in self.nodes:
 			# decide for current node with incoming tasks
 			if len(nL.w) > 0:
 				# state = (nL, w, Qsizes)
-				state = [nL, len(nL.w), Qs]
+				state = [nL, Ws, Qs]
 				instant_reward = 0
 				# if it is updatable do it before taking a new action with the trio (s, a, s')
 				if self.algorithm_object.updatable and nL in self.past:

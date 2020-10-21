@@ -109,11 +109,15 @@ class Qlearning(object):
 		if state is None:
 			return action
 
-		(nL, w, Qs) = state
+		(nL, Ws, Qs) = state
+		w = Ws[nL.index]
 		Qs = list(Qs)
-		self.addstate(state)
-		state = statetuple(state)
 
+		new_state = True
+		if self.addstate(state):
+			new_state = False
+
+		state = statetuple(state)
 		# can only offload for a lesser queue
 		possibleactions = []
 		possibleactionsq = []
@@ -121,7 +125,7 @@ class Qlearning(object):
 			(w0, nO) = act
 			# since the actions are ordered from 1 -> W_max
 			if w0 > w: break
-			if Qs[nO.index] > Qs[nL.index]: continue
+			if Qs[nO.index]+Ws[nO.index] > Qs[nL.index]+Ws[nL.index]: continue
 			if nO == nL: continue
 			possibleactions.append(act)
 			possibleactionsq.append(qvalue)
@@ -130,10 +134,10 @@ class Qlearning(object):
 			return action
 
 		x = utils.uniformRandom()
-		# explore
-		if x < self.epsilon:
+		# explore, if it's a newstate, always explore
+		if x < self.epsilon or new_state:
 			(w0, nO) = utils.randomChoice(possibleactions)
-		# exploit
+		# exploit between attempted actions
 		else:
 			max_value = max(possibleactionsq)
 			indeces = [index for index, value in enumerate(possibleactionsq) if value == max_value]
@@ -203,7 +207,8 @@ def reward(ao=None, state=None, action=None, sr=configs.SERVICE_RATE, ar=configs
 		print("[Q DEBUG] Failed to calculate reward, returning zero.")
 		return 0
 
-	(nL, w, Qs)= state
+	(nL, Ws, Qs)= state
+	w = Ws[nL.index]
 	(w0, nO) = action
 
 	# U(s,a) = r_u log( 1 + wL + w0 )  --- log2 ? they don't specify
@@ -253,13 +258,17 @@ def statetuple(state=None,nodes=None, nL=None):
 	""" Creates a state tuple given nodes
 	"""
 	if state is not None:
+		if isinstance(state[1], list):
+			state[1] = tuple(state[1])
 		if isinstance(state[2], list):
 			state[2] = tuple(state[2])
 		return tuple(state)
 	elif nodes is not None and nL is not None:
-		Qs = []
-		for n in nodes:	Qs.append(n.qs())
-		return tuple([nL.name, len(nL.w), tuple(Qs)])
+		Qs = []; Ws = []
+		for n in nodes:
+			Qs.append(n.qs())
+			Ws.append(len(n.w))
+		return tuple([nL.name, tuple(Ws), tuple(Qs)])
 	return None
 
 def actiontuple(action=None, nO=None, w0=None):
