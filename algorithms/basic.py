@@ -9,14 +9,12 @@ class RandomAlgorithm(object):
 	def __init__(self, nodes = None):
 		self.nodes = nodes
 		self.updatable = False
-		self.reward_fun = qlearning.reward
 
 	def __str__(self):
 		return "Random Algorithm"
 
 	def setnodes(self, nodes):
 		self.nodes = nodes
-
 
 	def execute(self,state):
 		"""Gives a random action based on the state and limited possible actions
@@ -46,7 +44,6 @@ class LeastQueueAlgorithm(object):
 	def __init__(self, nodes=None):
 		self.nodes = nodes
 		self.updatable = False
-		self.reward_fun = qlearning.reward
 
 	def __str__(self):
 		return "Least Queue Algorithm"
@@ -85,7 +82,6 @@ class NearestNodeAlgorithm(object):
 	def __init__(self, nodes=None):
 		self.nodes = nodes
 		self.updatable = False
-		self.reward_fun = qlearning.reward
 
 	def __str__(self):
 		return "Nearest Node Algorithm"
@@ -106,7 +102,7 @@ class NearestNodeAlgorithm(object):
 				possible_nO.append(i)
 
 		# send to nearest with a lesser queue
-		e0 = 9999999
+		e0 = float('inf')
 		n0 = None
 		if possible_nO: nO_index = possible_nO[0]
 		for n,e in nL.comtime.items():
