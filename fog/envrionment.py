@@ -19,10 +19,10 @@ class FogEnv(gym.Env):
 		# define the action space: all possible (no, wo) combinations
 		self.action_space = spaces.Box(low=0, high=np.array([configs.N_NODES, configs.MAX_W]), dtype=np.uint8)
 
-		# and the state space: (nL, w, Q_1, Q_2, ..., Q_N )
+		# and the state space: (w_1,..., w_N, Q_1, Q_2, ..., Q_N )
 		max_Qs = np.full(configs.N_NODES, configs.MAX_QUEUE, dtype=np.uint8)
-		high = np.array([configs.N_NODES, configs.MAX_W])
-		high = np.append(high, max_Qs)
+		max_Ws = np.full(configs.N_NODES, configs.MAX_W, dtype=np.uint8)
+		high = np.append(max_Ws, max_Qs)
 		self.observation_space = spaces.Box(low=0, high=high, dtype=np.uint8)
 
 		# env related variables
