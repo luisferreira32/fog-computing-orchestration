@@ -47,6 +47,9 @@ class EventQueue(object):
 		self.q.append(e)
 		return
 
+	def first(self):
+		return self.q[-1].time
+		
 	def popEvent(self):
 		return self.q.pop()
 
