@@ -6,8 +6,7 @@
 from . import configs
 from . import node
 from . import events
-from . import coms
-from .controller import Controller
+from . import envrionment
 
 # tools
 from tools import utils, graphs
@@ -16,13 +15,8 @@ from tools import utils, graphs
 from algorithms import basic
 
 def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_object=None, placements=None):
-	# 0. create all necessary information for the simulation to begin
-	# 1. create first round of events (decision and recieving tasks)
-	# 2. run events that generate more events
-	# 3. repeat from 2
 
-	# -------------------------------------------- 0. --------------------------------------------
-	
+	# ------------------------------------------ create the nodes ------------------------------------------
 	# initiate a constant random - simulation consistency
 	utils.initRandom()
 	cps = sr*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
@@ -40,54 +34,20 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_ob
 	for n in nodes:
 		n.setcomtime(nodes)
 
-	# create the event queue
-	evq = events.EventQueue()
+	# ------------------------------------------ create the env ------------------------------------------
+	env = envrionment.FogEnv(nodes, sr, ar)
+	# and some vars
+	delays = []; discarded = 0;
 
-	# and for information obtaining
-	delays = []; discarded = 0; x=0;
-	sends = 0; recieves = 0; processes = 0;
+	# -------------------------------------------- run the loop ------------------------------------------
+	obs = env.reset()
+	for t in range(configs.SIM_TIME):
+		action = algorithm_object.execute(obs)
+		obs, rewards, done, info = env.step(action)
+		delays.extend(info["delays"])
+		discarded += info["discarded"]
+		env.render()
 
-	# lastly the controller that'll run the algorithm
-	if algorithm_object is None: algorithm_object = basic.RandomAlgorithm(nodes)
-	algorithm_object.setnodes(nodes)
-	ctr = Controller(nodes, algorithm_object)
+	return 1, utils.listavg(delays), round(discarded/(discarded+len(delays)),3)
 
-	# -------------------------------------------- 1. --------------------------------------------
-
-	# begin the first client request, that calls another based on a poisson process
-	ev = events.Recieving(0, nodes[0], ar=ar, interval=configs.TIME_INTERVAL, nodes=nodes)
-	evq.addEvent(ev)
-	ev = events.Decision(0, ctr)
-	evq.addEvent(ev)
-
-	# -------------------------------------------- 2. 3. --------------------------------------------
-	while evq.hasEvents():
-		ev = evq.popEvent()
-		# -------------------------------------------- 2. --------------------------------------------
-		
-		# execute the first event of the queue
-		t = ev.execute(evq)
-		if t is not None:
-			if isinstance(t, int): discarded += t
-			elif t.delay == -1: discarded += 1
-			else: delays.append(t.delay)
-
-		# -------------------------------------------- 3. --------------------------------------------
-
-		# some info
-		if ev.classtype == "Recieving": recieves +=1
-		elif ev.classtype == "Sending": sends +=1
-		elif ev.classtype == "Processing": processes +=1
-		# just a loading display
-		if ev.time == x:
-			print(".", end="",flush=True)
-			x += int(configs.SIM_TIME/5)
-
-	if configs.FOG_DEBUG == 1: print("[DEBUG] Finished simulation")
-	if configs.INFO == 1: print(" [INFO]",algorithm_object," Ran",sends,"SENDING")#,recieves,"RECIEVINGS",processes,"PROCESSING events")
-
-	for n in nodes:
-		discarded += len(n.w) + len(n.sendq)
-	# return avg reward, avg delay, and overload probability
-	return (utils.listavg(ctr.rewards), utils.listavg(delays), round(discarded/(len(delays)+discarded),3))
 		

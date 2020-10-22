@@ -98,6 +98,9 @@ class Core(object):
 			return None
 		return self.w.popleft()
 
+	def hasw(self):
+		return len(self.w) > 0
+
 	def send(self, task, destination):
 		self.sendq.append([task, destination])
 
@@ -105,9 +108,7 @@ class Core(object):
 		return self.sendq.popleft()
 
 	def tosend(self):
-		if len(self.sendq) > 0:
-			return True
-		return False
+		return len(self.sendq) > 0
 
 	# -- reset function --
 	def reset(self):
