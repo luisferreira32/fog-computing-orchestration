@@ -1,31 +1,23 @@
-# 'w' is defined here and passed as argument for the events
-# IF AFTER EXECUTING a returning task is not completed, it was discarded 
-# create a time dictionary of communication so it doesn't need to do math every time
-
 # fog related imports
-from . import configs
-from . import node
-from . import events
-from . import envrionment
-
+from fog import configs, envrionment, node
+from stable_baselines.common.vec_env import DummyVecEnv
 # tools
-from tools import utils, graphs
+from tools import utils
 
-# decision algorithms
-from algorithms import basic
 
-def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_object=None, placements=None):
+def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm=None):
 
-	# ------------------------------------------ create the nodes ------------------------------------------
+	# ------------------------------------------ set up the env ------------------------------------------
+	if algorithm == None: return -1, -1, -1
 	# initiate a constant random - simulation consistency
 	utils.initRandom()
-	cps = sr*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
-	if placements is None:
-		placements = []
-		for i in range(0, configs.N_NODES):
-			placements.append((utils.uniformRandom(configs.MAX_AREA[0]),utils.uniformRandom(configs.MAX_AREA[1])))
+	# placement of the nodes
+	placements=[]
+	for i in range(0, configs.N_NODES):
+		placements.append((utils.uniformRandom(configs.MAX_AREA[0]),utils.uniformRandom(configs.MAX_AREA[1])))
 
-	# create N_NODES with random placements within a limited area and a configured SR
+	# the nodes 
+	cps = sr*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
 	nodes = []
 	for i in range(0, configs.N_NODES):
 		n = node.Core(name="n"+str(i), index=i,	placement=placements[i], cpu=(configs.DEFAULT_CPI, cps))
@@ -34,20 +26,26 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm_ob
 	for n in nodes:
 		n.setcomtime(nodes)
 
-	# ------------------------------------------ create the env ------------------------------------------
 	env = envrionment.FogEnv(nodes, sr, ar)
-	# and some vars
-	delays = []; discarded = 0;
+	env = DummyVecEnv([lambda: env])
+	# --- and learn a bit of the new envrionment ---
+	algorithm.set_env(env)
+	algorithm.learn(total_timesteps=configs.SIM_TIME*2)
 
 	# -------------------------------------------- run the loop ------------------------------------------
+	# some info registering apps
+	rewards = []; delays = []; discarded = 0;
 	obs = env.reset()
 	for t in range(configs.SIM_TIME):
-		action = algorithm_object.execute(obs)
-		obs, rewards, done, info = env.step(action)
+		action, _states = algorithm.predict(obs)
+		obs, rw, done, info = env.step(action)
+		# unpack and save it
+		rw = rw[0]; info = info[0];
 		delays.extend(info["delays"])
+		rewards.append(rw)
 		discarded += info["discarded"]
 		env.render()
 
-	return 1, utils.listavg(delays), round(discarded/(discarded+len(delays)),3)
+	return utils.listavg(rewards), utils.listavg(delays), round(discarded/(discarded+len(delays)),3)
 
 		

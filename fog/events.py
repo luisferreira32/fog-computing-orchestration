@@ -65,6 +65,18 @@ class Event(object):
 		self.classtype = classtype
 
 
+# -------------------------------------------- Discard --------------------------------------------
+
+class Discard(Event):
+	def __init__(self, time, discarded):
+		super(Discard, self).__init__(time, "Discard")
+		self.discarded = discarded
+
+	def execute(self, eq):
+		return self.discarded
+
+
+
 # -------------------------------------------- Recieving --------------------------------------------
 
 class Recieving(Event):
