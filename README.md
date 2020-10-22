@@ -17,5 +17,5 @@ To run this simulations it is necessary to have Tensorflow 2.0 installed, recomm
   
 [Matplotlib](https://matplotlib.org/) was used for graphical results.
 
-Baselines were made with [stable-baselines](https://github.com/hill-a/stable-baselines) which in turn was forked from OpenAI baselines, this ones need version 1.4 or 1.5 of Tensorflow to reproduce them.
+Baselines were made with [stable-baselines](https://github.com/hill-a/stable-baselines) which in turn was forked from OpenAI baselines, this ones need version 1.8 to 1.15 of Tensorflow to reproduce them.
 
