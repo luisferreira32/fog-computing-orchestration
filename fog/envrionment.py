@@ -142,11 +142,12 @@ class FogEnv(gym.Env):
 
 		wLs = 0; wos = 0; t_c =0;
 		for n_l, (w, q, n_o, w_o) in enumerate(zip(w_i, q_i, n_io, w_io)):
-			# if there is an impossible action, penalize it infinitely
+			# if there is an impossible action, penalize it
 			if w_o > w: return -1000.0
+			if n_l == n_o: return -1000.0
 			# else calculate normal reward
 			wLs += min(configs.MAX_QUEUE - q, w - w_o)
-			if w_o > 0 and n_l != n_o: t_c += w_o*self.nodes[n_l].comtime[self.nodes[n_o]]
+			if w_o > 0: t_c += w_o*self.nodes[n_l].comtime[self.nodes[n_o]]
 		wos = np.sum(w_io)
 		utility = 10 * np.log(1+wLs+wos)
 		delay = 1 * t_c / (wLs + wos + 1)

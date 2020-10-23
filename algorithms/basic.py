@@ -32,9 +32,9 @@ class RandomAlgorithm(object):
 				w_o[j] = 0
 				continue
 			# randomly offload to a random node
-			#n_o[j] = int(utils.uniformRandom(configs.N_NODES))
-			#w_o[j] = w_i[j]
-			
+			n_o[j] = int(utils.uniformRandom(configs.N_NODES))
+			w_o[j] = round(utils.uniformRandom(w_i[j]))
+			"""
 			wqj = w_i[j] + q_i[j]
 			# check possible acitons
 			possible_n_o = [i for i, (w,q) in enumerate(zip(w_i, q_i)) if (i != j and w+q < wqj)]
@@ -44,6 +44,7 @@ class RandomAlgorithm(object):
 			else:
 				n_o[j] = 0
 				w_o[j] = 0
+			"""
 			
 
 		action = np.append(n_o, w_o)
