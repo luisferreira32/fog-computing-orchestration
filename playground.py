@@ -1,6 +1,6 @@
 # fog packages
-from fog.simulate import simulate
-from fog.envrionment import FogEnv
+from fog.simulate import simulate, algorithm_classroom
+from fog.envrionment import CreatFogEnv
 from fog import configs
 
 # tools
@@ -25,24 +25,28 @@ configs.SIM_TIME = 2000 # don't go over 50 000
 configs.DEFAULT_DATA = 5*8
 configs.INFO = 0
 
-#### ------------------ SETU UP THE ENV ------------------
-
-
+#### ---------------- SET UP THE ENV -----------------
+env = CreatFogEnv(configs.SERVICE_RATE, configs.TASK_ARRIVAL_RATE)
 
 #### ----------------- SET UP ALGORITHMS -----------------
 # set up which algorithms will run 
 algs = []
 algs.append(basic.RandomAlgorithm())
 #algs.append(basic.LeastQueueAlgorithm())
-algs.append(PPO2(MlpPolicy, FogEnv(None), verbose=1))
-algs.append(A2C(MlpPolicy, FogEnv(None), verbose=1)	)
+algs.append(PPO2(MlpPolicy, env, verbose=0))
+algs.append(A2C(MlpPolicy, env, verbose=0)	)
+
+#### ------------------ TAINS ALGORITHMS ------------------
+for alg in algs:
+	algorithm_classroom(srs, ars, algorithm=alg)
 
 #### ------------------ GRAPHICAL SIMS ------------------
 
 # simulations
 for sr in srs:
+	env = CreatFogEnv(sr, configs.TASK_ARRIVAL_RATE)
 	for alg in algs:
-		(avg_reward, avg_delay, overload_prob)= simulate(sr=sr, algorithm=alg)
+		(avg_reward, avg_delay, overload_prob)= simulate(algorithm=alg, env=env)
 		utils.appendict(avg_reward_sr, alg, avg_reward)
 		utils.appendict(avg_delay_sr, alg, avg_delay)
 		utils.appendict(overload_sr, alg, overload_prob)
@@ -50,8 +54,9 @@ for sr in srs:
 		
 
 for ar in ars:
+	env = CreatFogEnv(configs.SERVICE_RATE, ar)
 	for alg in algs:
-		(avg_reward, avg_delay, overload_prob)= simulate(ar=ar, algorithm=alg)
+		(avg_reward, avg_delay, overload_prob)= simulate(algorithm=alg, env=env)
 		utils.appendict(avg_reward_ar, alg, avg_reward)
 		utils.appendict(avg_delay_ar, alg, avg_delay)
 		utils.appendict(overload_ar, alg, overload_prob)

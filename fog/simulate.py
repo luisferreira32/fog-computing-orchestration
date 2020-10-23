@@ -1,37 +1,18 @@
 # fog related imports
-from fog import configs, envrionment, node
+from fog import configs, node
+from fog.envrionment import CreatFogEnv
 from stable_baselines.common.vec_env import DummyVecEnv
 # tools
 from tools import utils
 
 
-def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm=None):
+def simulate(algorithm=None, env=None):
 
 	# ------------------------------------------ set up the env ------------------------------------------
-	if algorithm == None: return -1, -1, -1
+	if algorithm is None or env is None: return -1, -1, -1
 	# initiate a constant random - simulation consistency
 	utils.initRandom()
-	# placement of the nodes
-	placements=[]
-	for i in range(0, configs.N_NODES):
-		placements.append((utils.uniformRandom(configs.MAX_AREA[0]),utils.uniformRandom(configs.MAX_AREA[1])))
-
-	# the nodes 
-	cps = sr*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
-	nodes = []
-	for i in range(0, configs.N_NODES):
-		n = node.Core(name="n"+str(i), index=i,	placement=placements[i], cpu=(configs.DEFAULT_CPI, cps))
-		nodes.append(n)
-	# create M edges between each two nodes
-	for n in nodes:
-		n.setcomtime(nodes)
-
-	env = envrionment.FogEnv(nodes, sr, ar)
-	env = DummyVecEnv([lambda: env])
-	# --- and learn a bit of the new envrionment ---
-	algorithm.set_env(env)
-	algorithm.learn(total_timesteps=configs.SIM_TIME*2)
-
+	env = DummyVecEnv([lambda: env]) 
 	# -------------------------------------------- run the loop ------------------------------------------
 	# some info registering apps
 	rewards = []; delays = []; discarded = 0;
@@ -49,3 +30,22 @@ def simulate(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE, algorithm=No
 	return utils.listavg(rewards), utils.listavg(delays), round(discarded/(discarded+len(delays)),3)
 
 		
+def algorithm_classroom(srs, ars, algorithm=None):
+	print("[INFO] training algorithm",algorithm)
+
+	for sr in srs:
+		print("[SR",sr,"]")
+		# -- set up the envrionment depending on the sr and ar
+		env = CreatFogEnv(sr, configs.TASK_ARRIVAL_RATE)
+		env = DummyVecEnv([lambda: env])
+		# --- and learn a bit of the new envrionment ---
+		algorithm.set_env(env)
+		algorithm.learn(total_timesteps=configs.SIM_TIME)
+
+	for ar in ars:
+		print("[AR",ar,"]")
+		env = CreatFogEnv(configs.SERVICE_RATE, ar)
+		env = DummyVecEnv([lambda: env])
+		# --- and learn a bit of the new envrionment ---
+		algorithm.set_env(env)
+		algorithm.learn(total_timesteps=configs.SIM_TIME)

@@ -5,10 +5,27 @@ from gym import spaces
 import numpy as np
 
 # fog related imports
-from . import configs
-from . import events
+from fog import configs, events, node
+from tools import utils
 
-# constants
+def CreatFogEnv(sr=configs.SERVICE_RATE, ar=configs.TASK_ARRIVAL_RATE):
+	utils.initRandom()
+	# placement of the nodes
+	placements=[]
+	for i in range(0, configs.N_NODES):
+		placements.append((utils.uniformRandom(configs.MAX_AREA[0]),utils.uniformRandom(configs.MAX_AREA[1])))
+
+	# the nodes 
+	cps = sr*configs.DEFAULT_IL*configs.DEFAULT_CPI/configs.TIME_INTERVAL
+	nodes = []
+	for i in range(0, configs.N_NODES):
+		n = node.Core(name="n"+str(i), index=i,	placement=placements[i], cpu=(configs.DEFAULT_CPI, cps))
+		nodes.append(n)
+	# create M edges between each two nodes
+	for n in nodes:
+		n.setcomtime(nodes)
+
+	return FogEnv(nodes, sr, ar)
 
 class FogEnv(gym.Env):
 	"""Custom Environment that follows gym interface"""
