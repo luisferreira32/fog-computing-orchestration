@@ -7,30 +7,10 @@ from fog import configs
 from tools import utils, graphs
 import sys
 
-<<<<<<< HEAD
-algs = [basic.RandomAlgorithm(), basic.LeastQueueAlgorithm(), basic.NearestNodeAlgorithm()]
-#algs = [basic.RandomAlgorithm()]
-#algs = []
-srs = [1, 3, 5, 7]
-ars = [3, 5, 7, 9]
-#placements= [(0,0), (10,10), (100,15), (95,85), (100,100)]
-placements=None
-
-#### --------------- ONE TIME SIMS 
-
-if len(sys.argv) > 1 and sys.argv[1] == "display":
-	configs.DISPLAY = True
-	configs.SIM_TIME = 100
-	ao = qlearning.Qlearning(sr=7, ar=5.2)
-	simulate(sr=8, ar=5.2, algorithm_object=ao)
-	configs.DISPLAY = False
-	sys.exit()
-=======
 #algorithms
 from algorithms import basic
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2, A2C
->>>>>>> openaigym
 
 # --------------------------------------------THE PLAYGROUND-----------------------------------------
 
