@@ -68,7 +68,7 @@ class FogEnv(gym.Env):
 		self.clock += configs.TIME_INTERVAL
 		done = self.clock >= configs.SIM_TIME
 
-		# run all events until this time step
+		# run all events until the end of this time step
 		while self.evq.hasEvents() and self.evq.first() < self.clock:
 			ev = self.evq.popEvent()
 			t = ev.execute(self.evq)
@@ -111,15 +111,16 @@ class FogEnv(gym.Env):
 		(n_io, w_io) = np.split(action, 2)
 
 		for i, (n_o, w_o) in enumerate(zip(n_io, w_io)):
-			nL = self.nodes[i]
-			if not nL.transmitting and i != n_o:
+			n_l = self.nodes[i]
+			if not n_l.transmitting and i != n_o:
 				for x in range(w_o):
-					if not nL.hasw(): break
-					nL.send(nL.decide(), self.nodes[n_o])
-			while not nL.fullqueue() and nL.hasw():
-				nL.queue(nL.decide())
+					if not n_l.hasw(): break
+					n_l.send(n_l.decide(), self.nodes[n_o])
+			while not n_l.fullqueue() and n_l.hasw():
+				n_l.queue(n_l.decide())
 
 		for n in self.nodes:
+			# discard W if they're not in w_l or w_o
 			if n.hasw():
 				discarded = len(n.w)
 				n.w.clear()
@@ -140,19 +141,61 @@ class FogEnv(gym.Env):
 		w_i = [len(n.w) for n in self.nodes]
 		q_i = [n.qs() for n in self.nodes]
 
-		wLs = 0; wos = 0; t_c =0;
+		# reward = U - (D+O)
+		U = 0
+		D = 0
+		O = 0
+
+		# overloads
+		O_aux = 0
+		w_node = np.zeros(configs.N_NODES, dtype=np.uint8)
+		for n_l, (w, q, n_o, w_o) in enumerate(zip(w_i, q_i, n_io, w_io)):
+			w_l = min(configs.MAX_QUEUE - q, w - w_o)
+			# tasks worked per node
+			w_node[n_l] += w_l
+			w_node[n_o] += w_o
+		# worked tasks
+		wLs = 0; wos = 0;
+		# delays
+		t_c = 0; t_w = 0; t_e = 0;
+
 		for n_l, (w, q, n_o, w_o) in enumerate(zip(w_i, q_i, n_io, w_io)):
 			# if there is an impossible action, penalize it
 			if w_o > w: return -1000.0
 			if n_l == n_o: return -1000.0
-			# else calculate normal reward
-			wLs += min(configs.MAX_QUEUE - q, w - w_o)
-			if w_o > 0: t_c += w_o*self.nodes[n_l].comtime[self.nodes[n_o]]
-		wos = np.sum(w_io)
-		utility = 10 * np.log(1+wLs+wos)
-		delay = 1 * t_c / (wLs + wos + 1)
 
-		return utility - delay
+			# else calculate normal reward
+			q_o = self.nodes[n_o].qs()
+			w_l = min(configs.MAX_QUEUE - q, w - w_o)
+			wLs += w_l
+			# delays
+			if w_o > 0:
+				t_c += w_o*self.nodes[n_l].comtime[self.nodes[n_o]]
+				t_w += q_o/self.sr
+				t_e += w_l/self.sr
+			if w_l > 0:
+				t_w += q/self.sr
+				t_e += w_o/self.sr
+			# overload probs
+			Q_il = min(max(0, q-self.sr)+w_node[n_l], configs.MAX_QUEUE)
+			Q_ol = min(max(0, q_o-self.sr)+w_node[n_o], configs.MAX_QUEUE)
+			P_il = max(0,(self.ar/configs.N_NODES) - (configs.MAX_QUEUE-Q_il))/(self.ar/configs.N_NODES)
+			P_ol = max(0,(self.ar/configs.N_NODES) - (configs.MAX_QUEUE-Q_ol))/(self.ar/configs.N_NODES)
+			if w_l+w_o != 0:
+				O_aux += (w_l * P_il + w_o * P_ol) / (w_l + w_o)
+
+		# total offloaded tasks
+		wos = np.sum(w_io)
+
+		# utility reward
+		U = 10 * np.log(1+wLs+wos)
+		# delay reward
+		if wLs+wos != 0: D = 1 * (t_c + t_w + t_e) / (wLs + wos)
+		# overload probability of nodes
+		O = 150 * O_aux
+
+
+		return U - (D + O)
 
 
 	def render(self, mode='human', close=False):

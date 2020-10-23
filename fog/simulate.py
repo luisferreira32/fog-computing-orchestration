@@ -19,11 +19,12 @@ def simulate(algorithm=None, env=None):
 	obs = env.reset()
 	for t in range(configs.SIM_TIME):
 		action, _states = algorithm.predict(obs)
+		print(action)
 		obs, rw, done, info = env.step(action)
 		# unpack and save it
 		rw = rw[0]; info = info[0];
 		delays.extend(info["delays"])
-		rewards.append(rw)
+		if rw != -1000.0: rewards.append(rw) # average reward of possible actions
 		discarded += info["discarded"]
 		env.render()
 

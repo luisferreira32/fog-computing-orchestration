@@ -33,8 +33,8 @@ env = CreatFogEnv(configs.SERVICE_RATE, configs.TASK_ARRIVAL_RATE)
 algs = []
 algs.append(basic.RandomAlgorithm())
 #algs.append(basic.LeastQueueAlgorithm())
-algs.append(PPO2(MlpPolicy, env, verbose=0))
-algs.append(A2C(MlpPolicy, env, verbose=0)	)
+algs.append(PPO2(MlpPolicy, env))
+algs.append(A2C(MlpPolicy, env, gamma=0.5)	)
 
 #### ------------------ TAINS ALGORITHMS ------------------
 for alg in algs:
