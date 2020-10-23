@@ -19,7 +19,6 @@ def simulate(algorithm=None, env=None):
 	obs = env.reset()
 	for t in range(configs.SIM_TIME):
 		action, _states = algorithm.predict(obs)
-		print(action)
 		obs, rw, done, info = env.step(action)
 		# unpack and save it
 		rw = rw[0]; info = info[0];

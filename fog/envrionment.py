@@ -146,25 +146,25 @@ class FogEnv(gym.Env):
 		D = 0
 		O = 0
 
-		# overloads
-		O_aux = 0
-		w_node = np.zeros(configs.N_NODES, dtype=np.uint8)
-		for n_l, (w, q, n_o, w_o) in enumerate(zip(w_i, q_i, n_io, w_io)):
-			w_l = min(configs.MAX_QUEUE - q, w - w_o)
-			# tasks worked per node
-			w_node[n_l] += w_l
-			w_node[n_o] += w_o
 		# worked tasks
 		wLs = 0; wos = 0;
 		# delays
 		t_c = 0; t_w = 0; t_e = 0;
-
+		# overloads
+		O_aux = 0
+		w_node = np.zeros(configs.N_NODES, dtype=np.uint8)
 		for n_l, (w, q, n_o, w_o) in enumerate(zip(w_i, q_i, n_io, w_io)):
 			# if there is an impossible action, penalize it
 			if w_o > w: return -1000.0
 			if n_l == n_o: return -1000.0
+			# else gather some info
+			w_l = min(configs.MAX_QUEUE - q, w - w_o)
+			# tasks worked per node
+			w_node[n_l] += w_l
+			w_node[n_o] += w_o
 
-			# else calculate normal reward
+		for n_l, (w, q, n_o, w_o) in enumerate(zip(w_i, q_i, n_io, w_io)):
+			# then calculate normal reward
 			q_o = self.nodes[n_o].qs()
 			w_l = min(configs.MAX_QUEUE - q, w - w_o)
 			wLs += w_l
