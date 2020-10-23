@@ -1,5 +1,4 @@
 1.15venv/*
-2.0venv/*
 *.pyc
 *.pyo
 todolist.txt

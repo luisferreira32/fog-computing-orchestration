@@ -98,6 +98,9 @@ class Core(object):
 			return None
 		return self.w.popleft()
 
+	def hasw(self):
+		return len(self.w) > 0
+
 	def send(self, task, destination):
 		self.sendq.append([task, destination])
 
@@ -105,40 +108,21 @@ class Core(object):
 		return self.sendq.popleft()
 
 	def tosend(self):
-		if len(self.sendq) > 0:
-			return True
-		return False
+		return len(self.sendq) > 0
+
+	# -- reset function --
+	def reset(self):
+		self.cpuqueue.clear()
+		self.w.clear()
+		self.sendq.clear()
+		self.processing = False
+		self.transmitting = False
+
 
 
 #------------------------------------------------------ ------------ -----------------------------------------------------
 #--------------------------------------------------- Functions on nodes --------------------------------------------------
 #------------------------------------------------------ ------------ -----------------------------------------------------
-
-def avgcps(n=Core(), sr=configs.SERVICE_RATE):
-	#Calculate cycles per second (*10^6) considering a model node, model task and a model service rate
-	return sr*n.cpi*configs.DEFAULT_IL
-
-def extime(n1=None, n2=None, wL=0, w0=0):
-	#Calculate task execution time on node local and offloaded
-	if n1 is None or n2 is None or w0 < 0 or wL < 0:
-		if configs.FOG_DEBUG == 1: print("[DEBUG] Invalid parameters in extime()")
-		return -1
-
-	return ((configs.DEFAULT_IL*n1.cpi*wL)/n1.cps + (configs.DEFAULT_IL*n2.cpi*w0)/n2.cps)
-
-
-def wtime(n1=None, n2=None, wL=0, w0=0, sr=configs.SERVICE_RATE):
-	#Calculate the average waiting time
-	if n1 is None or n2 is None or w0 < 0 or wL < 0:
-		if configs.FOG_DEBUG == 1: print("[DEBUG] Invalid parameters in wtime()")
-		return -1
-
-	# wt = (QL/srL)[if wL != 0] + (QL/srL + Q0/sr0)[if w0 != 0]
-	wt = 0
-	if wL > 0: wt += n1.qs()/sr
-	if w0 > 0: wt += n1.qs()/sr + n2.qs()/sr
-	return wt
-
 
 def distance(n1=None, n2=None):
 	#Calculate the distance between two nodes on a plane

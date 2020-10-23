@@ -47,8 +47,14 @@ class EventQueue(object):
 		self.q.append(e)
 		return
 
+	def first(self):
+		return self.q[-1].time
+		
 	def popEvent(self):
 		return self.q.pop()
+
+	def reset(self):
+		self.q.clear()
 
 
 # -------------------------------------------- Events --------------------------------------------
@@ -59,44 +65,16 @@ class Event(object):
 		self.classtype = classtype
 
 
-# -------------------------------------------- Decision --------------------------------------------
+# -------------------------------------------- Discard --------------------------------------------
 
-class Decision(Event):
-	def __init__(self, time, controller, time_interval = configs.TIME_INTERVAL):
-		super(Decision, self).__init__(time, "Decision")
-
-		self.controller = controller
-		self.time_interval = time_interval
-
-	def __str__(self):
-		return "Decision["+("%.2f"%self.time)+"]"
+class Discard(Event):
+	def __init__(self, time, discarded):
+		super(Discard, self).__init__(time, "Discard")
+		self.discarded = discarded
 
 	def execute(self, eq):
-		discarded = self.controller.decide()
+		return self.discarded
 
-		# if there is something to send or process, do it
-		for n in self.controller.nodes:
-			# start processing if it hasn't started already
-			if not n.processing and not n.emptyqueue():
-				ev = Processing(self.time, n)
-				eq.addEvent(ev)
-			# and sending if not sending already
-			if not n.transmitting and n.tosend() > 0:
-				ev = Sending(self.time, n)
-				eq.addEvent(ev)
-
-
-		# and add another decision after a time interval
-		ev = Decision(self.time + self.time_interval, self.controller)
-		eq.addEvent(ev)
-
-		# debug message
-		if configs.FOG_DEBUG == 1: print("[DEBUG] [%.2f Decision]" % self.time)
-
-		if configs.DISPLAY == True: graphs.displayState(self.time,self.controller.nodes, eq)
-		
-		# returns number of discarded tasks
-		return discarded
 
 
 # -------------------------------------------- Recieving --------------------------------------------
