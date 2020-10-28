@@ -36,6 +36,8 @@ class FogEnv(gym.Env):
 		# and execute the action
 		self._take_action(action) 
 
+		# rollout the events
+		
 		# obtain next observation
 		obs = self._next_observation()
 

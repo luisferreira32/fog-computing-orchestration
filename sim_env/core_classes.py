@@ -9,6 +9,7 @@ class Cloud_node
 from abc import ABC, abstractmethod
 from collections import deque
 from numpy import random
+import numpy as np
 
 # sim_env imports
 from sim_env.configs import MAX_QUEUE, CPU_UNIT, RAM_UNIT, CPU_CLOCKS, RAM_SIZES
@@ -60,15 +61,21 @@ class Node(ABC):
 class Fog_node(Node):
     """ A Fog node with limited resources
     """
-    def __init__(self, index, x, y, cpu_frequency, ram_size, number_of_slices):
+    def __init__(self, index, x, y, cpu_frequency, ram_size, number_of_slices, arrival_mode=None):
         super(Fog_node, self).__init__(index, x, y, cpu_frequency, ram_size, number_of_slices)
         self._dealt_tasks = 0
-        self._time_intervals = 0
+        self._total_time_intervals = 0
         self._service_rate = 0
+        if arrival_mode == None:
+            self._arrivals_on_slices = np.zeros(3)
+        elif arrival_mode == "normal":
+            self._arrivals_on_slices = np.full(3, 0.5)
+        elif arrival_mode == "heavy":
+            self._arrivals_on_slices = np.full(3, 0.9)
 
     def new_interval_update_service_rate(self):
-        self._time_intervals += 1
-        self._service_rate = self._dealt_tasks / self._time_intervals
+        self._total_time_intervals += 1
+        self._service_rate = self._dealt_tasks / self._total_time_intervals
 
     def slice_buffer_len(self, k):
         # error shield

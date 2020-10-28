@@ -14,7 +14,7 @@ class EventQueue(object):
 		self.q = collections.deque()
 
 	def __str__(self):
-		return "Event Queue of len" + str(len(self.q))
+		return "evq" + str(len(self.q))
 
 	def queueSize(self):
 		return len(self.q)
@@ -26,12 +26,10 @@ class EventQueue(object):
 		# only process events within sim time
 		if e.time > configs.SIM_TIME or e.time < 0:
 			return
-
 		# if there's no events just add it
 		if len(self.q) == 0:
 			self.q.append(e)
 			return
-
 		# insert in an orderly fashion time decreases from left to right, for faster insert
 		for ev in self.q:
 			if ev.time > e.time:
@@ -63,4 +61,12 @@ class Event(ABC):
 	def execute(self, evq):
 		# executes current event and adds more events to the EVentQueue
 		pass
+
+class Set_arrivals(Event):
+	""" Set_arrivals calculates which nodes and slices are recieving a task this timestep
+	"""
+	def __init__(self, time, timestep):
+		super(Set_arrivals, self).__init__(time, "Set_arrivals")
+		self.timestep = timestep
+		
 
