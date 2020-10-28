@@ -136,13 +136,13 @@ def point_to_point_transmission_rate(n1, n2):
     n0_mw = db_to_linear(THERMAL_NOISE_DENSITY)
     return shannon_hartley(g, p_mw, NODE_BANDWIDTH, n0_mw)
 
-def create_random_node(index=0):
+def create_random_node(index=0, slices_characteristics=BASE_SLICE_CHARS):
     # returns a node uniformly sampled within configurations, after the previous index
     [x, y] = [random.randint(low=0, high=AREA[0]), random.randint(low=0, high=AREA[1])]
     number_of_slices = 3
     cpu = random.choice(CPU_CLOCKS)
     ram = random.choice(RAM_SIZES)
-    return Fog_node(index, x, y, cpu, ram, number_of_slices)
+    return Fog_node(index, x, y, cpu, ram, number_of_slices, slices_characteristics)
 
 
 # ---------- Task related classes and functions ---------
