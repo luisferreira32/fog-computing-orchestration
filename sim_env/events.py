@@ -1,6 +1,7 @@
 # external imports
 import collections
 import sys
+from abc import ABC, abstractmethod
 
 # our imports
 
@@ -53,8 +54,13 @@ class EventQueue(object):
 
 # -------------------------------------------- Events --------------------------------------------
 
-class Event(object):
+class Event(ABC):
 	def __init__(self, time, classtype=None):
 		self.time = time
 		self.classtype = classtype
+
+	@abstractmethod
+	def execute(self, evq):
+		# executes current event and adds more events to the EVentQueue
+		pass
 
