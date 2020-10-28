@@ -13,8 +13,8 @@ CPU_UNIT = 1 # GHz
 RAM_UNIT = 400 # MB
 # slice characteristics
 BASE_SLICE_CHARS = {
-	"arrivals" : 0.5,
-	"task_type" : [1, 1, 0]
+	"arrivals" : [0.5, 0.5, 0.5],
+	"task_type" : [[1, 1, 0], [1, 1, 0], [1, 1, 0]]
 }
 
 # ENV CONSTANTS

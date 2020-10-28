@@ -22,4 +22,4 @@ def euclidean_distance(x1, y1, x2, y2):
 
 def bernoulli_arrival(p):
 	if not (0<=p<=1): return 0
-	return 1 if random.rand() < p else 0
+	return True if random.rand() < p else False

@@ -50,9 +50,10 @@ def test_bernoulli_arrival():
     assert bernoulli_arrival(-1) == 0 # error
     count1 = 0; count0 = 0;
     for i in range(100000):
-        if bernoulli_arrival(0.5):
+        if bernoulli_arrival(0.7):
             count1 +=1
         else:
             count0 +=1
     # ~50% of the times it hits, ~50% it doesn't
-    assert round(count1,-3) == round(count0,-3)
+    assert round(count1/100000,1) == 0.7
+    assert round(count0/100000,1) == 0.3

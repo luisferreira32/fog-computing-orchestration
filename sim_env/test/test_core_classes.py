@@ -70,7 +70,6 @@ def test_node_processing_on_slice():
     assert f1.buffers[0][1].is_processing() == False # second didn't
     assert f1.remove_task_of_slice(0, t1) == t1
     assert f1._avail_cpu_frequency == 1
-    assert t1.is_processing() == False
     assert t1.is_completed() == False # since we just removed and didn't set finish time
     
 def test_node_processing_on_slice_2():
