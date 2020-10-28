@@ -6,7 +6,8 @@ if "/home/yourself/fog-computing-orchestration" not in sys.path:
     sys.path.append("/home/yourself/fog-computing-orchestration")
 
 # functions under testing
-from sim_env.calculators import db_to_linear, linear_to_db, channel_gain, shannon_hartley, euclidean_distance
+from sim_env.calculators import db_to_linear, linear_to_db, channel_gain
+from sim_env.calculators import shannon_hartley, euclidean_distance, bernoulli_arrival
 
 def test_db_to_linear():
     # 10 * log10 ( value )
@@ -42,3 +43,16 @@ def test_shannon_hartley():
     assert shannon_hartley(100,1,-1,1) == 0 # error
     assert shannon_hartley(100,1,1,-20) == 0 # error
     assert shannon_hartley(1,-1,1,1) == 0 # error
+
+def test_bernoulli_arrival():
+    # True if x < p else False
+    assert bernoulli_arrival(10) == 0 # error
+    assert bernoulli_arrival(-1) == 0 # error
+    count1 = 0; count0 = 0;
+    for i in range(100000):
+        if bernoulli_arrival(0.5):
+            count1 +=1
+        else:
+            count0 +=1
+    # ~50% of the times it hits, ~50% it doesn't
+    assert round(count1,-2) == round(count0,-2)

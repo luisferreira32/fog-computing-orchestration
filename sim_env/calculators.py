@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from numpy import random
 import numpy as np
 
 def db_to_linear(value):
@@ -20,3 +20,6 @@ def shannon_hartley(gain, power, bandwidth, noise_density):
 def euclidean_distance(x1, y1, x2, y2):
     return np.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))
 
+def bernoulli_arrival(p):
+	if not (0<=p<=1): return 0
+	return 1 if random.rand() < p else 0

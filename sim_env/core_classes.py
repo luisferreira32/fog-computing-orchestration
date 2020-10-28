@@ -62,6 +62,13 @@ class Fog_node(Node):
     """
     def __init__(self, index, x, y, cpu_frequency, ram_size, number_of_slices):
         super(Fog_node, self).__init__(index, x, y, cpu_frequency, ram_size, number_of_slices)
+        self._dealt_tasks = 0
+        self._time_intervals = 0
+        self._service_rate = 0
+
+    def new_interval_update_service_rate(self):
+        self._time_intervals += 1
+        self._service_rate = self._dealt_tasks / self._time_intervals
 
     def slice_buffer_len(self, k):
         # error shield
@@ -80,9 +87,10 @@ class Fog_node(Node):
     def remove_task_of_slice(self, k, task, finish_time=None):
         # error shield
         if not (0<=k<self.max_k): return None
-        # removes and returns a task if it is or not on the buffer
+        # removes and returns a task if it is in the buffer
         try:
             self.buffers[k].remove(task)
+            self._dealt_tasks += 1
             # values should be zero if it's not processing
             self._avail_ram_size += task._memory_units*RAM_UNIT
             self._avail_cpu_frequency += task._cpu_units*CPU_UNIT
@@ -185,5 +193,6 @@ def task_processing_time(t=None):
 
 def task_communication_time(t, bit_rate):
     if t is None: return "no task given"
+    if bit_rate == 0: return "invalid transmission route"
     # simple packet_size calc
     return t.packet_size/bit_rate
