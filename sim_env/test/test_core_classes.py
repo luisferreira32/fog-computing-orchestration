@@ -5,7 +5,7 @@ if "/home/yourself/fog-computing-orchestration" not in sys.path:
     sys.path.append("/home/yourself/fog-computing-orchestration")
 
 # imported test classes
-from sim_env.configs import MAX_QUEUE
+from sim_env.configs import MAX_QUEUE, CPU_DEMANDS
 from sim_env.core_classes import Task, Fog_node
 
 # ---------- test Task class methods ----------
@@ -18,6 +18,8 @@ def test_task_creation():
     assert t._cpu_units == 0
     assert t._memory_units == 0
     assert t._total_delay == -1
+    t = Task(0, 5, task_type=[0,0,0])
+    assert t.cpu_demand == CPU_DEMANDS[0]
 
 def test_task_processing():
     t = Task(0, 5, 10, 400, 400)

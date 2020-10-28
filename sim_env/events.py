@@ -65,8 +65,25 @@ class Event(ABC):
 class Set_arrivals(Event):
 	""" Set_arrivals calculates which nodes and slices are recieving a task this timestep
 	"""
-	def __init__(self, time, timestep):
+	def __init__(self, time, timestep, nodes):
 		super(Set_arrivals, self).__init__(time, "Set_arrivals")
 		self.timestep = timestep
+		self.nodes = nodes
+
+	def execute(self, evq):
+		# for each node slice, check wether the task arrived or not
+		for n in nodes:
+			for i in range(n.max_k):
+				ev =
+
+class Task_arrival(Event):
+	""" Task_arrival inserts a task to a node slice
+	"""
+	def __init__(self, time, node, k, task):
+		super(Task_arrival, self).__init__(time, "Task_arrival")
+		self.node = node
+		self.node_slice = k
+		self.task = task
+		
 		
 

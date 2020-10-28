@@ -25,6 +25,8 @@ class FogEnv(gym.Env):
 
 		# self.seed()
 
+		# self.nodes!
+
 
 	def step(self, action):
 		# information dict to pass back

@@ -11,6 +11,11 @@ CPU_CLOCKS = [5, 6, 7, 8, 9, 10] # GHz
 RAM_SIZES = [2400, 4000, 8000] # MB
 CPU_UNIT = 1 # GHz
 RAM_UNIT = 400 # MB
+# slice characteristics
+BASE_SLICE_CHARS = {
+	"arrivals" : 0.5,
+	"task_type" : [1, 1, 0]
+}
 
 # ENV CONSTANTS
 AREA = [100, 100] # m x m

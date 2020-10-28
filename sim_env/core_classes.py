@@ -12,9 +12,10 @@ from numpy import random
 import numpy as np
 
 # sim_env imports
-from sim_env.configs import MAX_QUEUE, CPU_UNIT, RAM_UNIT, CPU_CLOCKS, RAM_SIZES
+from sim_env.configs import MAX_QUEUE, CPU_UNIT, RAM_UNIT, CPU_CLOCKS, RAM_SIZES, BASE_SLICE_CHARS
 from sim_env.configs import AREA, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT, THERMAL_NOISE_DENSITY
 from sim_env.configs import NODE_BANDWIDTH, TRANSMISSION_POWER
+from sim_env.configs import DEADLINES, CPU_DEMANDS, RAM_DEMANDS
 from sim_env.calculators import euclidean_distance, channel_gain, shannon_hartley, db_to_linear
 
 # ---------- Nodes related classes and functions ---------
@@ -61,17 +62,13 @@ class Node(ABC):
 class Fog_node(Node):
     """ A Fog node with limited resources
     """
-    def __init__(self, index, x, y, cpu_frequency, ram_size, number_of_slices, arrival_mode=None):
+    def __init__(self, index, x, y, cpu_frequency, ram_size, number_of_slices, slice_characteristics=BASE_SLICE_CHARS):
         super(Fog_node, self).__init__(index, x, y, cpu_frequency, ram_size, number_of_slices)
         self._dealt_tasks = 0
         self._total_time_intervals = 0
         self._service_rate = 0
-        if arrival_mode == None:
-            self._arrivals_on_slices = np.zeros(number_of_slices)
-        elif arrival_mode == "normal":
-            self._arrivals_on_slices = np.full(number_of_slices, 0.5)
-        elif arrival_mode == "heavy":
-            self._arrivals_on_slices = np.full(number_of_slices, 0.9)
+        self._arrivals_on_slices = slice_characteristics["arrivals"]
+        self._task_type_on_slices = slice_characteristics["task_type"]
 
     def new_interval_update_service_rate(self):
         self._total_time_intervals += 1
@@ -153,11 +150,17 @@ def create_random_node(index=0):
 class Task():
     """ A task attributed by the users
     """
-    def __init__(self, timestamp, packet_size, delay_constraint, cpu_demand, ram_demand):
+    def __init__(self, timestamp, packet_size, delay_constraint=10, cpu_demand=400, ram_demand=400, task_type=None):
+        # must either have task type or the other
         self.packet_size = packet_size
-        self.delay_constraint = delay_constraint
-        self.cpu_demand = cpu_demand
-        self.ram_demand = ram_demand
+        if not task_type == None and len(task_type) == 3:
+            self.delay_constraint = DEADLINES[task_type[0]]
+            self.cpu_demand = CPU_DEMANDS[task_type[1]]
+            self.ram_demand = RAM_DEMANDS[task_type[2]]
+        else:
+            self.delay_constraint = delay_constraint
+            self.cpu_demand = cpu_demand
+            self.ram_demand = ram_demand
 
         self._processing = False
         self._memory_units = 0

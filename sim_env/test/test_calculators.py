@@ -55,4 +55,4 @@ def test_bernoulli_arrival():
         else:
             count0 +=1
     # ~50% of the times it hits, ~50% it doesn't
-    assert round(count1,-2) == round(count0,-2)
+    assert round(count1,-3) == round(count0,-3)
