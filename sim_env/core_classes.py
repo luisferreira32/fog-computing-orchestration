@@ -67,11 +67,11 @@ class Fog_node(Node):
         self._total_time_intervals = 0
         self._service_rate = 0
         if arrival_mode == None:
-            self._arrivals_on_slices = np.zeros(3)
+            self._arrivals_on_slices = np.zeros(number_of_slices)
         elif arrival_mode == "normal":
-            self._arrivals_on_slices = np.full(3, 0.5)
+            self._arrivals_on_slices = np.full(number_of_slices, 0.5)
         elif arrival_mode == "heavy":
-            self._arrivals_on_slices = np.full(3, 0.9)
+            self._arrivals_on_slices = np.full(number_of_slices, 0.9)
 
     def new_interval_update_service_rate(self):
         self._total_time_intervals += 1
