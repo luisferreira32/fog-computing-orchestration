@@ -99,15 +99,13 @@ class Fog_node(Node):
 	def pop_last_task(self, k, time):
 		# error shield
 		if not (0<=k<self.max_k): return None
-		try:
-			# shouldn't pop a task that is processing
-			if self.buffers[k][-1].is_processing(): return None
-			# and should only offload a task arriving in this timestep
-			if self.buffers[k][-1].timestamp != time: return None
-			t = self.buffers[k].pop()
-		except:
-			return None
-		return t
+		# only works if there is a task in the buffer
+		if len(self.buffers[k]) == 0: return None
+		# shouldn't pop a task that is processing
+		if self.buffers[k][-1].is_processing(): return None
+		# and should only offload a task arriving in this timestep
+		if self.buffers[k][-1]._timestamp != time: return None
+		return self.buffers[k].pop()
 
 	def remove_task_of_slice(self, k, task):
 		# error shield
@@ -144,7 +142,7 @@ class Fog_node(Node):
 				under_processing.append(task)
 				# reduce the number that we will still allocate
 				aux_w -= 1
-		return task
+		return under_processing
 
 
 def point_to_point_transmission_rate(n1, n2):

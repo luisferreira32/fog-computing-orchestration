@@ -25,7 +25,7 @@ class FogEnv(gym.Env):
 
 		# self.seed()
 
-		# self.nodes!
+		# self.nodes, self.evq, etc...
 
 
 	def step(self, action):
@@ -40,7 +40,7 @@ class FogEnv(gym.Env):
 
 		# rollout the events
 		# update on nodes
-		
+
 		# obtain next observation
 		obs = self._next_observation()
 

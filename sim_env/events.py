@@ -92,6 +92,7 @@ class Task_arrival(Event):
 		self.node = node
 		self.k = k
 		self.task = task
+		assert time >= task._timestamp
 
 	def execute(self, evq):
 		# should schedule the deadline event if deadline is implemented
@@ -109,7 +110,7 @@ class Task_finished(Event):
 	def execute(self, evq):
 		self.task.finish_processing(self.time)
 		self.node._dealt_tasks += 1
-		return self.node.remove_task_of_slice(k,self.node, self.task)
+		return self.node.remove_task_of_slice(self.k, self.task)
 
 class Start_processing(Event):
 	""" Start_processing executes the task of starting to process w tasks
@@ -137,15 +138,15 @@ class Offload(Event):
 
 	def execute(self, evq):
 		# can't send if there is no way to send
-		if self.node._communication_rates[self.destination.index] == 0: return
+		if self.node._communication_rates[self.destination.index] == 0: return None
 		# then pop the last task we got
 		t = self.node.pop_last_task(self.k, self.time)
 		# if it's an invalid choice return empty handed
-		if t == None: return
+		if t == None: return None
 		# else plan the landing
 		self.node._dealt_tasks += 1
-		arrive = self.time + task_communication_time(t, self.node._communication_rates[self.destination.index])
-		evq.addEvent(Task_arrival(arrive, self.destination, self.k, t))
+		arrive_time = self.time + task_communication_time(t, self.node._communication_rates[self.destination.index])
+		evq.addEvent(Task_arrival(arrive_time, self.destination, self.k, t))
 
 
 		
