@@ -12,7 +12,7 @@ from numpy import random
 import numpy as np
 
 # sim_env imports
-from sim_env.configs import MAX_QUEUE, CPU_UNIT, RAM_UNIT, CPU_CLOCKS, RAM_SIZES, BASE_SLICE_CHARS
+from sim_env.configs import MAX_QUEUE, CPU_UNIT, RAM_UNIT, CPU_CLOCKS, RAM_SIZES, BASE_SLICE_CHARS, DEFAULT_SLICES
 from sim_env.configs import AREA, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT, THERMAL_NOISE_DENSITY
 from sim_env.configs import NODE_BANDWIDTH, TRANSMISSION_POWER
 from sim_env.configs import DEADLINES, CPU_DEMANDS, RAM_DEMANDS, PACKET_SIZE
@@ -56,6 +56,11 @@ class Node(ABC):
 	@abstractmethod
 	def start_processing_in_slice(self, k, w):
 		# starts processing w tasks in slice k
+		pass
+
+	@abstractmethod
+	def reset(self):
+		# resets the state of the node
 		pass
 
 
@@ -144,6 +149,12 @@ class Fog_node(Node):
 				aux_w -= 1
 		return under_processing
 
+	def reset(self):
+		for i in range(self.max_k):
+			self.buffers[i].clear()
+		self._avail_cpu_frequency = self.cpu_frequency
+		self._avail_ram_size = self.ram_size
+
 
 def point_to_point_transmission_rate(n1, n2):
 	# calculates transmission rate given two nodes
@@ -156,7 +167,7 @@ def point_to_point_transmission_rate(n1, n2):
 def create_random_node(index=0, slices_characteristics=BASE_SLICE_CHARS):
 	# returns a node uniformly sampled within configurations, after the previous index
 	[x, y] = [random.randint(low=0, high=AREA[0]), random.randint(low=0, high=AREA[1])]
-	number_of_slices = 3
+	number_of_slices = DEFAULT_SLICES
 	cpu = random.choice(CPU_CLOCKS)
 	ram = random.choice(RAM_SIZES)
 	return Fog_node(index, x, y, cpu, ram, number_of_slices, slices_characteristics)
