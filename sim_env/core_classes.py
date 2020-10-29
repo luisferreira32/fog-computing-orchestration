@@ -78,6 +78,8 @@ class Fog_node(Node):
 		self._task_type_on_slices = [tp for tp in slice_characteristics["task_type"]]
 		# com times within fog nodes
 		self._communication_rates = []
+		# keep track of processed tasks
+		self._being_processed = np.zeros(number_of_slices, dtype=np.uint8)
 
 	def set_communication_rates(self, nodes):
 		for n in nodes:
@@ -118,6 +120,7 @@ class Fog_node(Node):
 		# removes and returns a task if it is in the buffer
 		try:
 			self.buffers[k].remove(task)
+			if task.is_completed(): self._being_processed[k] -= 1
 			# values should be zero if it's not processing
 			self._avail_ram_size += task._memory_units*RAM_UNIT
 			self._avail_cpu_frequency += task._cpu_units*CPU_UNIT
@@ -147,6 +150,7 @@ class Fog_node(Node):
 				under_processing.append(task)
 				# reduce the number that we will still allocate
 				aux_w -= 1
+				self._being_processed[k] += 1
 		return under_processing
 
 	def reset(self):
