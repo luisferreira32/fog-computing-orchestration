@@ -63,13 +63,13 @@ def test_node_processing_on_slice():
     t2 = Task(0,5,10,400,400)
     assert f1.add_task_on_slice(0,t1) == None
     assert f1.add_task_on_slice(0,t2) == None
-    assert f1._avail_cpu_frequency == 1
+    assert f1._avail_cpu_units == 1
     f1.start_processing_in_slice(0,2)
-    assert f1._avail_cpu_frequency == 0
+    assert f1._avail_cpu_units == 0
     assert f1.buffers[0][0].is_processing() # first started
     assert f1.buffers[0][1].is_processing() == False # second didn't
     assert f1.remove_task_of_slice(0, t1) == t1
-    assert f1._avail_cpu_frequency == 1
+    assert f1._avail_cpu_units == 1
     assert t1.is_completed() == False # since we just removed and didn't set finish time
     # errors check
     assert f1.add_task_on_slice(0,t1) == None
@@ -89,9 +89,9 @@ def test_node_processing_on_slice_2():
     f2.add_task_on_slice(0,t2)
     f2.add_task_on_slice(0,t3)
     f2.add_task_on_slice(0,t4)
-    assert f2._avail_cpu_frequency == 10
+    assert f2._avail_cpu_units == 10
     f2.start_processing_in_slice(0,4)
     # one cpu unit per task, and since last task didn't have memory space 10 - 3 = 7
-    assert f2._avail_cpu_frequency == 7
+    assert f2._avail_cpu_units == 7
 
 

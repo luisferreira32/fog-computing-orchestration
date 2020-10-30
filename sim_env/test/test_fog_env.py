@@ -72,7 +72,7 @@ def test_split_action_by_nodes():
 			assert nodes_actions[i][k] == i
 			assert nodes_actions[i][DEFAULT_SLICES+k] == 0
 
-def test_take_action():
+def test_take_action_basics():
 	# create the env that has the nodes and clear the evq to check actions effects
 	fe = Fog_env()
 	fe.evq.reset()

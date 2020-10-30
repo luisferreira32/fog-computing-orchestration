@@ -98,8 +98,8 @@ class Fog_env(gym.Env):
 		a_ik = [1 if len(n.buffers[k]) > 0 and self.clock == n.buffers[k][-1]._timestamp else 0 for n in self.nodes for k in range(n.max_k)]
 		b_ik = [len(n.buffers[k]) for n in self.nodes for k in range(n.max_k)]
 		be_ik = [n._being_processed[k] for n in self.nodes for k in range(n.max_k)]
-		rc_i = [np.uint8(n._avail_cpu_frequency/CPU_UNIT) for n in self.nodes]
-		rm_i = [np.uint8(n._avail_ram_size/RAM_UNIT) for n in self.nodes]
+		rc_i = [n._avail_cpu_units for n in self.nodes]
+		rm_i = [n._avail_ram_units for n in self.nodes]
 		obs = np.concatenate((a_ik, b_ik, be_ik, rc_i, rm_i), axis=0)
 		return obs
 
@@ -116,7 +116,6 @@ class Fog_env(gym.Env):
 				# and start processing if there is any request
 				if wks[k] != 0:
 					self.evq.addEvent(Start_processing(self.clock, self.nodes[i], k, wks[k]))
-		pass
 
 	def _reward_fun(self, action):
 		# returns the instant reward of an action

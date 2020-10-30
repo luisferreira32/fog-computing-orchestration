@@ -34,8 +34,8 @@ class Node(ABC):
 		# resources
 		self.cpu_frequency = cpu_frequency
 		self.ram_size = ram_size
-		self._avail_cpu_frequency = cpu_frequency
-		self._avail_ram_size = ram_size
+		self._avail_cpu_units = cpu_frequency/CPU_UNIT
+		self._avail_ram_units = int(ram_size/RAM_UNIT)
 		# slices buffers
 		self.max_k = number_of_slices
 		self.buffers = [deque(maxlen=MAX_QUEUE) for _ in range(number_of_slices)]
@@ -122,8 +122,8 @@ class Fog_node(Node):
 			self.buffers[k].remove(task)
 			if task.is_completed(): self._being_processed[k] -= 1
 			# values should be zero if it's not processing
-			self._avail_ram_size += task._memory_units*RAM_UNIT
-			self._avail_cpu_frequency += task._cpu_units*CPU_UNIT
+			self._avail_ram_units += task._memory_units
+			self._avail_cpu_units += task._cpu_units
 		except:
 			return None
 		return task
@@ -135,14 +135,14 @@ class Fog_node(Node):
 		# only process if there is a task on the buffer
 		for task in self.buffers[k]:
 			# only process if has cores and memory for it
-			if not task.is_processing() and w > 0 and self._avail_cpu_frequency > 0 and self._avail_ram_size >= task.ram_demand:
+			if not task.is_processing() and w > 0 and self._avail_cpu_units > 0 and self._avail_ram_units >= np.ceil(task.ram_demand/RAM_UNIT):
 				# one unit per task
 				n_cpu_units = 1
 				# and the ram demand they require
-				n_memory_units = int(task.ram_demand/RAM_UNIT)
+				n_memory_units = np.ceil(task.ram_demand/RAM_UNIT)
 				# and take them from the available pool
-				self._avail_cpu_frequency -= n_cpu_units*CPU_UNIT
-				self._avail_ram_size -= n_memory_units*RAM_UNIT
+				self._avail_cpu_units -= n_cpu_units
+				self._avail_ram_units -= n_memory_units
 				# then start the processing
 				task.start_processing(n_cpu_units, n_memory_units)
 				under_processing.append(task)
@@ -154,8 +154,8 @@ class Fog_node(Node):
 	def reset(self):
 		for i in range(self.max_k):
 			self.buffers[i].clear()
-		self._avail_cpu_frequency = self.cpu_frequency
-		self._avail_ram_size = self.ram_size
+		self._avail_cpu_units = int(self.cpu_frequency/CPU_UNIT)
+		self._avail_ram_units = int(self.ram_size/RAM_UNIT)
 
 
 def point_to_point_transmission_rate(n1, n2):
