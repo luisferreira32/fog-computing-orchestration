@@ -136,9 +136,8 @@ class Fog_node(Node):
 		for task in self.buffers[k]:
 			# only process if has cores and memory for it
 			if not task.is_processing() and w > 0 and self._avail_cpu_units > 0 and self._avail_ram_units >= np.ceil(task.ram_demand/RAM_UNIT):
-				# one unit per task
+				# one cpu unit per task and the ram demand they require
 				n_cpu_units = 1
-				# and the ram demand they require
 				n_memory_units = np.ceil(task.ram_demand/RAM_UNIT)
 				# and take them from the available pool
 				self._avail_cpu_units -= n_cpu_units
