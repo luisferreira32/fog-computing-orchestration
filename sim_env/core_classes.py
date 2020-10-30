@@ -129,18 +129,16 @@ class Fog_node(Node):
 		return task
 
 	def start_processing_in_slice(self, k, w):
+		under_processing = []
 		# error shield
-		if w <= 0 or not (0<=k<self.max_k): return
-		# starts w tasks in slice k, within available resources constraints
-		aux_w = w; under_processing = []
+		if w <= 0 or not (0<=k<self.max_k): return under_processing
 		# only process if there is a task on the buffer
 		for task in self.buffers[k]:
 			# only process if has cores and memory for it
-			if not task.is_processing() and aux_w > 0 and self._avail_cpu_frequency > 0 and self._avail_ram_size >= task.ram_demand:
-				# calculate units to attribute to this task
-				n_cpu_units = int(self._avail_cpu_frequency/aux_w)
-				if n_cpu_units == 0:
-				    n_cpu_units = 1
+			if not task.is_processing() and w > 0 and self._avail_cpu_frequency > 0 and self._avail_ram_size >= task.ram_demand:
+				# one unit per task
+				n_cpu_units = 1
+				# and the ram demand they require
 				n_memory_units = int(task.ram_demand/RAM_UNIT)
 				# and take them from the available pool
 				self._avail_cpu_frequency -= n_cpu_units*CPU_UNIT
@@ -149,7 +147,7 @@ class Fog_node(Node):
 				task.start_processing(n_cpu_units, n_memory_units)
 				under_processing.append(task)
 				# reduce the number that we will still allocate
-				aux_w -= 1
+				w -= 1
 				self._being_processed[k] += 1
 		return under_processing
 
