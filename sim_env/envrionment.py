@@ -6,7 +6,8 @@ import numpy as np
 
 # fog related imports
 from sim_env.core_classes import create_random_node
-from sim_env.events import Event_queue
+from sim_env.events import Event_queue, Set_arrivals
+from sim_env.configs import TIME_STEP, SIM_TIME_STEPS
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
 
 
@@ -51,6 +52,9 @@ class Fog_env(gym.Env):
 		self.evq = Event_queue()
 		self.clock = 0
 
+		# and the first event that will trigger subsequent arrivals
+		self.evq.addEvent(Set_arrivals(0, TIME_STEP, self.nodes))
+
 
 	def step(self, action):
 		# information dict to pass back
@@ -62,8 +66,15 @@ class Fog_env(gym.Env):
 		# and execute the action
 		self._take_action(action) 
 
-		# rollout the events
-		# update on nodes
+		# increase the clock a timestep
+		self.clock += TIME_STEP
+		done = self.clock >= SIM_TIME_STEPS
+		# rollout the events until new timestep
+		while self.evq.hasEvents() and self.evq.first() < self.clock:
+			ev = self.evq.popEvent()
+			t = ev.execute(self.evq)
+			# update the info based on the object task returning
+		# which updates states on the nodes
 
 		# obtain next observation
 		obs = self._next_observation()
@@ -100,3 +111,31 @@ class Fog_env(gym.Env):
 	def render(self, mode='human', close=False):
 		# Render the environment to the screen
 		pass
+
+# ---------- Envrionment specific auxiliar functions ----------
+
+# --- observation funs ---
+
+def split_observation_by_node(obs):
+	# splits the observation by nodes to a POMDP
+	pass
+
+def split_observation_by_slices(obs):
+	# splits the observation by slices to a POMDP
+	pass
+
+def split_observation_by_logical_groups(obs):
+	# splits the observations in the logical groups of the state: a_ik, b_ik, be_ik, r_ic, r_im
+	return [obs[:DEFAULT_SLICES*N_NODES],
+		obs[DEFAULT_SLICES*N_NODES:2*DEFAULT_SLICES*N_NODES],
+		obs[2*DEFAULT_SLICES*N_NODES:3*DEFAULT_SLICES*N_NODES],
+		obs[3*DEFAULT_SLICES*N_NODES:3*DEFAULT_SLICES*N_NODES+N_NODES],
+		obs[3*DEFAULT_SLICES*N_NODES+N_NODES:3*DEFAULT_SLICES*N_NODES+2*N_NODES]]
+
+# --- nodes funs ---
+
+def get_nodes_characteristics(nodes):
+	# returns the list of the total cpu units and ram units on nodes
+	_cpu_units = [n.cpu_frequency/CPU_UNIT for n in nodes]
+	_ram_units = [n.ram_size/RAM_UNIT for n in nodes]
+	return [_cpu_units, _ram_units]
