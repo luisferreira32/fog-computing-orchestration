@@ -20,7 +20,7 @@ def test_task_processing_time():
 	t1.start_processing(1,1)
 	t2.start_processing(1,1)
 	t3.start_processing(2,1)
-	assert task_processing_time(t1) == 2
+	assert task_processing_time(t1) == 0.002
 	assert task_processing_time(t1) < task_processing_time(t2)
 	assert task_processing_time(t1) > task_processing_time(t3)
 	# and check out the None
