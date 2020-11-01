@@ -94,6 +94,7 @@ class Fog_node(Node):
 		if not (0<=k<self.max_k): return 0
 		return len(self.buffers[k])
 
+	# override
 	def add_task_on_slice(self, k, task):
 		# error shield
 		if not (0<=k<self.max_k): return task
@@ -103,6 +104,7 @@ class Fog_node(Node):
 		self.buffers[k].append(task)
 		return None
     
+    # override
 	def pop_last_task(self, k, time):
 		# error shield
 		if not (0<=k<self.max_k): return None
@@ -114,13 +116,14 @@ class Fog_node(Node):
 		if self.buffers[k][-1]._timestamp != time: return None
 		return self.buffers[k].pop()
 
+	# override
 	def remove_task_of_slice(self, k, task):
 		# error shield
 		if not (0<=k<self.max_k): return None
 		# removes and returns a task if it is in the buffer
 		try:
 			self.buffers[k].remove(task)
-			if task.is_completed(): self._being_processed[k] -= 1
+			if task.is_completed() or task.is_processing(): self._being_processed[k] -= 1
 			# values should be zero if it's not processing
 			self._avail_ram_units += task._memory_units
 			self._avail_cpu_units += task._cpu_units
@@ -128,6 +131,7 @@ class Fog_node(Node):
 			return None
 		return task
 
+	# override
 	def start_processing_in_slice(self, k, w):
 		under_processing = []
 		# error shield
@@ -150,6 +154,7 @@ class Fog_node(Node):
 				self._being_processed[k] += 1
 		return under_processing
 
+	# override
 	def reset(self):
 		for i in range(self.max_k):
 			self.buffers[i].clear()

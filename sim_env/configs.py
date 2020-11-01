@@ -1,6 +1,6 @@
 # GLOBAL FOG VARIABLES
 TIME_STEP = 0.001 # seconds
-SIM_TIME_STEPS = int(5000*TIME_STEP) # 5 seconds actually
+SIM_TIME_STEPS = 5000*TIME_STEP # 5 seconds actually
 N_NODES = 5
 
 # NODES CONSTANTS

@@ -4,7 +4,7 @@ import sys
 if "/home/yourself/fog-computing-orchestration" not in sys.path:
     sys.path.append("/home/yourself/fog-computing-orchestration")
 
-from sim_env.events import Event_queue, Task_arrival, Offload, Start_processing, Task_finished, Set_arrivals
+from sim_env.events import Event_queue, Task_arrival, Offload, Start_processing, Task_finished, Set_arrivals, Discard_task
 from sim_env.core_classes import create_random_node, Task
 from sim_env.configs import N_NODES, MAX_QUEUE
 
@@ -92,3 +92,27 @@ def test_offload():
 	assert ev.time > 0
 	assert ev.execute(evq) == None
 
+def test_discard_task():
+	evq = Event_queue()
+	node = create_random_node(0)
+	# place three tasks in slice 0
+	t1 = Task(0); t2 = Task(0); t3 = Task(0)
+	Task_arrival(0, node, 0, t1).execute(evq)
+	Task_arrival(0, node, 0, t2).execute(evq)
+	Task_arrival(0, node, 0, t3).execute(evq)
+	# start the processing of two
+	assert node._avail_cpu_units == node.cpu_frequency
+	Start_processing(0, node, 0, 2).execute(evq)
+	assert node._avail_cpu_units == node.cpu_frequency-2
+	# discard one
+	assert Discard_task(0,node,0,t1).execute(evq) == t1
+	assert t1.is_processing() == True
+	assert t1.is_completed() == False
+	assert Discard_task(0,node,0,t1).execute(evq)  == None # not on the queue anymore
+	assert node._avail_cpu_units == node.cpu_frequency-1
+	# if we discard one not processing
+	assert Discard_task(0,node,0,t3).execute(evq)  == t3
+	assert t3.is_processing() == False
+	assert t3.is_completed() == False
+	assert node._avail_cpu_units == node.cpu_frequency-1
+	assert Discard_task(0,node,0,t3).execute(evq)  == None # not on the queue anymore
