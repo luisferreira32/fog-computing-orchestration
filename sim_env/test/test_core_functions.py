@@ -11,10 +11,10 @@ from sim_env.core_classes import Task, task_processing_time, create_random_node,
 from sim_env.configs import CPU_CLOCKS, RAM_SIZES
 
 def test_task_processing_time():
-	# t=0, size = 5 Mb, delay = 10ms, cpu_demand = ? cycles/bit, memory = 400Mb
-	t1 = Task(0,5,10, 400, 400) # ? = 400
-	t2 = Task(0,5,10, 500, 400) # ? = 500
-	t3 = Task(0,5,10, 600, 400) # ? = 600
+	# t=0, size = 5 kb, delay = 10ms, cpu_demand = ? cycles/bit, memory = 400Mb
+	t1 = Task(0,5000,10, 400, 400) # ? = 400
+	t2 = Task(0,5000,10, 500, 400) # ? = 500
+	t3 = Task(0,5000,10, 600, 400) # ? = 600
 	# can't assert a processing time of a task that doesn't have cores working on it
 	assert task_processing_time(t1) == "task not processing"
 	t1.start_processing(1,1)

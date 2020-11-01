@@ -229,8 +229,8 @@ def task_processing_time(t=None):
 	# calculates the time a task takes to process after starting to process
 	if t is None: return "no task given"
 	if not t.is_processing(): return "task not processing"
-	# task has cpu_demand cycles/bit (packet size in Kb)
-	total_cycles = t.cpu_demand*t.packet_size*10**3
+	# task has cpu_demand cycles/bit
+	total_cycles = t.cpu_demand*t.packet_size
 	# processing units are in 1GHz each
 	total_time = total_cycles/(t._cpu_units*CPU_UNIT*(10**9))
 	return total_time
@@ -239,4 +239,4 @@ def task_communication_time(t, bit_rate):
 	if t is None: return "no task given"
 	if bit_rate == 0: return "invalid transmission route"
 	# simple packet_size calc
-	return (t.packet_size*(10**3))/bit_rate
+	return (t.packet_size)/bit_rate

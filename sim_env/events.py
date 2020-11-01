@@ -95,7 +95,8 @@ class Task_arrival(Event):
 		assert time >= task._timestamp
 
 	def execute(self, evq):
-		# should schedule the deadline event if deadline is implemented
+		# if the task just arrived, schedule a discard for it's deadline (in milliseconds)
+		evq.addEvent(Discard_task(self.task._timestamp+(0.001*self.task.delay_constraint), self.node, self.k, self.task))
 		return self.node.add_task_on_slice(self.k, self.task)
 		
 class Task_finished(Event):
