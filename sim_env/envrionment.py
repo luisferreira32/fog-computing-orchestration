@@ -32,33 +32,36 @@ class Fog_env(gym.Env):
 		self.clock = 0
 
 		# define the action space with I nodes and K slices each
-		# [f_00, f_01, ..., f_ik, w_00, w_01, ..., w_ik]
-		# self.action_space = spaces.?
-		low_f = np.zeros(DEFAULT_SLICES*N_NODES, dtype=np.uint8)
-		low_w = np.zeros(DEFAULT_SLICES*N_NODES, dtype=np.uint8)
-		action_lows = np.append(low_f, low_w)
+		# [f_00, ..., f_0k, w_00, ..., w_0k, ..., f_i0, ..., f_ik, w_i0, ..., w_ik]
+		# action_lows has to be remade if nodes don't have same slices
+		action_lows = np.zeros(DEFAULT_SLICES*N_NODES*2, dtype=np.uint8)
 
-		high_f = np.full(DEFAULT_SLICES*N_NODES, N_NODES-1, dtype=np.uint8)
-		high_w = [ np.uint8(n._avail_cpu_units) for n in self.nodes for k in range(n.max_k)]
-		action_highs = np.append(high_f, high_w)
+		action_highs = []
+		for n in self.nodes:
+			for _ in range(n.max_k):
+				action_highs.append(np.uint8(N_NODES-1))
+			for _ in range(n.max_k):
+				action_highs.append(np.uint8(n._avail_cpu_units))
+		action_highs = np.array(action_highs)
 		self.action_space = spaces.Box(low=action_lows, high=action_highs, dtype=np.uint8)
 
 		# and the state space with I nodes and K slices each
-		# [a_00, a_01, ..., a_ik, b_00, b_01 ..., b_ik, be_00, be_01, ..., be_ik, rc_0, ..., rc_i, rm_0, ..., rm_i]
-		# self.observation_space = spaces.?
-		low_a = np.zeros(DEFAULT_SLICES*N_NODES, dtype=np.uint8)
-		low_b = np.zeros(DEFAULT_SLICES*N_NODES, dtype=np.uint8)
-		low_be = np.zeros(DEFAULT_SLICES*N_NODES, dtype=np.uint8)
-		low_rc = np.zeros(N_NODES, dtype=np.uint8)
-		low_rm = np.zeros(N_NODES, dtype=np.uint8)
-		state_lows = np.concatenate((low_a, low_b, low_be, low_rc, low_rm), axis=0)
+		# [a_00, ..., a_0k, b_00, ..., b_0k, be_00, ..., be_0k, rc_0, rm_0,
+		# ..., a_i0, ..., a_ik, b_i0, ..., b_ik, be_i0, ..., be_ik, rc_i, rm_i]
+		# state_lows has to be remade if nodes don't have same slices
+		state_lows = np.zeros(DEFAULT_SLICES*N_NODES*3+N_NODES*2, dtype=np.uint8)
 
-		high_a = np.full(DEFAULT_SLICES*N_NODES, 1, dtype=np.uint8)
-		high_b = np.full(DEFAULT_SLICES*N_NODES, MAX_QUEUE, dtype=np.uint8)
-		high_be = [ np.uint8(n._avail_cpu_units) for n in self.nodes for k in range(n.max_k)]
-		high_rc = [ np.uint8(n._avail_cpu_units) for n in self.nodes]
-		high_rm = [ np.uint8(n._avail_ram_units) for n in self.nodes]
-		state_highs = np.concatenate((high_a, high_b, high_be, high_rc, high_rm), axis=0)
+		state_highs = []
+		for n in self.nodes:
+			for _ in range(n.max_k):
+				state_highs.append(1) # a_ik
+			for _ in range(n.max_k):
+				state_highs.append(MAX_QUEUE) # b_ik
+			for _ in range(n.max_k):
+				state_highs.append(np.uint8(n._avail_cpu_units)) # be_ik
+			state_highs.append(np.uint8(n._avail_cpu_units)) # rc_i
+			state_highs.append(np.uint8(n._avail_ram_units)) # rm_i
+		state_highs = np.array(state_highs)
 		self.observation_space = spaces.Box(low=state_lows, high=state_highs, dtype=np.uint8)
 
 		# self.seed()
@@ -104,13 +107,20 @@ class Fog_env(gym.Env):
 
 	def _next_observation(self):
 		# does a system observation
-		a_ik = [1 if len(n.buffers[k]) > 0 and self.clock == n.buffers[k][-1]._timestamp else 0 for n in self.nodes for k in range(n.max_k)]
-		b_ik = [len(n.buffers[k]) for n in self.nodes for k in range(n.max_k)]
-		be_ik = [n._being_processed[k] for n in self.nodes for k in range(n.max_k)]
-		rc_i = [n._avail_cpu_units for n in self.nodes]
-		rm_i = [n._avail_ram_units for n in self.nodes]
-		obs = np.concatenate((a_ik, b_ik, be_ik, rc_i, rm_i), axis=0)
-		return obs
+		obs = []
+		for n in self.nodes:
+			for k in range(n.max_k):
+				if len(n.buffers[k]) > 0 and self.clock == n.buffers[k][-1]._timestamp:
+				 	obs.append(1)
+				else:
+					obs.append(0)
+			for k in range(n.max_k):
+				obs.append(len(n.buffers[k]))
+			for k in range(n.max_k):
+				obs.append(n._being_processed[k])
+			obs.append(n._avail_cpu_units)
+			obs.append(n._avail_ram_units)
+		return np.array(obs, dtype=np.uint8)
 
 	def _take_action(self, action):
 		# to make sure you give actions in the FORMATED action space
@@ -148,18 +158,21 @@ class Fog_env(gym.Env):
 
 def split_observation_by_logical_groups(obs):
 	# splits the observations in the logical groups of the state: a_ik, b_ik, be_ik, rc_i, rm_i
-	return np.split(obs, [DEFAULT_SLICES*N_NODES, 2*DEFAULT_SLICES*N_NODES, 3*DEFAULT_SLICES*N_NODES,
-		3*DEFAULT_SLICES*N_NODES+N_NODES])
+	obs_by_nodes = split_observation_by_node(obs)
+	a_ik = []; b_ik = []; be_ik = []; rc_i = []; rm_i = [];
+	for i in range(N_NODES):
+		[a, b, be, rc, rm] = np.split(obs_by_nodes[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
+		a_ik = np.append(a_ik, a);
+		b_ik = np.append(b_ik, b);
+		be_ik = np.append(be_ik, be);
+		rc_i.append(rc);
+		rm_i.append(rm);
+	return [a_ik, b_ik, be_ik, rc_i, rm_i]
+
 
 def split_observation_by_node(obs):
 	# splits the observation by nodes to several POMDP
-	[a_ik, b_ik, be_ik, r_ic, r_im] = split_observation_by_logical_groups(obs)
-	aks = np.split(a_ik, N_NODES)
-	bks = np.split(b_ik, N_NODES)
-	beks = np.split(be_ik, N_NODES)
-	rc = np.split(r_ic, N_NODES)
-	rm = np.split(r_im, N_NODES)
-	return [ np.concatenate((aks[i], bks[i], beks[i], rc[i], rm[i])) for i in range(N_NODES) ]
+	return np.split(obs, N_NODES)
 
 def split_observation_by_slices(obs):
 	# splits the observation by slices to several POMDP
@@ -170,11 +183,8 @@ def split_observation_by_slices(obs):
 
 def split_action_by_nodes(action):
 	# splits the actions by nodes i
-	# action space: [f_00, f_01, ..., f_ik, w_00, w_01, ..., w_ik]
-	[fs, ws] = np.split(action, 2)
-	fsi = np.split(fs, N_NODES)
-	wsi = np.split(ws, N_NODES)
-	return [ np.append(fsi[i],wsi[i]) for i in range(N_NODES)]
+	# action space: [f_00, ..., f_0k, w_00, ..., w_0k, ..., f_i0, ..., f_ik, w_i0, ..., w_ik]
+	return np.split(action, N_NODES)
 
 
 # --- nodes funs ---
