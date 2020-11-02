@@ -134,30 +134,43 @@ class Offload(Event):
 	""" Offloads the task that just arrived to a destination node
 	"""
 	def __init__(self, time, node, k, destination):
-		super(Offload, self).__init__(time)
+		super(Offload, self).__init__(time, "Offload")
 		self.node = node
 		self.k = k
 		self.destination = destination
 
 	def execute(self, evq):
-		# can't send if there is no way to send
+		# can't send if there is no way to send or it's busy sending
 		if self.node._communication_rates[self.destination.index] == 0: return None
+		if self.node.transmitting: return None
 		# then pop the last task we got
 		t = self.node.pop_last_task(self.k, self.time)
 		# if it's an invalid choice return without sending out the task
 		if t == None: return None
 		# else plan the landing
 		self.node._dealt_tasks += 1
+		self.node.transmitting = True
 		arrive_time = self.time + task_communication_time(t, self.node._communication_rates[self.destination.index])
 		evq.addEvent(Task_arrival(arrive_time, self.destination, self.k, t))
+		evq.addEvent(Finished_transmitting(arrive_time, self.node))
 		return None
 
+class Finished_transmitting(Event):
+	""" Finished_transmitting is an event that sets the transmission flag down
+	"""
+	def __init__(self, time, node):
+		super(Finished_transmitting, self).__init__(time, "Finished_transmitting")
+		self.node = node
+
+	def execute(self,evq):
+		self.node.transmitting = False
+		return None
 
 class Discard_task(Event):
 	"""Discard_task that has its' delay constraint unmet
 	"""
 	def __init__(self, time, node, k, task):
-		super(Discard_task, self).__init__(time)
+		super(Discard_task, self).__init__(time, "Discard_task")
 		self.node = node
 		self.k = k
 		self.task = task

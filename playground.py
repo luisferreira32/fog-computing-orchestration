@@ -12,15 +12,14 @@ from stable_baselines import PPO2, A2C
 import numpy as np
 
 env = DummyVecEnv([lambda: Fog_env()]) 
-algorithm = A2C(MlpPolicy, env, gamma=0.5) # PPO2(MlpPolicy, env)
+algorithm = PPO2(MlpPolicy, env)  #A2C(MlpPolicy, env, gamma=0.5) 
 algorithm.learn(total_timesteps=TRAINING_STEPS)
 obs = env.reset()
 done = False; delays = []; discarded = 0
 while not done:
 	action, _states = algorithm.predict(obs)
-	print(action)
 	obs, rw, done, info = env.step(action)
-	env.render()
+	# env.render()
 	# info gathering
 	delays = np.append(delays, info[0]["delay_list"])
 	discarded += info[0]["discarded"]

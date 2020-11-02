@@ -39,6 +39,8 @@ class Node(ABC):
 		# slices buffers
 		self.max_k = number_of_slices
 		self.buffers = [deque(maxlen=MAX_QUEUE) for _ in range(number_of_slices)]
+		# states
+		self.transmitting = False
 
 	def __str__(slef):
 		return self.name
