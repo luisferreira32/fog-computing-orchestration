@@ -18,7 +18,7 @@ done = False; delays = []; discarded = 0
 while not done:
 	action, _states = algorithm.predict(obs)
 	obs, rw, done, info = env.step(action)
-	env.render()
+	#env.render()
 	# info gathering
 	delays = np.append(delays, info[0]["delay_list"])
 	discarded += info[0]["discarded"]

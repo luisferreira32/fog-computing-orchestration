@@ -98,7 +98,7 @@ class Fog_env(gym.Env):
 		self.clock += TIME_STEP
 		done = self.clock >= SIM_TIME_STEPS
 		# rollout the events until new timestep
-		while self.evq.hasEvents() and self.evq.first_time() < self.clock:
+		while self.evq.hasEvents() and self.evq.first_time() <= self.clock:
 			ev = self.evq.popEvent()
 			t = ev.execute(self.evq)
 			# update the info based on the object task returning
@@ -111,7 +111,7 @@ class Fog_env(gym.Env):
 
 		# obtain next observation
 		obs = self._next_observation()
-		print(obs)
+		info["previous_state"] = obs
 
 		# just save it for render
 		self.saved_step_info = info
