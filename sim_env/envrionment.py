@@ -189,7 +189,7 @@ class Fog_env(gym.Env):
 
 				# also, verify if there is an overload chance in the arriving node
 				if obs_by_nodes[act[k]][self.nodes[act[k]].max_k+k]+1 >= MAX_QUEUE:
-					coeficient -= 0.1 # tunable_weight
+					coeficient -= 2 # tunable_weight
 
 				# a_ik * ( (-1)if(delay_constraint_unmet) - (tunable_weight)if(overflow_chance) )
 				node_reward += obs[k] * coeficient
