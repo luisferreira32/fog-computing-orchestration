@@ -2,7 +2,7 @@
 
 # just a simple simulation
 
-from sim_env.configs import SIM_TIME_STEPS
+from sim_env.configs import TRAINING_STEPS
 from sim_env.envrionment import Fog_env
 
 from stable_baselines.common.vec_env import DummyVecEnv
@@ -13,6 +13,7 @@ import numpy as np
 
 env = DummyVecEnv([lambda: Fog_env()]) 
 algorithm = PPO2(MlpPolicy, env)
+algorithm.learn(total_timesteps=TRAINING_STEPS)
 obs = env.reset()
 done = False; delays = []; discarded = 0
 while not done:

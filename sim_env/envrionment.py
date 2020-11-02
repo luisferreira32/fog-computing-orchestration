@@ -13,6 +13,9 @@ from sim_env.configs import TIME_STEP, SIM_TIME_STEPS
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
 from sim_env.configs import PACKET_SIZE, DEADLINES, CPU_DEMANDS, RAM_DEMANDS
 
+# algorithm related imports
+from algorithms.configs import OVERLOAD_WEIGHT
+
 
 def Create_fog_envrionment(args):
 	pass
@@ -189,7 +192,7 @@ class Fog_env(gym.Env):
 
 				# also, verify if there is an overload chance in the arriving node
 				if obs_by_nodes[act[k]][self.nodes[act[k]].max_k+k]+1 >= MAX_QUEUE:
-					coeficient -= 2 # tunable_weight
+					coeficient -= OVERLOAD_WEIGHT # tunable_weight
 
 				# a_ik * ( (-1)if(delay_constraint_unmet) - (tunable_weight)if(overflow_chance) )
 				node_reward += obs[k] * coeficient
