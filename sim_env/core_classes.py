@@ -88,6 +88,9 @@ class Fog_node(Node):
 	def new_interval_update_service_rate(self):
 		self._total_time_intervals += 1
 		self._service_rate = self._dealt_tasks / self._total_time_intervals
+		# to avoid zero divisions
+		if self._service_rate == 0:
+			self._service_rate = 1
 
 	def slice_buffer_len(self, k):
 		# error shield

@@ -19,8 +19,7 @@ while not done:
 	action, _states = algorithm.predict(obs)
 	obs, rw, done, info = env.step(action)
 	env.render()
-	# info un vectorize
-	info = info[0]
-	delays = np.append(delays, info["delay_list"])
-	discarded += info["discarded"]
+	# info gathering
+	delays = np.append(delays, info[0]["delay_list"])
+	discarded += info[0]["discarded"]
 print("delay_avg:",sum(delays)/len(delays),"processed:",len(delays),"discarded:",discarded)

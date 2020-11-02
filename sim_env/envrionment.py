@@ -11,6 +11,7 @@ from sim_env.core_classes import create_random_node
 from sim_env.events import Event_queue, Set_arrivals, Offload, Start_processing
 from sim_env.configs import TIME_STEP, SIM_TIME_STEPS
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
+from sim_env.configs import PACKET_SIZE, DEADLINES, CPU_DEMANDS, RAM_DEMANDS
 
 
 def Create_fog_envrionment(args):
@@ -30,6 +31,7 @@ class Fog_env(gym.Env):
 			n.set_communication_rates(self.nodes)
 		self.evq = Event_queue()
 		self.clock = 0
+		self.saved_step_info = None
 
 		# define the action space with I nodes and K slices each
 		# [f_00, ..., f_0k, w_00, ..., w_0k, ..., f_i0, ..., f_ik, w_i0, ..., w_ik]
@@ -71,14 +73,23 @@ class Fog_env(gym.Env):
 
 
 	def step(self, action):
+		# current state
+		state = self._next_observation()
+
 		# information dict to pass back
 		info = {
 			"discarded" : 0,
-			"delay_list" : []
+			"delay_list" : [],
+			"previous_action": np.uint8(action),
+			"previous_state": state
 			};
 
+		# update some envrionment values
+		for n in self.nodes:
+			n.new_interval_update_service_rate()
+
 		# calculate the instant rewards, based on state, action pair
-		rw = self._reward_fun(self._next_observation(), action)
+		rw = self._reward_fun(state, action)
 
 		# and execute the action
 		self._take_action(action) 
@@ -100,6 +111,10 @@ class Fog_env(gym.Env):
 
 		# obtain next observation
 		obs = self._next_observation()
+		print(obs)
+
+		# just save it for render
+		self.saved_step_info = info
 
 		return obs, rw, done, info
 
@@ -147,17 +162,56 @@ class Fog_env(gym.Env):
 					self.evq.addEvent(Start_processing(self.clock, self.nodes[i], k, wks[k]))
 
 	def _reward_fun(self, state, action):
+		# to make sure you give actions in the FORMATED action space
+		action = action.astype(np.int8)
 		# returns the instant reward of an action
-		return 0
+		obs_by_nodes = split_observation_by_node(state)
+		nodes_actions = split_action_by_nodes(action)
+
+		# reward sum of all nodes:
+		R = 0
+		for obs, act, n in zip(obs_by_nodes, nodes_actions, self.nodes):
+			node_reward = 0
+			for k in range(n.max_k):
+				D_ik = 0
+				# if it's offloaded adds communication time to delay
+				if act[k] != n.index:
+					D_ik += PACKET_SIZE / n._communication_rates[act[k]]
+				# calculate the Queue delay: b_ik/service_rate_i
+				D_ik += obs[n.max_k+k]/n._service_rate
+				# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
+				D_ik +=  PACKET_SIZE*CPU_DEMANDS[n._task_type_on_slices[k][1]] / (CPU_UNIT*10**9)
+				# finally, check if slice delay constraint is met
+				if D_ik >= DEADLINES[n._task_type_on_slices[k][0]]:
+					coeficient = -1
+				else:
+					coeficient = 1
+
+				# also, verify if there is an overload chance in the arriving node
+				if obs_by_nodes[act[k]][self.nodes[act[k]].max_k+k]+1 >= MAX_QUEUE:
+					coeficient -= 0.1 # tunable_weight
+
+				# a_ik * ( (-1)if(delay_constraint_unmet) - (tunable_weight)if(overflow_chance) )
+				node_reward += obs[k] * coeficient
+			R += node_reward/n.max_k
+
+		return R
 
 	def render(self, mode='human', close=False):
 		# Render the environment to the screen
-		"""
-		nodes_obs = split_observation_by_node(self._next_observation())
+		if self.saved_step_info is None: return
+		info = self.saved_step_info
+		nodes_obs = split_observation_by_node(info["previous_state"])
+		nodes_actions = split_action_by_nodes(info["previous_action"])
 		print("------",self.clock,"------")
-		for i, obs in enumerate(nodes_obs):
-			print("n"+str(i)+" obs:", obs)
-		"""
+		for i in range(N_NODES):
+			[a, b, be, rc, rm] = np.split(nodes_obs[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
+			print("n"+str(i)+" obs[ a:", a,"b:", b, "be:", be, "rc:",rc, "rm:",rm,"]")
+			[f, w] = np.split(nodes_actions[i], 2)
+			print("act[ f:",f,"w:",w,"]")
+			for k,buf in enumerate(self.nodes[i].buffers):
+				print("slice",k,"buffer",[round(t._timestamp,4) for t in buf])
+		input("\nEnter to continue...")
 		pass
 
 # ---------- Envrionment specific auxiliar functions ----------
@@ -180,6 +234,8 @@ def split_observation_by_logical_groups(obs):
 
 def split_observation_by_node(obs):
 	# splits the observation by nodes to several POMDP
+	# [[a_00, ..., a_0k, b_00, ..., b_0k, be_00, ..., be_0k, rc_0, rm_0], ...
+	# [a_i0, ..., a_ik, b_i0, ..., b_ik, be_i0, ..., be_ik, rc_i, rm_i]]
 	return np.split(obs, N_NODES)
 
 def split_observation_by_slices(obs):
