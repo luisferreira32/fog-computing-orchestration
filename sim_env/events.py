@@ -83,6 +83,7 @@ class Set_arrivals(Event):
 					evq.addEvent(ev)
 		# then recursevly ask for another set of arrivals
 		evq.addEvent(Set_arrivals(self.time+self.timestep, self.timestep, self.nodes))
+		return None
 
 class Task_arrival(Event):
 	""" Task_arrival inserts a task to a node slice, if it overflows returns the task
@@ -127,6 +128,7 @@ class Start_processing(Event):
 		for task in tasks_under_processing:
 			finish = self.time+task_processing_time(task)
 			evq.addEvent(Task_finished(finish, self.node, self.k, task))
+		return None
 
 class Offload(Event):
 	""" Offloads the task that just arrived to a destination node
@@ -142,12 +144,13 @@ class Offload(Event):
 		if self.node._communication_rates[self.destination.index] == 0: return None
 		# then pop the last task we got
 		t = self.node.pop_last_task(self.k, self.time)
-		# if it's an invalid choice return empty handed
+		# if it's an invalid choice return without sending out the task
 		if t == None: return None
 		# else plan the landing
 		self.node._dealt_tasks += 1
 		arrive_time = self.time + task_communication_time(t, self.node._communication_rates[self.destination.index])
 		evq.addEvent(Task_arrival(arrive_time, self.destination, self.k, t))
+		return None
 
 
 class Discard_task(Event):

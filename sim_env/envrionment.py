@@ -72,7 +72,10 @@ class Fog_env(gym.Env):
 
 	def step(self, action):
 		# information dict to pass back
-		info = {};
+		info = {
+			"discarded" : 0,
+			"delay_list" : []
+			};
 
 		# calculate the instant rewards, based on state, action pair
 		rw = self._reward_fun(self._next_observation(), action)
@@ -88,6 +91,11 @@ class Fog_env(gym.Env):
 			ev = self.evq.popEvent()
 			t = ev.execute(self.evq)
 			# update the info based on the object task returning
+			if t is not None: # a task was returned
+				if t.is_completed():
+					info["delay_list"].append(t.task_delay())
+				else:
+					info["discarded"] += 1
 		# which updates states on the nodes
 
 		# obtain next observation
