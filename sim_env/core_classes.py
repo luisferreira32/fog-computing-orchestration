@@ -79,7 +79,7 @@ class Fog_node(Node):
 		self._service_rate = 0
 		# task slices constants
 		self._arrivals_on_slices = [ar for ar in slice_characteristics["arrivals"]]
-		self._task_type_on_slices = [tp for tp in slice_characteristics["task_type"]]
+		self._task_type_on_slices = [[DEADLINES[tp[0]],CPU_DEMANDS[tp[1]],RAM_DEMANDS[tp[2]]] for tp in slice_characteristics["task_type"]]
 		# com times within fog nodes
 		self._communication_rates = []
 		# keep track of processed tasks
@@ -195,9 +195,9 @@ class Task():
 		# must either have task type or the other
 		self.packet_size = packet_size
 		if not task_type == None and len(task_type) == 3:
-			self.delay_constraint = DEADLINES[task_type[0]]
-			self.cpu_demand = CPU_DEMANDS[task_type[1]]
-			self.ram_demand = RAM_DEMANDS[task_type[2]]
+			self.delay_constraint = task_type[0]
+			self.cpu_demand = task_type[1]
+			self.ram_demand = task_type[2]
 		else:
 			self.delay_constraint = delay_constraint
 			self.cpu_demand = cpu_demand

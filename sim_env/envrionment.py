@@ -13,7 +13,7 @@ from sim_env.core_classes import create_random_node
 from sim_env.events import Event_queue, Set_arrivals, Offload, Start_processing
 from sim_env.configs import TIME_STEP, SIM_TIME_STEPS, RANDOM_SEED
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
-from sim_env.configs import PACKET_SIZE, DEADLINES, CPU_DEMANDS, RAM_DEMANDS
+from sim_env.configs import PACKET_SIZE
 
 # algorithm related imports
 from algorithms.configs import OVERLOAD_WEIGHT
@@ -22,8 +22,52 @@ from algorithms.configs import OVERLOAD_WEIGHT
 from utils.tools import set_seed
 
 
-def Create_fog_envrionment(args):
+# ---------- Envrionment specific auxiliar functions ----------
+
+# --- observation funs ---
+
+def split_observation_by_logical_groups(obs):
+	# splits the observations in the logical groups of the state: a_ik, b_ik, be_ik, rc_i, rm_i
+	obs_by_nodes = split_observation_by_node(obs)
+	a_ik = []; b_ik = []; be_ik = []; rc_i = []; rm_i = [];
+	for i in range(N_NODES):
+		[a, b, be, rc, rm] = np.split(obs_by_nodes[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
+		a_ik = np.append(a_ik, a);
+		b_ik = np.append(b_ik, b);
+		be_ik = np.append(be_ik, be);
+		rc_i.append(rc);
+		rm_i.append(rm);
+	return [a_ik, b_ik, be_ik, rc_i, rm_i]
+
+
+def split_observation_by_node(obs):
+	# splits the observation by nodes to several POMDP
+	# [[a_00, ..., a_0k, b_00, ..., b_0k, be_00, ..., be_0k, rc_0, rm_0], ...
+	# [a_i0, ..., a_ik, b_i0, ..., b_ik, be_i0, ..., be_ik, rc_i, rm_i]]
+	return np.split(obs, N_NODES)
+
+def split_node_obs_by_slice(nobs):
+	# splits the node observation by slices to several POMDP
 	pass
+
+
+# --- action funs ---
+
+def split_action_by_nodes(action):
+	# splits the actions by nodes i
+	# action space: [f_00, ..., f_0k, w_00, ..., w_0k, ..., f_i0, ..., f_ik, w_i0, ..., w_ik]
+	return np.split(action, N_NODES)
+
+
+# --- nodes funs ---
+
+def get_nodes_characteristics(nodes):
+	# returns the list of the total cpu units and ram units on nodes
+	_cpu_units = [n.cpu_frequency/CPU_UNIT for n in nodes]
+	_ram_units = [n.ram_size/RAM_UNIT for n in nodes]
+	return [_cpu_units, _ram_units]
+
+# ---------- Fog Envrionment ----------
 
 class Fog_env(gym.Env):
 	""" Fog_env looks to replicate a FC envrionment, configured in sim_env.configs
@@ -198,9 +242,9 @@ class Fog_env(gym.Env):
 				# calculate the Queue delay: b_ik/service_rate_i
 				D_ik += obs[n.max_k+k]/n._service_rate
 				# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
-				D_ik +=  PACKET_SIZE*CPU_DEMANDS[n._task_type_on_slices[k][1]] / (CPU_UNIT*10**9)
+				D_ik +=  PACKET_SIZE*n._task_type_on_slices[k][1] / (CPU_UNIT*10**9)
 				# finally, check if slice delay constraint is met
-				if D_ik >= DEADLINES[n._task_type_on_slices[k][0]]:
+				if D_ik >= n._task_type_on_slices[k][0]:
 					coeficient = -1
 				else:
 					coeficient = 1
@@ -232,47 +276,3 @@ class Fog_env(gym.Env):
 		input("\nEnter to continue...")
 		pass
 
-# ---------- Envrionment specific auxiliar functions ----------
-
-# --- observation funs ---
-
-def split_observation_by_logical_groups(obs):
-	# splits the observations in the logical groups of the state: a_ik, b_ik, be_ik, rc_i, rm_i
-	obs_by_nodes = split_observation_by_node(obs)
-	a_ik = []; b_ik = []; be_ik = []; rc_i = []; rm_i = [];
-	for i in range(N_NODES):
-		[a, b, be, rc, rm] = np.split(obs_by_nodes[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
-		a_ik = np.append(a_ik, a);
-		b_ik = np.append(b_ik, b);
-		be_ik = np.append(be_ik, be);
-		rc_i.append(rc);
-		rm_i.append(rm);
-	return [a_ik, b_ik, be_ik, rc_i, rm_i]
-
-
-def split_observation_by_node(obs):
-	# splits the observation by nodes to several POMDP
-	# [[a_00, ..., a_0k, b_00, ..., b_0k, be_00, ..., be_0k, rc_0, rm_0], ...
-	# [a_i0, ..., a_ik, b_i0, ..., b_ik, be_i0, ..., be_ik, rc_i, rm_i]]
-	return np.split(obs, N_NODES)
-
-def split_observation_by_slices(obs):
-	# splits the observation by slices to several POMDP
-	pass
-
-
-# --- action funs ---
-
-def split_action_by_nodes(action):
-	# splits the actions by nodes i
-	# action space: [f_00, ..., f_0k, w_00, ..., w_0k, ..., f_i0, ..., f_ik, w_i0, ..., w_ik]
-	return np.split(action, N_NODES)
-
-
-# --- nodes funs ---
-
-def get_nodes_characteristics(nodes):
-	# returns the list of the total cpu units and ram units on nodes
-	_cpu_units = [n.cpu_frequency/CPU_UNIT for n in nodes]
-	_ram_units = [n.ram_size/RAM_UNIT for n in nodes]
-	return [_cpu_units, _ram_units]

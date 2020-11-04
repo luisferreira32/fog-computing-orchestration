@@ -18,7 +18,7 @@ def test_task_creation():
     assert t._cpu_units == 0
     assert t._memory_units == 0
     assert t._total_delay == -1
-    t = Task(0, 5, task_type=[0,0,0])
+    t = Task(0, 5, task_type=[10,200,400])
     assert t.cpu_demand == CPU_DEMANDS[0]
 
 def test_task_processing():
@@ -43,6 +43,8 @@ def test_node_creation():
     assert f1.cpu_frequency == 1
     assert f1.ram_size == 2400
     assert len(f1.buffers) == 3
+    t = Task(0,task_type=f1._task_type_on_slices[0])
+    assert t.cpu_demand == 400
 
 def test_node_task_on_slice():  
     f1 = Fog_node(0, x=0, y=0, cpu_frequency=1, ram_size=2400, number_of_slices=3)
