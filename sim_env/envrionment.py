@@ -3,18 +3,23 @@
 # external openAI imports
 import gym
 from gym import spaces
+from gym.utils import seeding
+
 # and necessary math libs
 import numpy as np
 
 # fog related imports
 from sim_env.core_classes import create_random_node
 from sim_env.events import Event_queue, Set_arrivals, Offload, Start_processing
-from sim_env.configs import TIME_STEP, SIM_TIME_STEPS
+from sim_env.configs import TIME_STEP, SIM_TIME_STEPS, RANDOM_SEED
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
 from sim_env.configs import PACKET_SIZE, DEADLINES, CPU_DEMANDS, RAM_DEMANDS
 
 # algorithm related imports
 from algorithms.configs import OVERLOAD_WEIGHT
+
+# for reproductibility
+from utils.tools import set_seed
 
 
 def Create_fog_envrionment(args):
@@ -67,13 +72,23 @@ class Fog_env(gym.Env):
 		state_possibilities = np.array(state_possibilities)
 		self.observation_space = spaces.MultiDiscrete(state_possibilities)
 
-		# self.seed()
+		# Set up seeds for reproductibility
+		self.seed(RANDOM_SEED)
 
 		# and the first event that will trigger subsequent arrivals
 		self.evq.addEvent(Set_arrivals(0, TIME_STEP, self.nodes))
 
+	def seed(self, seed=None):
+		# set all the necessary seeds for reproductibility
+		self.np_random, seed = seeding.np_random(seed)
+		self.action_space.seed(seed)
+		set_seed(seed)
+		return [seed]
 
 	def step(self, action):
+		# to make sure you give actions in the FORMATED action space
+		action = action.astype(np.int8)
+		assert self.action_space.contains(action)
 		# current state
 		state = self._next_observation()
 
@@ -147,8 +162,6 @@ class Fog_env(gym.Env):
 		return np.array(obs, dtype=np.uint8)
 
 	def _take_action(self, action):
-		# to make sure you give actions in the FORMATED action space
-		action = action.astype(np.int8)
 		# takes the action in the system, i.e. sets up the offloading events
 		nodes_actions = split_action_by_nodes(action)
 		for i in range(N_NODES):
@@ -163,8 +176,6 @@ class Fog_env(gym.Env):
 					self.evq.addEvent(Start_processing(self.clock, self.nodes[i], k, wks[k]))
 
 	def _reward_fun(self, state, action):
-		# to make sure you give actions in the FORMATED action space
-		action = action.astype(np.int8)
 		# returns the instant reward of an action
 		obs_by_nodes = split_observation_by_node(state)
 		nodes_actions = split_action_by_nodes(action)

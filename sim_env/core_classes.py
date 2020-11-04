@@ -8,7 +8,6 @@ class Cloud_node
 # external imports
 from abc import ABC, abstractmethod
 from collections import deque
-from numpy import random
 import numpy as np
 
 # sim_env imports
@@ -17,6 +16,9 @@ from sim_env.configs import AREA, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT, THERMA
 from sim_env.configs import NODE_BANDWIDTH, TRANSMISSION_POWER
 from sim_env.configs import DEADLINES, CPU_DEMANDS, RAM_DEMANDS, PACKET_SIZE
 from sim_env.calculators import euclidean_distance, channel_gain, shannon_hartley, db_to_linear
+
+# tools
+from utils.tools import uniform_rand_choice, uniform_rand_int
 
 # ---------- Nodes related classes and functions ---------
 
@@ -177,10 +179,10 @@ def point_to_point_transmission_rate(n1, n2):
 
 def create_random_node(index=0, slices_characteristics=BASE_SLICE_CHARS):
 	# returns a node uniformly sampled within configurations, after the previous index
-	[x, y] = [random.randint(low=0, high=AREA[0]), random.randint(low=0, high=AREA[1])]
+	[x, y] = [uniform_rand_int(low=0, high=AREA[0]), uniform_rand_int(low=0, high=AREA[1])]
 	number_of_slices = DEFAULT_SLICES
-	cpu = random.choice(CPU_CLOCKS)
-	ram = random.choice(RAM_SIZES)
+	cpu = uniform_rand_choice(CPU_CLOCKS)
+	ram = uniform_rand_choice(RAM_SIZES)
 	return Fog_node(index, x, y, cpu, ram, number_of_slices, slices_characteristics)
 
 
