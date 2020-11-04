@@ -82,12 +82,13 @@ class Fog_env(gym.Env):
 		# set all the necessary seeds for reproductibility
 		self.np_random, seed = seeding.np_random(seed)
 		self.action_space.seed(seed)
+		self.observation_space.seed(seed)
 		set_seed(seed)
 		return [seed]
 
 	def step(self, action):
 		# to make sure you give actions in the FORMATED action space
-		action = action.astype(np.int8)
+		action = action.astype(np.uint8)
 		assert self.action_space.contains(action)
 		# current state
 		state = self._next_observation()
@@ -142,6 +143,7 @@ class Fog_env(gym.Env):
 		for node in self.nodes:
 			node.reset()	
 		self.clock = 0
+		self.seed(RANDOM_SEED)
 		return self._next_observation()
 
 	def _next_observation(self):
@@ -162,6 +164,8 @@ class Fog_env(gym.Env):
 		return np.array(obs, dtype=np.uint8)
 
 	def _take_action(self, action):
+		# to make sure you give actions in the FORMATED action space
+		action = action.astype(np.int8)
 		# takes the action in the system, i.e. sets up the offloading events
 		nodes_actions = split_action_by_nodes(action)
 		for i in range(N_NODES):
@@ -176,6 +180,8 @@ class Fog_env(gym.Env):
 					self.evq.addEvent(Start_processing(self.clock, self.nodes[i], k, wks[k]))
 
 	def _reward_fun(self, state, action):
+		# to make sure you give actions in the FORMATED action space
+		action = action.astype(np.int8)
 		# returns the instant reward of an action
 		obs_by_nodes = split_observation_by_node(state)
 		nodes_actions = split_action_by_nodes(action)
