@@ -1,43 +1,103 @@
 #!/usr/bin/env python
 
-# just a simple simulation
+# ---- JUST ESSENTIAL IMPORTS ----
 
-from sim_env.configs import TRAINING_STEPS, N_NODES, DEFAULT_SLICES, RANDOM_SEED, ALGORITHM_SEED
+import sys
+from sim_env.configs import BASE_SLICE_CHARS
+from sim_env.configs import NORMAL_CASE_A, NORMAL_CASE_B, NORMAL_CASE_C
+from sim_env.configs import HEAVY_CASE_A, HEAVY_CASE_B, HEAVY_CASE_C
+
+# ---- command line input ----
+
+# argument check
+if len(sys.argv) < 2:
+	print("run with --help or -H for more information")
+	sys.exit(1)
+
+# help print
+if "--help" in sys.argv or "-H" in sys.argv:
+	print("Playground.py should be played in an envrionment with Tensorflow and OpenAI gym")
+	print("--basic [-B] : runs a basic run")
+	print("--algorithm= [-A=] : choose your algorithm, by default rr is chosen")
+	print("   rr : Nearest Round Robin basline algorithm")
+	print("   pq : Nearest Priority Queue basline algorithm")
+	print("   ppo2 : needs Tensorflow 1.15 and stable-baslines")
+	print("--cases= [-C=] : by default runs case A with normal traffic")
+	print("   all : runs case A, B and C, with normal and heavy traffic")
+	print("   normal : runs case A, B and C, with normal traffic")
+	print("   heavy : runs case A, B and C, with heavy traffic")
+	print("   A : runs case A with normal and heavy traffic")
+	print("   B : runs case B with normal and heavy traffic")
+	print("   C : runs case C with normal and heavy traffic")
+	print("--debug : will render every step")
+	sys.exit(1)
+
+# running variables
+debug = False
+algs = []; cases = []
+
+# pick up the flags
+if "--debug" in sys.argv:
+	debug = True
+
+for s in sys.argv:
+	if "--algorithm=" in s or "-A=" in s:
+		if "rr" in s:
+			algs.append("rr")
+		elif "pq" in s:
+			algs.append("pq")
+		elif "ppo2" in s:
+			algs.append("ppo2")
+	if "--cases=" in s or "-C=" in s:
+		if "all" in s:
+			cases = [NORMAL_CASE_A, NORMAL_CASE_B, NORMAL_CASE_C, HEAVY_CASE_A, HEAVY_CASE_B, HEAVY_CASE_C]
+		elif "normal" in s:
+			cases = [NORMAL_CASE_A, NORMAL_CASE_B, NORMAL_CASE_C]
+		elif "heavy" in s:
+			cases = [HEAVY_CASE_A, HEAVY_CASE_B, HEAVY_CASE_C]
+	if "--basic" in s or "-B" in s:
+		algs.append("rr")
+		cases = [BASE_SLICE_CHARS]
+
+# default values if it was not chosen
+if not algs:
+	algs = ["rr"]
+if not cases:
+	cases = [BASE_SLICE_CHARS]
+
+
+# --- ALGORITHM IMPORTS ---
+from sim_env.configs import TRAINING_STEPS, N_NODES, DEFAULT_SLICES, RANDOM_SEED
+from algorithms.configs import ALGORITHM_SEED
 from sim_env.envrionment import Fog_env
-from algorithms.basic import Nearest_Round_Robin
+from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
 
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2, A2C
 
 import numpy as np
-import sys
 
-if len(sys.argv) < 2:
-	sys.argv.append("ppo2")
-	sys.argv.append("a2c")
-	sys.argv.append("rr")
 
-display = False
-if "-d" in sys.argv:
-	display = True
 
-if "ppo2" in sys.argv:
+# ---- algorithms runnning ----
+
+if "ppo2" in algs:
 	env = DummyVecEnv([lambda: Fog_env()])
 	# PPO2 test
-	algorithm = PPO2(MlpPolicy, env, seed=ALGORITHM_SEED ,n_cpu_tf_sess=1)  
+	algorithm = PPO2(MlpPolicy, env, seed=ALGORITHM_SEED ,n_cpu_tf_sess=1, verbose=1)  
 	algorithm.learn(total_timesteps=TRAINING_STEPS)
 	obs = env.reset()
 	done = False; ppo_delays = []; ppo_discarded = 0
 	while not done:
 		action, _states = algorithm.predict(obs)
 		obs, rw, done, info = env.step(action)
-		if display: env.render()
+		if debug: env.render()
 		# info gathering
 		ppo_delays = np.append(ppo_delays, info[0]["delay_list"])
 		ppo_discarded += info[0]["discarded"]
 
-if "a2c" in sys.argv:
+if "a2c" in algs:
 	env = DummyVecEnv([lambda: Fog_env()])
 	#A2C
 	algorithm = A2C(MlpPolicy, env, gamma=0.5, seed=ALGORITHM_SEED ,n_cpu_tf_sess=1)
@@ -47,30 +107,46 @@ if "a2c" in sys.argv:
 	while not done:
 		action, _states = algorithm.predict(obs)
 		obs, rw, done, info = env.step(action)
-		if display: env.render()
+		if debug: env.render()
 		# info gathering
 		a2c_delays = np.append(a2c_delays, info[0]["delay_list"])
 		a2c_discarded += info[0]["discarded"]
 
 
-if "rr" in sys.argv:
-	env = DummyVecEnv([lambda: Fog_env()])
+if "rr" in algs:
+	env = Fog_env()
 	#A2C
-	algorithm = Nearest_Round_Robin(env.envs[0])
+	algorithm = Nearest_Round_Robin(env)
 	obs = env.reset()
 	done = False; rr_delays = []; rr_discarded = 0
 	while not done:
+		action = algorithm.predict(obs)
+		obs, rw, done, info = env.step(action)
+		if debug: env.render()
+		# info gathering
+		rr_delays = np.append(rr_delays, info["delay_list"])
+		rr_discarded += info["discarded"]
+
+if "pq" in algs:
+	env = DummyVecEnv([lambda: Fog_env()])
+	#A2C
+	algorithm = Nearest_Priority_Queue(env.envs[0])
+	obs = env.reset()
+	done = False; pq_delays = []; pq_discarded = 0
+	while not done:
 		action = algorithm.predict(obs[0])
 		obs, rw, done, info = env.step([action])
-		if display: env.render()
+		if debug: env.render()
 		# info gathering
-		rr_delays = np.append(rr_delays, info[0]["delay_list"])
-		rr_discarded += info[0]["discarded"]
+		pq_delays = np.append(pq_delays, info[0]["delay_list"])
+		pq_discarded += info[0]["discarded"]
 
 # result prints
-if "ppo2" in sys.argv:
+if "ppo2" in algs:
 	print("ppo2 delay_avg:",sum(ppo_delays)/len(ppo_delays),"processed:",len(ppo_delays),"discarded:",ppo_discarded)
-if "a2c" in sys.argv:
+if "a2c" in algs:
 	print("a2c delay_avg:",sum(a2c_delays)/len(a2c_delays),"processed:",len(a2c_delays),"discarded:",a2c_discarded)
-if "rr" in sys.argv:
+if "rr" in algs:
 	print("rr delay_avg:",sum(rr_delays)/len(rr_delays),"processed:",len(rr_delays),"discarded:",rr_discarded)
+if "pq" in algs:
+	print("pq delay_avg:",sum(pq_delays)/len(pq_delays),"processed:",len(pq_delays),"discarded:",pq_discarded)

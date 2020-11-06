@@ -16,7 +16,8 @@ CPU_CLOCKS = [5, 6, 7, 8, 9, 10] # GHz
 RAM_SIZES = [2400, 4000, 8000] # MB
 CPU_UNIT = 1 # GHz
 RAM_UNIT = 400 # MB
-# slice characteristics (case A)
+
+# slice characteristics 
 BASE_SLICE_CHARS = {
 	"arrivals" : [0.5, 0.5, 0.5],
 	"task_type" : [[0, 1, 0], [0, 2, 0], [0, 1, 1]]
@@ -34,3 +35,29 @@ DEADLINES = [10, 50, 100] # ms
 CPU_DEMANDS = [200, 400, 600] # cycles/bit
 RAM_DEMANDS = [400, 1200] # MB
 
+# ---- simulation cases ---- 
+
+# Case A
+NORMAL_CASE_A = BASE_SLICE_CHARS
+HEAVY_CASE_A ={
+	"arrivals" : [0.9, 0.9, 0.9],
+	"task_type" : [[0, 1, 0], [0, 2, 0], [0, 1, 1]]
+}
+# Case B
+NORMAL_CASE_B = {
+	"arrivals" : [0.5, 0.5, 0.5],
+	"task_type" : [[0, 1, 0], [1, 1, 0], [2, 1, 0]]
+}
+HEAVY_CASE_B = {
+	"arrivals" : [0.9, 0.9, 0.9],
+	"task_type" : [[0, 1, 0], [1, 1, 0], [2, 1, 0]]
+}
+# Case C
+NORMAL_CASE_C = {
+	"arrivals" : [0.5, 0.5, 0.5],
+	"task_type" : [[0, 1, 0], [1, 2, 0], [1, 1, 0]]
+}
+HEAVY_CASE_C = {
+	"arrivals" : [0.9, 0.9, 0.9],
+	"task_type" : [[0, 1, 0], [1, 2, 0], [1, 1, 0]]
+}

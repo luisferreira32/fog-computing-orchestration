@@ -116,3 +116,9 @@ def test_discard_task():
 	assert t3.is_completed() == False
 	assert node._avail_cpu_units == node.cpu_frequency-1
 	assert Discard_task(0,node,0,t3).execute(evq)  == None # not on the queue anymore
+	# discard after sent and delay unmet
+	evq.reset()
+	Task_arrival(1,node, 0,t1).execute(evq)
+	e = evq.popEvent()
+	assert e.classtype == "Discard_task"
+	assert e.time == 0.001*t1.delay_constraint

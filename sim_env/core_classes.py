@@ -22,6 +22,24 @@ from utils.tools import uniform_rand_choice, uniform_rand_int
 
 # ---------- Nodes related classes and functions ---------
 
+
+def point_to_point_transmission_rate(n1, n2):
+	# calculates transmission rate given two nodes
+	d = euclidean_distance(n1.x, n1.y, n2.x, n2.y)
+	g = channel_gain(d, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT)
+	p_mw = db_to_linear(TRANSMISSION_POWER)
+	n0_mw = db_to_linear(THERMAL_NOISE_DENSITY)
+	return shannon_hartley(g, p_mw, NODE_BANDWIDTH, n0_mw)
+
+def create_random_node(index=0, slices_characteristics=BASE_SLICE_CHARS):
+	# returns a node uniformly sampled within configurations, after the previous index
+	[x, y] = [uniform_rand_int(low=0, high=AREA[0]), uniform_rand_int(low=0, high=AREA[1])]
+	number_of_slices = DEFAULT_SLICES
+	cpu = uniform_rand_choice(CPU_CLOCKS)
+	ram = uniform_rand_choice(RAM_SIZES)
+	return Fog_node(index, x, y, cpu, ram, number_of_slices, slices_characteristics)
+
+	
 class Node(ABC):
 	""" Abstract node class
 	"""
@@ -168,22 +186,6 @@ class Fog_node(Node):
 		self._avail_cpu_units = int(self.cpu_frequency/CPU_UNIT)
 		self._avail_ram_units = int(self.ram_size/RAM_UNIT)
 
-
-def point_to_point_transmission_rate(n1, n2):
-	# calculates transmission rate given two nodes
-	d = euclidean_distance(n1.x, n1.y, n2.x, n2.y)
-	g = channel_gain(d, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT)
-	p_mw = db_to_linear(TRANSMISSION_POWER)
-	n0_mw = db_to_linear(THERMAL_NOISE_DENSITY)
-	return shannon_hartley(g, p_mw, NODE_BANDWIDTH, n0_mw)
-
-def create_random_node(index=0, slices_characteristics=BASE_SLICE_CHARS):
-	# returns a node uniformly sampled within configurations, after the previous index
-	[x, y] = [uniform_rand_int(low=0, high=AREA[0]), uniform_rand_int(low=0, high=AREA[1])]
-	number_of_slices = DEFAULT_SLICES
-	cpu = uniform_rand_choice(CPU_CLOCKS)
-	ram = uniform_rand_choice(RAM_SIZES)
-	return Fog_node(index, x, y, cpu, ram, number_of_slices, slices_characteristics)
 
 
 # ---------- Task related classes and functions ---------
