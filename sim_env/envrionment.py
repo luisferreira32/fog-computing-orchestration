@@ -13,7 +13,7 @@ from sim_env.core_classes import create_random_node
 from sim_env.events import Event_queue, Set_arrivals, Offload, Start_processing
 from sim_env.configs import TIME_STEP, SIM_TIME_STEPS, RANDOM_SEED
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
-from sim_env.configs import PACKET_SIZE
+from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS
 
 # algorithm related imports
 from algorithms.configs import OVERLOAD_WEIGHT
@@ -74,12 +74,12 @@ class Fog_env(gym.Env):
 	it is a custom environment that follows gym interface"""
 	metadata = {'render.modes': ['human']}
 
-	def __init__(self):
+	def __init__(self, case=BASE_SLICE_CHARS):
 		super(Fog_env, self).__init__()
 
 		# envrionment variables
 		# self.nodes, self.evq, etc...
-		self.nodes = [create_random_node(i) for i in range(N_NODES)]
+		self.nodes = [create_random_node(i, case) for i in range(N_NODES)]
 		for n in self.nodes:
 			n.set_communication_rates(self.nodes)
 		self.evq = Event_queue()
@@ -231,7 +231,7 @@ class Fog_env(gym.Env):
 		nodes_actions = split_action_by_nodes(action)
 
 		# reward sum of all nodes:
-		R = 0
+		R = 0; 
 		for obs, act, n in zip(obs_by_nodes, nodes_actions, self.nodes):
 			node_reward = 0
 			for k in range(n.max_k):

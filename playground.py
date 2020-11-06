@@ -26,9 +26,9 @@ if "--help" in sys.argv or "-H" in sys.argv:
 	print("   all : runs case A, B and C, with normal and heavy traffic")
 	print("   normal : runs case A, B and C, with normal traffic")
 	print("   heavy : runs case A, B and C, with heavy traffic")
-	print("   A : runs case A with normal and heavy traffic")
-	print("   B : runs case B with normal and heavy traffic")
-	print("   C : runs case C with normal and heavy traffic")
+	print("   _A : runs case A with normal and heavy traffic")
+	print("   _B : runs case B with normal and heavy traffic")
+	print("   _C : runs case C with normal and heavy traffic")
 	print("--debug : will render every step")
 	sys.exit(1)
 
@@ -55,6 +55,14 @@ for s in sys.argv:
 			cases = [NORMAL_CASE_A, NORMAL_CASE_B, NORMAL_CASE_C]
 		elif "heavy" in s:
 			cases = [HEAVY_CASE_A, HEAVY_CASE_B, HEAVY_CASE_C]
+		elif "_A" in s:
+			cases = [NORMAL_CASE_A, HEAVY_CASE_A]
+		elif "_B" in s:
+			cases = [NORMAL_CASE_B, HEAVY_CASE_B]
+		elif "_C" in s:
+			cases = [NORMAL_CASE_C, HEAVY_CASE_C]
+		elif "HC" in s:
+			cases = [HEAVY_CASE_C]
 	if "--basic" in s or "-B" in s:
 		algs.append("rr")
 		cases = [BASE_SLICE_CHARS]
@@ -74,29 +82,58 @@ from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
 
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines.common.policies import MlpPolicy
-from stable_baselines import PPO2, A2C
+from stable_baselines import PPO2 #, A2C
 
 import numpy as np
 
 
 
-# ---- algorithms runnning ----
+# ---- algorithms runnning for every case ----
 
-if "ppo2" in algs:
-	env = DummyVecEnv([lambda: Fog_env()])
-	# PPO2 test
-	algorithm = PPO2(MlpPolicy, env, seed=ALGORITHM_SEED ,n_cpu_tf_sess=1, verbose=1)  
-	algorithm.learn(total_timesteps=TRAINING_STEPS)
-	obs = env.reset()
-	done = False; ppo_delays = []; ppo_discarded = 0
-	while not done:
-		action, _states = algorithm.predict(obs)
-		obs, rw, done, info = env.step(action)
-		if debug: env.render()
-		# info gathering
-		ppo_delays = np.append(ppo_delays, info[0]["delay_list"])
-		ppo_discarded += info[0]["discarded"]
+print(cases)
+for case in cases:
+	if "ppo2" in algs:
+		env = DummyVecEnv([lambda: Fog_env(case)])
+		# PPO2 test
+		algorithm = PPO2(MlpPolicy, env, seed=ALGORITHM_SEED ,n_cpu_tf_sess=1, verbose=0)  
+		algorithm.learn(total_timesteps=TRAINING_STEPS)
+		obs = env.reset()
+		done = False; ppo_delays = []; ppo_discarded = 0
+		while not done:
+			action, _states = algorithm.predict(obs)
+			obs, rw, done, info = env.step(action)
+			if debug: env.render()
+			# info gathering
+			ppo_delays = np.append(ppo_delays, info[0]["delay_list"])
+			ppo_discarded += info[0]["discarded"]
 
+	if "rr" in algs:
+		env = DummyVecEnv([lambda: Fog_env(case)])
+		algorithm = Nearest_Round_Robin(env.envs[0])
+		obs = env.reset()
+		done = False; rr_delays = []; rr_discarded = 0
+		while not done:
+			action = algorithm.predict(obs[0])
+			obs, rw, done, info = env.step([action])
+			if debug: env.render()
+			# info gathering
+			rr_delays = np.append(rr_delays, info[0]["delay_list"])
+			rr_discarded += info[0]["discarded"]
+
+	if "pq" in algs:
+		env = DummyVecEnv([lambda: Fog_env(case)])
+		algorithm = Nearest_Priority_Queue(env.envs[0])
+		obs = env.reset()
+		done = False; pq_delays = []; pq_discarded = 0
+		while not done:
+			action = algorithm.predict(obs[0])
+			obs, rw, done, info = env.step([action])
+			if debug: env.render()
+			# info gathering
+			pq_delays = np.append(pq_delays, info[0]["delay_list"])
+			pq_discarded += info[0]["discarded"]
+
+"""
 if "a2c" in algs:
 	env = DummyVecEnv([lambda: Fog_env()])
 	#A2C
@@ -111,35 +148,7 @@ if "a2c" in algs:
 		# info gathering
 		a2c_delays = np.append(a2c_delays, info[0]["delay_list"])
 		a2c_discarded += info[0]["discarded"]
-
-
-if "rr" in algs:
-	env = Fog_env()
-	#A2C
-	algorithm = Nearest_Round_Robin(env)
-	obs = env.reset()
-	done = False; rr_delays = []; rr_discarded = 0
-	while not done:
-		action = algorithm.predict(obs)
-		obs, rw, done, info = env.step(action)
-		if debug: env.render()
-		# info gathering
-		rr_delays = np.append(rr_delays, info["delay_list"])
-		rr_discarded += info["discarded"]
-
-if "pq" in algs:
-	env = DummyVecEnv([lambda: Fog_env()])
-	#A2C
-	algorithm = Nearest_Priority_Queue(env.envs[0])
-	obs = env.reset()
-	done = False; pq_delays = []; pq_discarded = 0
-	while not done:
-		action = algorithm.predict(obs[0])
-		obs, rw, done, info = env.step([action])
-		if debug: env.render()
-		# info gathering
-		pq_delays = np.append(pq_delays, info[0]["delay_list"])
-		pq_discarded += info[0]["discarded"]
+"""
 
 # result prints
 if "ppo2" in algs:

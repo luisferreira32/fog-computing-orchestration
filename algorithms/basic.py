@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import numpy as np
 
 from sim_env.envrionment import split_observation_by_node
@@ -30,13 +32,14 @@ class Nearest_Round_Robin(object):
 		for i in range(N_NODES):
 			[a_k, b_k, be_k, rc_k, rm_k] = np.split(obs_by_nodes[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
 			
-			# to process based on availabe memory and RR priority
-			while rm_k >= self.nodes[i]._task_type_on_slices[self.process[i]][2]/RAM_UNIT and not np.all(b_k == be_k):
+			# to process based on availabe memory, cpu, and RR priority
+			while rm_k >= np.ceil(self.nodes[i]._task_type_on_slices[self.process[i]][2]/RAM_UNIT) and rc_k > 0 and not np.all(b_k == be_k):
 				if b_k[self.process[i]] > be_k[self.process[i]]:
 					# set the w_ik to process +1
 					action[i*DEFAULT_SLICES*2+DEFAULT_SLICES+self.process[i]] += 1
 					# and take the resources on the available obs
 					rm_k -= int(self.nodes[i]._task_type_on_slices[self.process[i]][2]/RAM_UNIT)
+					rc_k -= 1
 					be_k[self.process[i]] += 1
 
 				self.process[i] += 1
@@ -95,12 +98,13 @@ class Nearest_Priority_Queue(object):
 			# begining with the higher to the lower priorities (slice k)
 			for k in self.priorities[i]:
 				# to process based on availabe memory and there is still tasks to process
-				while rm_k >= self.nodes[i]._task_type_on_slices[k][2]/RAM_UNIT and not b_k[k] == be_k[k]:
+				while rm_k >= self.nodes[i]._task_type_on_slices[k][2]/RAM_UNIT and rc_k > 0 and not b_k[k] == be_k[k]:
 					if b_k[k] > be_k[k]:
 						# set the w_ik to process +1
 						action[i*DEFAULT_SLICES*2+DEFAULT_SLICES+k] += 1
 						# and take the resources on the available obs
 						rm_k -= int(self.nodes[i]._task_type_on_slices[k][2]/RAM_UNIT)
+						rc_k -= 1
 						be_k[k] += 1
 
 
