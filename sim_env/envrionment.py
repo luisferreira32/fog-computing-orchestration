@@ -215,10 +215,12 @@ class Fog_env(gym.Env):
 		for i in range(N_NODES):
 			# for node i: [f_0, ..., f_k, w_0, ..., w_k]
 			[fks, wks] = np.split(nodes_actions[i], 2)
+			# concurrent offloads on this step
+			con = len(fks)-np.count_nonzero(fks==i)
 			for k in range(DEFAULT_SLICES):
 				# if you are given a destination, add the offload event
 				if fks[k] != i:
-					self.evq.addEvent(Offload(self.clock, self.nodes[i], k, self.nodes[fks[k]]))
+					self.evq.addEvent(Offload(self.clock, self.nodes[i], k, self.nodes[fks[k]], con))
 				# and start processing if there is any request
 				if wks[k] != 0:
 					self.evq.addEvent(Start_processing(self.clock, self.nodes[i], k, wks[k]))

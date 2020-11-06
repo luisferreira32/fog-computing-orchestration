@@ -63,6 +63,8 @@ for s in sys.argv:
 			cases = [NORMAL_CASE_C, HEAVY_CASE_C]
 		elif "HC" in s:
 			cases = [HEAVY_CASE_C]
+		elif "NC" in s:
+			cases = [NORMAL_CASE_C]
 	if "--basic" in s or "-B" in s:
 		algs.append("rr")
 		cases = [BASE_SLICE_CHARS]

@@ -133,11 +133,12 @@ class Start_processing(Event):
 class Offload(Event):
 	""" Offloads the task that just arrived to a destination node
 	"""
-	def __init__(self, time, node, k, destination):
+	def __init__(self, time, node, k, destination, con=1):
 		super(Offload, self).__init__(time, "Offload")
 		self.node = node
 		self.k = k
 		self.destination = destination
+		self.concurrent_offloads = con
 
 	def execute(self, evq):
 		# can't send if there is no way to send or it's busy sending
@@ -150,7 +151,7 @@ class Offload(Event):
 		# else plan the landing
 		self.node._dealt_tasks += 1
 		self.node.transmitting = True
-		arrive_time = self.time + task_communication_time(t, self.node._communication_rates[self.destination.index])
+		arrive_time = self.time + task_communication_time(t, self.node._communication_rates[self.destination.index]/self.concurrent_offloads)
 		evq.addEvent(Task_arrival(arrive_time, self.destination, self.k, t))
 		evq.addEvent(Finished_transmitting(arrive_time, self.node))
 		return None
