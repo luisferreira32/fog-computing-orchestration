@@ -138,11 +138,12 @@ class Fog_env(gym.Env):
 		state = self._next_observation()
 
 		# information dict to pass back
+		total = 0; overflow = 0; success = 0;
 		info = {
 			"discarded" : 0,
 			"delay_list" : [],
-			"previous_action": np.uint8(action),
-			"previous_state": state
+			"success_rate": 0.0,
+			"overflow_rate": 0.0,
 			};
 
 		# update some envrionment values
@@ -162,20 +163,34 @@ class Fog_env(gym.Env):
 		while self.evq.hasEvents() and self.evq.first_time() <= self.clock:
 			ev = self.evq.popEvent()
 			t = ev.execute(self.evq)
-			# update the info based on the object task returning
+			# update the info on offload sucess rate
+			if ev.classtype == "Task_arrival" and ev.task_time() < self.clock:
+				total += 1
+				if t is None:
+					success += 1
+				elif not t.is_completed():
+					overflow += 1
+			# update info on completed (with delay) and discarded numbers
 			if t is not None: # a task was returned
 				if t.is_completed():
 					info["delay_list"].append(t.task_delay())
 				else:
 					info["discarded"] += 1
-		# which updates states on the nodes
+
+		# save some info
+		if total > 0:
+			info["success_rate"] = (success)/(total)
+			info["overflow_rate"] = (overflow)/(total)
+		else:
+			info["success_rate"] = []
+			info["overflow_rate"] = []
+
 
 		# obtain next observation
 		obs = self._next_observation()
-		info["previous_state"] = obs
 
 		# just save it for render
-		self.saved_step_info = info
+		self.saved_step_info = [obs, action]
 
 		return obs, rw, done, info
 
@@ -264,9 +279,8 @@ class Fog_env(gym.Env):
 	def render(self, mode='human', close=False):
 		# Render the environment to the screen
 		if self.saved_step_info is None: return
-		info = self.saved_step_info
-		nodes_obs = split_observation_by_node(info["previous_state"])
-		nodes_actions = split_action_by_nodes(info["previous_action"])
+		nodes_obs = split_observation_by_node(self.saved_step_info[0])
+		nodes_actions = split_action_by_nodes(self.saved_step_info[1])
 		print("------",self.clock,"------")
 		for i in range(N_NODES):
 			[a, b, be, rc, rm] = np.split(nodes_obs[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])

@@ -234,6 +234,9 @@ class Task():
 	def task_delay(self):
 		return self._total_delay
 
+	def task_time(self):
+		return self._timestamp
+
 def task_processing_time(t=None):
 	# calculates the time a task takes to process after starting to process
 	if t is None: return "no task given"

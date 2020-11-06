@@ -1,7 +1,7 @@
 # GLOBAL FOG VARIABLES
-TIME_STEP = 0.001 # seconds
+TIME_STEP = 0.0005 # seconds
 TRAINING_STEPS = 5000
-SIM_TIME_STEPS = TRAINING_STEPS*TIME_STEP # 5 seconds actually
+SIM_TIME_STEPS = TRAINING_STEPS*TIME_STEP
 RANDOM_SEED = 10017
 
 # NODES CONSTANTS
@@ -19,6 +19,7 @@ RAM_UNIT = 400 # MB
 
 # slice characteristics 
 BASE_SLICE_CHARS = {
+	"case": "n_case_a",
 	"arrivals" : [0.5, 0.5, 0.5],
 	"task_type" : [[0, 1, 0], [0, 2, 0], [0, 1, 1]]
 }
@@ -40,24 +41,29 @@ RAM_DEMANDS = [400, 1200] # MB
 # Case A
 NORMAL_CASE_A = BASE_SLICE_CHARS
 HEAVY_CASE_A ={
+	"case": "h_case_a",
 	"arrivals" : [0.9, 0.9, 0.9],
 	"task_type" : [[0, 1, 0], [0, 2, 0], [0, 1, 1]]
 }
 # Case B
 NORMAL_CASE_B = {
+	"case": "n_case_b",
 	"arrivals" : [0.5, 0.5, 0.5],
 	"task_type" : [[0, 1, 0], [1, 1, 0], [2, 1, 0]]
 }
 HEAVY_CASE_B = {
+	"case": "h_case_b",
 	"arrivals" : [0.9, 0.9, 0.9],
 	"task_type" : [[0, 1, 0], [1, 1, 0], [2, 1, 0]]
 }
 # Case C
 NORMAL_CASE_C = {
+	"case": "n_case_c",
 	"arrivals" : [0.5, 0.5, 0.5],
 	"task_type" : [[0, 1, 0], [1, 2, 0], [1, 1, 0]]
 }
 HEAVY_CASE_C = {
+	"case": "h_case_c",
 	"arrivals" : [0.9, 0.9, 0.9],
 	"task_type" : [[0, 1, 0], [1, 2, 0], [1, 1, 0]]
 }

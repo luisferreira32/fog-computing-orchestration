@@ -93,12 +93,15 @@ class Task_arrival(Event):
 		self.node = node
 		self.k = k
 		self.task = task
-		assert time >= task._timestamp
+		assert time >= task.task_time()
 
 	def execute(self, evq):
 		# if the task just arrived, schedule a discard for it's deadline (in milliseconds)
-		evq.addEvent(Discard_task(self.task._timestamp+(0.001*self.task.delay_constraint), self.node, self.k, self.task))
+		evq.addEvent(Discard_task(self.task.task_time()+(0.001*self.task.delay_constraint), self.node, self.k, self.task))
 		return self.node.add_task_on_slice(self.k, self.task)
+
+	def task_time(self):
+		return self.task.task_time()
 		
 class Task_finished(Event):
 	""" Task_finished specifies a task finished processing and returns it
