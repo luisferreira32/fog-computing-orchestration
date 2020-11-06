@@ -3,3 +3,4 @@
 *.pyo
 *.cache/*
 todolist.txt
+results/*

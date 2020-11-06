@@ -44,9 +44,9 @@ for s in sys.argv:
 	if "--algorithm=" in s or "-A=" in s:
 		if "rr" in s:
 			algs.append("rr")
-		elif "pq" in s:
+		if "pq" in s:
 			algs.append("pq")
-		elif "ppo2" in s:
+		if "ppo2" in s:
 			algs.append("ppo2")
 	if "--cases=" in s or "-C=" in s:
 		if "all" in s:
@@ -77,10 +77,12 @@ if not cases:
 
 
 # --- ALGORITHM IMPORTS ---
+
 from sim_env.configs import TRAINING_STEPS, N_NODES, DEFAULT_SLICES, RANDOM_SEED
 from algorithms.configs import ALGORITHM_SEED
 from sim_env.envrionment import Fog_env
 from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
+from utils.display import plt_bar, plt_error_bar
 
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines.common.policies import MlpPolicy
@@ -91,7 +93,7 @@ import numpy as np
 
 
 # ---- algorithms runnning for every case ----
-
+avg_delays_list = []; delays_list=[];
 print(cases)
 for case in cases:
 	if "ppo2" in algs:
@@ -100,42 +102,51 @@ for case in cases:
 		algorithm = PPO2(MlpPolicy, env, seed=ALGORITHM_SEED ,n_cpu_tf_sess=1, verbose=0)  
 		algorithm.learn(total_timesteps=TRAINING_STEPS)
 		obs = env.reset()
-		done = False; ppo_delays = []; ppo_discarded = 0
+		done = False; delays = []; discarded = 0
 		while not done:
 			action, _states = algorithm.predict(obs)
 			obs, rw, done, info = env.step(action)
 			if debug: env.render()
 			# info gathering
-			ppo_delays = np.append(ppo_delays, info[0]["delay_list"])
-			ppo_discarded += info[0]["discarded"]
+			delays = np.append(delays, info[0]["delay_list"])
+			discarded += info[0]["discarded"]
+		delays_list.append(delays)
+		avg_delays_list.append(sum(delays)/len(delays))
 
 	if "rr" in algs:
 		env = DummyVecEnv([lambda: Fog_env(case)])
 		algorithm = Nearest_Round_Robin(env.envs[0])
 		obs = env.reset()
-		done = False; rr_delays = []; rr_discarded = 0
+		done = False; delays = []; rr_discarded = 0
 		while not done:
 			action = algorithm.predict(obs[0])
 			obs, rw, done, info = env.step([action])
 			if debug: env.render()
 			# info gathering
-			rr_delays = np.append(rr_delays, info[0]["delay_list"])
+			delays = np.append(delays, info[0]["delay_list"])
 			rr_discarded += info[0]["discarded"]
+		delays_list.append(delays)
+		avg_delays_list.append(sum(delays)/len(delays))
 
 	if "pq" in algs:
 		env = DummyVecEnv([lambda: Fog_env(case)])
 		algorithm = Nearest_Priority_Queue(env.envs[0])
 		obs = env.reset()
-		done = False; pq_delays = []; pq_discarded = 0
+		done = False; delays = []; pq_discarded = 0
 		while not done:
 			action = algorithm.predict(obs[0])
 			obs, rw, done, info = env.step([action])
 			if debug: env.render()
 			# info gathering
-			pq_delays = np.append(pq_delays, info[0]["delay_list"])
+			delays = np.append(delays, info[0]["delay_list"])
 			pq_discarded += info[0]["discarded"]
+		delays_list.append(delays)
+		avg_delays_list.append(sum(delays)/len(delays))
 
-"""
+plt_error_bar(algs, delays_list)
+#plt_bar(algs, avg_delays_list)
+
+""" OBSOLETE CODE --- will delete in the future
 if "a2c" in algs:
 	env = DummyVecEnv([lambda: Fog_env()])
 	#A2C
@@ -150,7 +161,7 @@ if "a2c" in algs:
 		# info gathering
 		a2c_delays = np.append(a2c_delays, info[0]["delay_list"])
 		a2c_discarded += info[0]["discarded"]
-"""
+
 
 # result prints
 if "ppo2" in algs:
@@ -161,3 +172,4 @@ if "rr" in algs:
 	print("rr delay_avg:",sum(rr_delays)/len(rr_delays),"processed:",len(rr_delays),"discarded:",rr_discarded)
 if "pq" in algs:
 	print("pq delay_avg:",sum(pq_delays)/len(pq_delays),"processed:",len(pq_delays),"discarded:",pq_discarded)
+"""
