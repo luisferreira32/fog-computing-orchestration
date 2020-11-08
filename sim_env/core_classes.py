@@ -37,6 +37,7 @@ def create_random_node(index=0, slices_characteristics=BASE_SLICE_CHARS):
 	number_of_slices = DEFAULT_SLICES
 	cpu = uniform_rand_choice(CPU_CLOCKS)
 	ram = uniform_rand_choice(RAM_SIZES)
+	print("Node",index,"created at (x,y) = ",(x,y),"cpu =",cpu,"ram =",ram)
 	return Fog_node(index, x, y, cpu, ram, number_of_slices, slices_characteristics)
 
 	

@@ -45,14 +45,8 @@ class Fog_env(gym.Env):
 		# [[f_00, ..., f_0k, w_00, ..., w_0k], ..., [f_i0, ..., f_ik, w_i0, ..., w_ik]]
 		# for each node there is an action [f_i0, ..., f_ik, w_i0, ..., w_ik]
 		# where values can be between 0 and I for f_ik, and 0 and N for w_ik
-		action_possibilities = []
-		for n in self.nodes:
-			nodes_actions = []
-			for _ in range(n.max_k):
-				nodes_actions.append(N_NODES+1) # f_ik: 0 to N_NODES (nodes indexes, 0 if no arrivals)
-			for _ in range(n.max_k):
-				nodes_actions.append(n._avail_cpu_units+1) # w_ik: 0 to cpu_units
-			action_possibilities.append(nodes_actions)
+		action_possibilities = [np.append([N_NODES+1 for _ in range(n.max_k)],
+			[n._avail_cpu_units+1 for _ in range(n.max_k)]) for n in self.nodes]
 		action_possibilities = np.array(action_possibilities, dtype=np.uint8)
 		self.action_space = spaces.MultiDiscrete(action_possibilities)
 
@@ -60,18 +54,8 @@ class Fog_env(gym.Env):
 		# [a_00, ..., a_0k, b_00, ..., b_0k, be_00, ..., be_0k, rc_0, rm_0,
 		# ..., a_i0, ..., a_ik, b_i0, ..., b_ik, be_i0, ..., be_ik, rc_i, rm_i]
 		# state_lows has to be remade if nodes don't have same slices
-		state_possibilities = []
-		for n in self.nodes:
-			nodes_obs = []
-			for _ in range(n.max_k):
-				nodes_obs.append(2) # a_ik: 0 or 1
-			for _ in range(n.max_k):
-				nodes_obs.append(MAX_QUEUE+1) # b_ik: 0 to max_queue
-			for _ in range(n.max_k):
-				nodes_obs.append(n._avail_cpu_units+1) # be_ik: 0 to cpu_units
-			nodes_obs.append(n._avail_cpu_units+1) # rc_i: 0 to cpu_units
-			nodes_obs.append(n._avail_ram_units+1) # rm_i: 0 to ram_units
-			state_possibilities.append(nodes_obs)
+		state_possibilities = [np.concatenate(([2 for _ in range(n.max_k)],[MAX_QUEUE+1 for _ in range(n.max_k)],
+			[n._avail_cpu_units+1 for _ in range(n.max_k)], [n._avail_cpu_units+1], [n._avail_ram_units+1])) for n in self.nodes]
 		state_possibilities = np.array(state_possibilities, dtype=np.uint8)
 		self.observation_space = spaces.MultiDiscrete(state_possibilities)
 
@@ -152,19 +136,9 @@ class Fog_env(gym.Env):
 
 	def _get_agent_observation(self, n):
 		# does a partial system observation
-		pobs = []
-		for k in range(n.max_k):
-			if len(n.buffers[k]) > 0 and self.clock == n.buffers[k][-1]._timestamp:
-			 	pobs.append(1)
-			else:
-				pobs.append(0)
-		for k in range(n.max_k):
-			pobs.append(len(n.buffers[k]))
-		for k in range(n.max_k):
-			pobs.append(n._being_processed[k])
-		pobs.append(n._avail_cpu_units)
-		pobs.append(n._avail_ram_units)
-
+		pobs = np.concatenate(([1 if len(n.buffers[k]) > 0 and self.clock == n.buffers[k][-1]._timestamp else 0 for k in range(n.max_k)],
+			[len(n.buffers[k]) for k in range(n.max_k)], [n._being_processed[k] for k in range(n.max_k)],
+			[n._avail_cpu_units],[n._avail_ram_units]))
 		return np.array(pobs, dtype=np.uint8)
 
 	def _set_agent_action(self, n, action):
@@ -187,7 +161,7 @@ class Fog_env(gym.Env):
 		for k in range(n.max_k):
 			D_ik = 0; Dt_ik = 0
 			# if it's offloaded adds communication time to delay
-			if action[k] != n.index:
+			if action[k] != n.index and action[k] != 0:
 				Dt_ik = PACKET_SIZE / n._communication_rates[action[k]] 
 				D_ik += Dt_ik
 			# calculate the Queue delay: b_ik/service_rate_i
