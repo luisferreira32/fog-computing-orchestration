@@ -2,7 +2,7 @@
 TIME_STEP = 0.001 # seconds
 TRAINING_STEPS = 5000
 SIM_TIME_STEPS = TRAINING_STEPS*TIME_STEP
-RANDOM_SEED = 2**13-1 # mersenne prime seeds at 2, 3, 5, 7, 13, 17, 19, 31
+RANDOM_SEED = 2**31-1 # mersenne prime seeds at 2, 3, 5, 7, 13, 17, 19, 31
 DEBUG = False
 
 # NODES CONSTANTS

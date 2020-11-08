@@ -56,6 +56,7 @@ for case in cases:
 		print("-average delay:",round(1000*sum(delays)/len(delays),2),"ms")
 		print("-success rate:",round(len(delays)/(len(delays)+sum(overflowed)+sum(discarded)),2))
 		print("-overflow rate:",round(sum(overflowed)/(len(delays)+sum(overflowed)+sum(discarded)),2))
+		delays_list.append(delays)
 
 	# --- Nearest Node - Priority Queue algorithm --- 
 	if "pq" in algs:
@@ -78,8 +79,9 @@ for case in cases:
 		print("-average delay:",round(1000*sum(delays)/len(delays),2),"ms")
 		print("-success rate:",round(len(delays)/(len(delays)+sum(overflowed)+sum(discarded)),2))
 		print("-overflow rate:",round(sum(overflowed)/(len(delays)+sum(overflowed)+sum(discarded)),2))
+		delays_list.append(delays)
 
 
-#x = [case["case"]+" "+alg for case in cases for alg in algs]
+x = [case["case"]+" "+alg for case in cases for alg in algs]
 #plt_bar(x, [np.mean(d) for d in delays_list], mili=True, title="average_delays")
-#plt_error_bar(x, success_rates_list, title="success_rates")
+plt_error_bar(x, delays_list, title="average_delays")
