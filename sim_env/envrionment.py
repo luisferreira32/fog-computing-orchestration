@@ -11,6 +11,7 @@ import numpy as np
 # fog related imports
 from sim_env.core_classes import create_random_node
 from sim_env.events import Event_queue, Set_arrivals, Offload, Start_processing
+from sim_env.events_aux import is_arrival_on_slice
 from sim_env.configs import TIME_STEP, SIM_TIME_STEPS, RANDOM_SEED
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
 from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS
@@ -248,14 +249,17 @@ class Fog_env(gym.Env):
 		nodes_actions = split_action_by_nodes(action)
 
 		# reward sum of all nodes:
-		R = 0; 
-		for obs, act, n in zip(obs_by_nodes, nodes_actions, self.nodes):
+		R = 0;
+		for i in range(len(self.nodes)):
+			# unpack and zero reward for each node
+			obs = obs_by_nodes[i]; act = nodes_actions[i]; n = self.nodes[i]
 			node_reward = 0
 			for k in range(n.max_k):
-				D_ik = 0
+				D_ik = 0; Dt_ik = 0
 				# if it's offloaded adds communication time to delay
 				if act[k] != n.index:
-					D_ik += PACKET_SIZE / n._communication_rates[act[k]]
+					Dt_ik = PACKET_SIZE / n._communication_rates[act[k]] 
+					D_ik += Dt_ik
 				# calculate the Queue delay: b_ik/service_rate_i
 				D_ik += obs[n.max_k+k]/n._service_rate
 				# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
@@ -266,8 +270,13 @@ class Fog_env(gym.Env):
 				else:
 					coeficient = 1
 
+				# count the number of new arrivals in the arriving node
+				arr = 0
+				for ev in self.evq.queue():
+					if is_arrival_on_slice(ev, self.nodes[act[k]], k) and ev.time <= self.clock+Dt_ik:
+						arr += 1
 				# also, verify if there is an overload chance in the arriving node
-				if obs_by_nodes[act[k]][self.nodes[act[k]].max_k+k]+1 >= MAX_QUEUE:
+				if obs_by_nodes[act[k]][self.nodes[act[k]].max_k+k]+arr+1 >= MAX_QUEUE:
 					coeficient -= OVERLOAD_WEIGHT # tunable_weight
 
 				# a_ik * ( (-1)if(delay_constraint_unmet) - (tunable_weight)if(overflow_chance) )

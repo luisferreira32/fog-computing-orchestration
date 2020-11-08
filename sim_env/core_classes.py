@@ -62,7 +62,7 @@ class Node(ABC):
 		# states
 		self.transmitting = False
 
-	def __str__(slef):
+	def __str__(self):
 		return self.name
 
 	@abstractmethod
@@ -106,6 +106,7 @@ class Fog_node(Node):
 	def set_communication_rates(self, nodes):
 		for n in nodes:
 			self._communication_rates.append(point_to_point_transmission_rate(self,n))
+		print(self.name, [str(round(r/1000000,2))+" Kb/ms" for r in self._communication_rates])
 
 	def new_interval_update_service_rate(self):
 		self._total_time_intervals += 1

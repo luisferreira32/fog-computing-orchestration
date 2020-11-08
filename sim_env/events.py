@@ -49,6 +49,9 @@ class Event_queue(object):
 	def first_time(self):
 		return self.q[-1].time
 
+	def queue(self):
+		return self.q
+
 	def reset(self):
 		self.q.clear()
 
