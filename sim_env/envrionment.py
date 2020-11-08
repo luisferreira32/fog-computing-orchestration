@@ -92,6 +92,7 @@ class Fog_env(gym.Env):
 	def step(self, action_n):
 		# to make sure you give actions in the FORMATED action space
 		assert self.action_space.contains(action_n)
+		state_t = self._get_state_obs()
 
 		# to return it's necessary to return a lists in
 		obs_n = [] # observations (POMDP)
@@ -106,10 +107,7 @@ class Fog_env(gym.Env):
 		for i in range(N_NODES):
 			# set the zeroed info
 			info_n[i] = {
-				"discarded" : 0,
-				"delay_list" : [],
-				"success_rate": 0.0,
-				"overflow_rate": 0.0,
+				"delay_list" : []
 				};
 
 			# calculate the instant rewards, based on state, action pair
@@ -134,7 +132,7 @@ class Fog_env(gym.Env):
 		obs_n = self._get_state_obs()
 
 		# just save it for render
-		self.saved_step_info = [obs_n, action_n]
+		self.saved_step_info = [state_t, action_n]
 
 		return obs_n, reward_n, done, info_n
 
@@ -178,7 +176,7 @@ class Fog_env(gym.Env):
 		for k in range(DEFAULT_SLICES):
 			# if you are given a destination, add the offload event
 			if fks[k] != n.index and fks[k] != 0:
-				self.evq.addEvent(Offload(self.clock, n, k, self.nodes[fks[k]], concurr))
+				self.evq.addEvent(Offload(self.clock, n, k, self.nodes[fks[k]-1], concurr))
 			# and start processing if there is any request
 			if wks[k] != 0:
 				self.evq.addEvent(Start_processing(self.clock, n, k, wks[k]))
@@ -205,10 +203,11 @@ class Fog_env(gym.Env):
 			# count the number of new arrivals in the arriving node
 			arr = 0
 			for ev in self.evq.queue():
-				if is_arrival_on_slice(ev, self.nodes[action[k]], k) and ev.time <= self.clock+Dt_ik:
+				if is_arrival_on_slice(ev, self.nodes[action[k]-1], k) and ev.time <= self.clock+Dt_ik:
 					arr += 1
 			# also, verify if there is an overload chance in the arriving node
-			arr_obs = self._get_agent_observation(self.nodes[action[k]])
+			arrival_node = self.nodes[action[k]-1] if action[k] > 0 else n
+			arr_obs = self._get_agent_observation(arrival_node)
 			if arr_obs[DEFAULT_SLICES+k]+arr+1 >= MAX_QUEUE:
 				coeficient -= OVERLOAD_WEIGHT # tunable_weight
 

@@ -40,9 +40,11 @@ class Nearest_Round_Robin(object):
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		for k,b in enumerate(b_k):
-			if b > 0.8*MAX_QUEUE:
+			if b > 0.8*MAX_QUEUE and a_k[k] == 1:
 				# set the f_ik to the nearest node
 				action[k] = self.node._communication_rates.index(max(self.node._communication_rates))
+			elif a_k[k] == 1:
+				action[k] = self.node.index
 
 		# and return the action
 		return action
@@ -91,9 +93,11 @@ class Nearest_Priority_Queue(object):
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		for k,b in enumerate(b_k):
-			if b > 0.8*MAX_QUEUE:
+			if b > 0.8*MAX_QUEUE and a_k[k] == 1:
 				# set the f_ik to the nearest node
 				action[k] = self.node._communication_rates.index(max(self.node._communication_rates))
+			elif a_k[k] == 1:
+				action[k] = self.node.index
 
 		# and return the action
 		return action
