@@ -110,6 +110,9 @@ class Fog_env(gym.Env):
 			t = ev.execute(self.evq)
 
 			# --- GET INFORMAITON HERE ---
+			if t is not None: # means it came from a node
+				if t.is_completed():
+					info_n[n.index-1]["delay_list"].append(t.task_delay())
 
 
 		# obtain next observation
@@ -197,10 +200,12 @@ class Fog_env(gym.Env):
 		nodes_actions = self.saved_step_info[1]
 		print("------",self.clock,"------")
 		for i in range(N_NODES):
+			print("--- ",self.nodes[i]," ---")
 			[a, b, be, rc, rm] = np.split(nodes_obs[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
-			print("n"+str(i)+" obs[ a:", a,"b:", b, "be:", be, "rc:",rc, "rm:",rm,"]")
+			print(" obs[ a:", a,"b:", b, "be:", be, "rc:",rc, "rm:",rm,"]")
 			[f, w] = np.split(nodes_actions[i], 2)
 			print("act[ f:",f,"w:",w,"]")
+			print("-- current state: --")
 			for k,buf in enumerate(self.nodes[i].buffers):
 				print("slice",k,"buffer",[round(t._timestamp,4) for t in buf])
 		input("\nEnter to continue...")

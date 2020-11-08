@@ -4,6 +4,7 @@
 
 import sys
 from utils.input_handler import argument_check
+from utils.basic_info import average_delays
 
 # ---- command line input ----
 
@@ -35,15 +36,18 @@ for case in cases:
 	# --- Nearest Node - Round Robin algorithm ---
 	if "rr" in algs:
 		env = Fog_env(case)
+		average_delays(env.nodes)
 		agents = [Nearest_Round_Robin(n) for n in env.nodes]
 		obs_n = env.reset()
 		done = False; delays = []; success_rates=[]; rr_discarded = 0
 		while not done:
 			action_n = np.array([agent.decide(obs) for agent,obs in zip(agents, obs_n)], dtype=np.uint8)
-			obs_n, rw_n, done, info = env.step(action_n)
+			obs_n, rw_n, done, info_n = env.step(action_n)
 			if debug: env.render()
 			# info gathering
-			#... here ....
+			for key, info in info_n.items():
+				delays = np.append(delays, info["delay_list"])
+		print("Nearest_Round_Robin", round(1000*sum(delays)/len(delays),2),"ms on case",case)
 
 	# --- Nearest Node - Priority Queue algorithm --- 
 	if "pq" in algs:

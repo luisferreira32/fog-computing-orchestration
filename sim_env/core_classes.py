@@ -37,7 +37,7 @@ def create_random_node(index=0, slices_characteristics=BASE_SLICE_CHARS):
 	number_of_slices = DEFAULT_SLICES
 	cpu = uniform_rand_choice(CPU_CLOCKS)
 	ram = uniform_rand_choice(RAM_SIZES)
-	print("Node",index,"created at (x,y) = ",(x,y),"cpu =",cpu,"ram =",ram)
+	print("[DEBUG] Node",index,"created at (x,y) = ",(x,y),"cpu =",cpu,"ram =",ram)
 	return Fog_node(index, x, y, cpu, ram, number_of_slices, slices_characteristics)
 
 	
@@ -107,7 +107,7 @@ class Fog_node(Node):
 	def set_communication_rates(self, nodes):
 		for n in nodes:
 			self._communication_rates.append(point_to_point_transmission_rate(self,n))
-		print(self.name, [str(round(r/1000000,2))+" Kb/ms" for r in self._communication_rates])
+		print("[DEBUG]",self.name, [str(round(r/1000000,2))+" Kb/ms" for r in self._communication_rates])
 
 	def new_interval_update_service_rate(self):
 		self._total_time_intervals += 1

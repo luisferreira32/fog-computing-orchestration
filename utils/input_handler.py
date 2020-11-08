@@ -27,9 +27,9 @@ def argument_check(argv):
 		print("   all : runs case A, B and C, with normal and heavy traffic")
 		print("   normal : runs case A, B and C, with normal traffic")
 		print("   heavy : runs case A, B and C, with heavy traffic")
-		print("   all_X : runs case X =[A, B or C] with normal and heavy traffic")
-		print("   normal_X : runs case X =[A, B or C] with normal and heavy traffic")
-		print("   heavy_X : runs case X =[A, B or C] with normal and heavy traffic")
+		print("   aX : runs case X =[A, B or C] with normal and heavy traffic")
+		print("   nX : runs case X =[A, B or C] with normal traffic")
+		print("   hX : runs case X =[A, B or C] with heavy traffic")
 		print("--debug : will render every step")
 		return [debug, algs, cases]
 
@@ -52,23 +52,23 @@ def argument_check(argv):
 				cases = [NORMAL_CASE_A, NORMAL_CASE_B, NORMAL_CASE_C]
 			elif "heavy" in s:
 				cases = [HEAVY_CASE_A, HEAVY_CASE_B, HEAVY_CASE_C]
-			elif "all_A" in s:
+			elif "aA" in s:
 				cases = [NORMAL_CASE_A, HEAVY_CASE_A]
-			elif "all_B" in s:
+			elif "aB" in s:
 				cases = [NORMAL_CASE_B, HEAVY_CASE_B]
-			elif "all_C" in s:
+			elif "aC" in s:
 				cases = [NORMAL_CASE_C, HEAVY_CASE_C]
-			elif "heavy_A" in s:
+			elif "hA" in s:
 				cases = [HEAVY_CASE_A]
-			elif "normal_A" in s:
+			elif "nA" in s:
 				cases = [NORMAL_CASE_A]
-			elif "heavy_B" in s:
+			elif "hB" in s:
 				cases = [HEAVY_CASE_B]
-			elif "normal_B" in s:
+			elif "nB" in s:
 				cases = [NORMAL_CASE_B]
-			elif "heavy_C" in s:
+			elif "hC" in s:
 				cases = [HEAVY_CASE_C]
-			elif "normal_C" in s:
+			elif "nC" in s:
 				cases = [NORMAL_CASE_C]
 		if "--basic" in s or "-B" in s:
 			algs.append("rr")
