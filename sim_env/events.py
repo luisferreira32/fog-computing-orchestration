@@ -148,7 +148,7 @@ class Offload(Event):
 
 	def execute(self, evq):
 		# can't send if there is no way to send or it's busy sending
-		if self.node._communication_rates[self.destination.index] == 0: return None
+		if self.node._communication_rates[self.destination.index-1] == 0: return None
 		if self.node.transmitting: return None
 		# then pop the last task we got
 		t = self.node.pop_last_task(self.k, self.time)
@@ -157,7 +157,7 @@ class Offload(Event):
 		# else plan the landing
 		self.node._dealt_tasks += 1
 		self.node.transmitting = True
-		arrive_time = self.time + task_communication_time(t, self.node._communication_rates[self.destination.index]/self.concurrent_offloads)
+		arrive_time = self.time + task_communication_time(t, self.node._communication_rates[self.destination.index-1]/self.concurrent_offloads)
 		evq.addEvent(Task_arrival(arrive_time, self.destination, self.k, t))
 		evq.addEvent(Finished_transmitting(arrive_time, self.node))
 		return None

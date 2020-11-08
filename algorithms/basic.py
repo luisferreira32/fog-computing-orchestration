@@ -14,7 +14,7 @@ class Nearest_Round_Robin(object):
 		self.node = node
 
 	def __str__(self):
-		return "Round Robin"
+		return "Nearest Round Robin"
 
 	def decide(self, obs):
 		# node action struct: [f_i0, ..., f_ik, w_i0, ..., w_ik]
@@ -25,26 +25,30 @@ class Nearest_Round_Robin(object):
 		[a_k, b_k, be_k, rc_k, rm_k] = np.split(obs, [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
 		
 		# to process based on availabe memory, cpu, and RR priority
-		while rm_k >= np.ceil(self.node._task_type_on_slices[self.process][2]/RAM_UNIT) and rc_k > 0 and not np.all(b_k == be_k):
-			if b_k[self.process] > be_k[self.process]:
+		checked_slice = 0
+		while checked_slice < self.node.max_k and rm_k > 0 and rc_k > 0 and not np.all(b_k == be_k):
+			if b_k[self.process] > be_k[self.process] and rm_k >= np.ceil(self.node._task_type_on_slices[self.process][2]/RAM_UNIT):
 				# set the w_ik to process +1
 				action[DEFAULT_SLICES+self.process] += 1
 				# and take the resources on the available obs
-				rm_k -= int(self.node._task_type_on_slices[self.process][2]/RAM_UNIT)
+				rm_k -= int(np.ceil(self.node._task_type_on_slices[self.process][2]/RAM_UNIT))
 				rc_k -= 1
 				be_k[self.process] += 1
 
+			# if memory is being a limit here, might not be on another slice
+			if rm_k>= np.ceil(self.node._task_type_on_slices[self.process][2]/RAM_UNIT):
+				checked_slice +=1
 			self.process += 1
 			if self.process == DEFAULT_SLICES:
 				self.process = 0
 
 		# offload to the Nearest Node if buffer bigger than 0.8
-		for k,b in enumerate(b_k):
-			if b > 0.8*MAX_QUEUE and a_k[k] == 1:
-				# set the f_ik to the nearest node
-				action[k] = self.node._communication_rates.index(max(self.node._communication_rates))
-			elif a_k[k] == 1:
+		for k in range(self.node.max_k):
+			if a_k[k] == 1:
 				action[k] = self.node.index
+			if b_k[k] >= 0.8*MAX_QUEUE and a_k[k] == 1:
+				# set the f_ik to the nearest node
+				action[k] = self.node._distances.index(min(d for d in self.node._distances if d > 0))+1
 
 		# and return the action
 		return action
@@ -59,16 +63,11 @@ class Nearest_Priority_Queue(object):
 	def __init__(self, node):
 		self.node = node
 		# make slice priority on nodes
-		self.priorities = []
-		delay_constraints = [k[0] for k in n._task_type_on_slices]
-		for k in range(DEFAULT_SLICES):
-			i = delay_constraints.index(min(delay_constraints))
-			self.priorities.append(i)
-			# so the same slice isn't taken twice
-			delay_constraints[i] = float("inf")
+		delay_constraints = [k[0] for k in node._task_type_on_slices]
+		self.priorities = np.argsort(delay_constraints)
 
 	def __str__(self):
-		return "Round Robin"
+		return "Nearest Priority Queue"
 
 	def decide(self, obs):
 		# action struct: [f_00, ..., f_0k, w_00, ..., w_0k, ..., f_i0, ..., f_ik, w_i0, ..., w_ik]
@@ -93,11 +92,11 @@ class Nearest_Priority_Queue(object):
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		for k,b in enumerate(b_k):
-			if b > 0.8*MAX_QUEUE and a_k[k] == 1:
-				# set the f_ik to the nearest node
-				action[k] = self.node._communication_rates.index(max(self.node._communication_rates))
-			elif a_k[k] == 1:
+			if a_k[k] == 1:
 				action[k] = self.node.index
+			if b_k[k] >= 0.8*MAX_QUEUE and a_k[k] == 1:
+				# set the f_ik to the nearest node
+				action[k] = self.node._distances.index(min(d for d in self.node._distances if d > 0))+1
 
 		# and return the action
 		return action

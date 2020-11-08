@@ -2,7 +2,8 @@
 TIME_STEP = 0.001 # seconds
 TRAINING_STEPS = 5000
 SIM_TIME_STEPS = TRAINING_STEPS*TIME_STEP
-RANDOM_SEED = 10017
+RANDOM_SEED = 2**13-1 # mersenne prime seeds at 2, 3, 5, 7, 13, 17, 19, 31
+DEBUG = False
 
 # NODES CONSTANTS
 N_NODES = 5
@@ -19,8 +20,8 @@ RAM_UNIT = 400 # MB
 
 # slice characteristics 
 BASE_SLICE_CHARS = {
-	"case": "n_case_a",
-	"arrivals" : [0.5, 0.5, 0.5],
+	"case": "n_case_1",
+	"arrivals" : [0.6, 0.6, 0.6],
 	"task_type" : [[0, 1, 0], [0, 2, 0], [0, 1, 1]]
 }
 
@@ -38,32 +39,32 @@ RAM_DEMANDS = [400, 1200] # MB
 
 # ---- simulation cases ---- 
 
-# Case A
-NORMAL_CASE_A = BASE_SLICE_CHARS
-HEAVY_CASE_A ={
-	"case": "h_case_a",
-	"arrivals" : [0.9, 0.9, 0.9],
+# Case 1
+NORMAL_CASE_1 = BASE_SLICE_CHARS
+HEAVY_CASE_1 ={
+	"case": "h_case_1",
+	"arrivals" : [0.8, 0.8, 0.8],
 	"task_type" : [[0, 1, 0], [0, 2, 0], [0, 1, 1]]
 }
-# Case B
-NORMAL_CASE_B = {
-	"case": "n_case_b",
-	"arrivals" : [0.5, 0.5, 0.5],
+# Case 2
+NORMAL_CASE_2 = {
+	"case": "n_case_2",
+	"arrivals" : [0.6, 0.6, 0.6],
 	"task_type" : [[0, 1, 0], [1, 1, 0], [2, 1, 0]]
 }
-HEAVY_CASE_B = {
-	"case": "h_case_b",
-	"arrivals" : [0.9, 0.9, 0.9],
+HEAVY_CASE_2 = {
+	"case": "h_case_2",
+	"arrivals" : [0.8, 0.8, 0.8],
 	"task_type" : [[0, 1, 0], [1, 1, 0], [2, 1, 0]]
 }
-# Case C
-NORMAL_CASE_C = {
-	"case": "n_case_c",
-	"arrivals" : [0.5, 0.5, 0.5],
+# Case 3
+NORMAL_CASE_3 = {
+	"case": "n_case_3",
+	"arrivals" : [0.6, 0.6, 0.6],
 	"task_type" : [[0, 1, 0], [1, 2, 0], [1, 1, 0]]
 }
-HEAVY_CASE_C = {
-	"case": "h_case_c",
-	"arrivals" : [0.9, 0.9, 0.9],
+HEAVY_CASE_3 = {
+	"case": "h_case_3",
+	"arrivals" : [0.8, 0.8, 0.8],
 	"task_type" : [[0, 1, 0], [1, 2, 0], [1, 1, 0]]
 }

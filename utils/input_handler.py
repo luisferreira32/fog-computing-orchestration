@@ -2,8 +2,8 @@
 
 # necessary constants import
 from sim_env.configs import BASE_SLICE_CHARS
-from sim_env.configs import NORMAL_CASE_A, NORMAL_CASE_B, NORMAL_CASE_C
-from sim_env.configs import HEAVY_CASE_A, HEAVY_CASE_B, HEAVY_CASE_C
+from sim_env.configs import NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3
+from sim_env.configs import HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3
 
 def argument_check(argv):
 	# running variables
@@ -22,14 +22,12 @@ def argument_check(argv):
 		print("--algorithm= [-A=] : choose your algorithm, by default rr is chosen")
 		print("   rr : Nearest Round Robin basline algorithm")
 		print("   pq : Nearest Priority Queue basline algorithm")
-		print("   ppo2 : needs Tensorflow 1.15 and stable-baslines")
-		print("--cases= [-C=] : by default runs case A with normal traffic")
-		print("   all : runs case A, B and C, with normal and heavy traffic")
-		print("   normal : runs case A, B and C, with normal traffic")
-		print("   heavy : runs case A, B and C, with heavy traffic")
-		print("   aX : runs case X =[A, B or C] with normal and heavy traffic")
-		print("   nX : runs case X =[A, B or C] with normal traffic")
-		print("   hX : runs case X =[A, B or C] with heavy traffic")
+		print("--cases= [-C=] : by default runs case 1 with normal traffic")
+		print("   all : runs case 1, 2 and 3, with normal and heavy traffic")
+		print("   normal : runs case 1, 2 and 3, with normal traffic")
+		print("   heavy : runs case 1, 2 and 3, with heavy traffic")
+		print("   n1 : runs case X =[1, 2 or 3] with normal traffic")
+		print("   h1 : runs case X =[1, 2 or 3] with heavy traffic")
 		print("--debug : will render every step")
 		return [debug, algs, cases]
 
@@ -43,33 +41,27 @@ def argument_check(argv):
 				algs.append("rr")
 			if "pq" in s:
 				algs.append("pq")
-			if "ppo2" in s:
-				algs.append("ppo2")
 		if "--cases=" in s or "-C=" in s:
+			cases = []
 			if "all" in s:
-				cases = [NORMAL_CASE_A, NORMAL_CASE_B, NORMAL_CASE_C, HEAVY_CASE_A, HEAVY_CASE_B, HEAVY_CASE_C]
+				cases = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3, HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
 			elif "normal" in s:
-				cases = [NORMAL_CASE_A, NORMAL_CASE_B, NORMAL_CASE_C]
+				cases = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3]
 			elif "heavy" in s:
-				cases = [HEAVY_CASE_A, HEAVY_CASE_B, HEAVY_CASE_C]
-			elif "aA" in s:
-				cases = [NORMAL_CASE_A, HEAVY_CASE_A]
-			elif "aB" in s:
-				cases = [NORMAL_CASE_B, HEAVY_CASE_B]
-			elif "aC" in s:
-				cases = [NORMAL_CASE_C, HEAVY_CASE_C]
-			elif "hA" in s:
-				cases = [HEAVY_CASE_A]
-			elif "nA" in s:
-				cases = [NORMAL_CASE_A]
-			elif "hB" in s:
-				cases = [HEAVY_CASE_B]
-			elif "nB" in s:
-				cases = [NORMAL_CASE_B]
-			elif "hC" in s:
-				cases = [HEAVY_CASE_C]
-			elif "nC" in s:
-				cases = [NORMAL_CASE_C]
+				cases = [HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
+			# add ons	
+			if "n1" in s:
+				cases.append(NORMAL_CASE_1)
+			if "n2" in s:
+				cases.append(NORMAL_CASE_2)
+			if "n3" in s:
+				cases.append(NORMAL_CASE_3)
+			if "h1" in s:
+				cases.append(HEAVY_CASE_1)
+			if "h2" in s:
+				cases.append(HEAVY_CASE_2)
+			if "h3" in s:
+				cases.append(HEAVY_CASE_3)
 		if "--basic" in s or "-B" in s:
 			algs.append("rr")
 			cases = [BASE_SLICE_CHARS]

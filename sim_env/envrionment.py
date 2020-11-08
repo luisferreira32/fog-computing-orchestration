@@ -31,6 +31,7 @@ class Fog_env(gym.Env):
 
 	def __init__(self, case=BASE_SLICE_CHARS):
 		super(Fog_env, self).__init__()
+		set_seed(RANDOM_SEED)
 
 		# envrionment variables
 		# self.nodes, self.evq, etc...
@@ -91,7 +92,9 @@ class Fog_env(gym.Env):
 		for i in range(N_NODES):
 			# set the zeroed info
 			info_n[i] = {
-				"delay_list" : []
+				"delay_list" : [],
+				"overflow" : 0,
+				"discarded" : 0,
 				};
 
 			# calculate the instant rewards, based on state, action pair
@@ -111,8 +114,12 @@ class Fog_env(gym.Env):
 
 			# --- GET INFORMAITON HERE ---
 			if t is not None: # means it came from a node
-				if t.is_completed():
+				if t.is_completed(): # finished
 					info_n[n.index-1]["delay_list"].append(t.task_delay())
+				elif t.task_time() == ev.time: # overflowed
+					info_n[n.index-1]["overflow"] += 1
+				else:
+					info_n[n.index-1]["discarded"] += 1
 
 
 		# obtain next observation
@@ -165,7 +172,7 @@ class Fog_env(gym.Env):
 			D_ik = 0; Dt_ik = 0
 			# if it's offloaded adds communication time to delay
 			if action[k] != n.index and action[k] != 0:
-				Dt_ik = PACKET_SIZE / n._communication_rates[action[k]] 
+				Dt_ik = PACKET_SIZE / n._communication_rates[action[k]-1] 
 				D_ik += Dt_ik
 			# calculate the Queue delay: b_ik/service_rate_i
 			D_ik += obs[n.max_k+k]/n._service_rate

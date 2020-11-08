@@ -15,6 +15,7 @@ from sim_env.configs import MAX_QUEUE, CPU_UNIT, RAM_UNIT, CPU_CLOCKS, RAM_SIZES
 from sim_env.configs import AREA, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT, THERMAL_NOISE_DENSITY
 from sim_env.configs import NODE_BANDWIDTH, TRANSMISSION_POWER
 from sim_env.configs import DEADLINES, CPU_DEMANDS, RAM_DEMANDS, PACKET_SIZE
+from sim_env.configs import DEBUG
 from sim_env.calculators import euclidean_distance, channel_gain, shannon_hartley, db_to_linear
 
 # tools
@@ -37,7 +38,7 @@ def create_random_node(index=0, slices_characteristics=BASE_SLICE_CHARS):
 	number_of_slices = DEFAULT_SLICES
 	cpu = uniform_rand_choice(CPU_CLOCKS)
 	ram = uniform_rand_choice(RAM_SIZES)
-	print("[DEBUG] Node",index,"created at (x,y) = ",(x,y),"cpu =",cpu,"ram =",ram)
+	if DEBUG: print("[DEBUG] Node",index,"created at (x,y) = ",(x,y),"cpu =",cpu,"ram =",ram)
 	return Fog_node(index, x, y, cpu, ram, number_of_slices, slices_characteristics)
 
 	
@@ -101,13 +102,15 @@ class Fog_node(Node):
 		self._task_type_on_slices = [[DEADLINES[tp[0]],CPU_DEMANDS[tp[1]],RAM_DEMANDS[tp[2]]] for tp in slice_characteristics["task_type"]]
 		# com times within fog nodes
 		self._communication_rates = []
+		self._distances = []
 		# keep track of processed tasks
 		self._being_processed = np.zeros(number_of_slices, dtype=np.uint8)
 
 	def set_communication_rates(self, nodes):
 		for n in nodes:
+			self._distances.append(euclidean_distance(self.x, self.y, n.x, n.y))
 			self._communication_rates.append(point_to_point_transmission_rate(self,n))
-		print("[DEBUG]",self.name, [str(round(r/1000000,2))+" Kb/ms" for r in self._communication_rates])
+		if DEBUG: print("[DEBUG]",self.name, [str(round(r/1000000,2))+" Kb/ms" for r in self._communication_rates])
 
 	def new_interval_update_service_rate(self):
 		self._total_time_intervals += 1
