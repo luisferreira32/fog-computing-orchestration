@@ -22,52 +22,6 @@ from algorithms.configs import OVERLOAD_WEIGHT
 # for reproductibility
 from utils.tools import set_seed
 
-
-# ---------- Envrionment specific auxiliar functions ----------
-
-# --- observation funs ---
-
-def split_observation_by_logical_groups(obs):
-	# splits the observations in the logical groups of the state: a_ik, b_ik, be_ik, rc_i, rm_i
-	obs_by_nodes = split_observation_by_node(obs)
-	a_ik = []; b_ik = []; be_ik = []; rc_i = []; rm_i = [];
-	for i in range(N_NODES):
-		[a, b, be, rc, rm] = np.split(obs_by_nodes[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
-		a_ik = np.append(a_ik, a);
-		b_ik = np.append(b_ik, b);
-		be_ik = np.append(be_ik, be);
-		rc_i.append(rc);
-		rm_i.append(rm);
-	return [a_ik, b_ik, be_ik, rc_i, rm_i]
-
-
-def split_observation_by_node(obs):
-	# splits the observation by nodes to several POMDP
-	# [[a_00, ..., a_0k, b_00, ..., b_0k, be_00, ..., be_0k, rc_0, rm_0], ...
-	# [a_i0, ..., a_ik, b_i0, ..., b_ik, be_i0, ..., be_ik, rc_i, rm_i]]
-	return np.split(obs, N_NODES)
-
-def split_node_obs_by_slice(nobs):
-	# splits the node observation by slices to several POMDP
-	pass
-
-
-# --- action funs ---
-
-def split_action_by_nodes(action):
-	# splits the actions by nodes i
-	# action space: [f_00, ..., f_0k, w_00, ..., w_0k, ..., f_i0, ..., f_ik, w_i0, ..., w_ik]
-	return np.split(action, N_NODES)
-
-
-# --- nodes funs ---
-
-def get_nodes_characteristics(nodes):
-	# returns the list of the total cpu units and ram units on nodes
-	_cpu_units = [n.cpu_frequency/CPU_UNIT for n in nodes]
-	_ram_units = [n.ram_size/RAM_UNIT for n in nodes]
-	return [_cpu_units, _ram_units]
-
 # ---------- Fog Envrionment ----------
 
 class Fog_env(gym.Env):
@@ -80,7 +34,7 @@ class Fog_env(gym.Env):
 
 		# envrionment variables
 		# self.nodes, self.evq, etc...
-		self.nodes = [create_random_node(i, case) for i in range(N_NODES)]
+		self.nodes = [create_random_node(i, case) for i in range(1,N_NODES+1)]
 		for n in self.nodes:
 			n.set_communication_rates(self.nodes)
 		self.evq = Event_queue()
@@ -88,16 +42,18 @@ class Fog_env(gym.Env):
 		self.saved_step_info = None
 
 		# define the action space with I nodes and K slices each
-		# [f_00, ..., f_0k, w_00, ..., w_0k, ..., f_i0, ..., f_ik, w_i0, ..., w_ik]
+		# [[f_00, ..., f_0k, w_00, ..., w_0k], ..., [f_i0, ..., f_ik, w_i0, ..., w_ik]]
 		# for each node there is an action [f_i0, ..., f_ik, w_i0, ..., w_ik]
 		# where values can be between 0 and I for f_ik, and 0 and N for w_ik
 		action_possibilities = []
 		for n in self.nodes:
+			nodes_actions = []
 			for _ in range(n.max_k):
-				action_possibilities.append(N_NODES) # f_ik: 0 to N_NODES-1 (nodes indexes)
+				nodes_actions.append(N_NODES+1) # f_ik: 0 to N_NODES (nodes indexes, 0 if no arrivals)
 			for _ in range(n.max_k):
-				action_possibilities.append(n._avail_cpu_units+1) # w_ik: 0 to cpu_units
-		action_possibilities = np.array(action_possibilities)
+				nodes_actions.append(n._avail_cpu_units+1) # w_ik: 0 to cpu_units
+			action_possibilities.append(nodes_actions)
+		action_possibilities = np.array(action_possibilities, dtype=np.uint8)
 		self.action_space = spaces.MultiDiscrete(action_possibilities)
 
 		# and the state space with I nodes and K slices each
@@ -106,15 +62,17 @@ class Fog_env(gym.Env):
 		# state_lows has to be remade if nodes don't have same slices
 		state_possibilities = []
 		for n in self.nodes:
+			nodes_obs = []
 			for _ in range(n.max_k):
-				state_possibilities.append(2) # a_ik: 0 or 1
+				nodes_obs.append(2) # a_ik: 0 or 1
 			for _ in range(n.max_k):
-				state_possibilities.append(MAX_QUEUE+1) # b_ik: 0 to max_queue
+				nodes_obs.append(MAX_QUEUE+1) # b_ik: 0 to max_queue
 			for _ in range(n.max_k):
-				state_possibilities.append(n._avail_cpu_units+1) # be_ik: 0 to cpu_units
-			state_possibilities.append(n._avail_cpu_units+1) # rc_i: 0 to cpu_units
-			state_possibilities.append(n._avail_ram_units+1) # rm_i: 0 to ram_units
-		state_possibilities = np.array(state_possibilities)
+				nodes_obs.append(n._avail_cpu_units+1) # be_ik: 0 to cpu_units
+			nodes_obs.append(n._avail_cpu_units+1) # rc_i: 0 to cpu_units
+			nodes_obs.append(n._avail_ram_units+1) # rm_i: 0 to ram_units
+			state_possibilities.append(nodes_obs)
+		state_possibilities = np.array(state_possibilities, dtype=np.uint8)
 		self.observation_space = spaces.MultiDiscrete(state_possibilities)
 
 		# Set up seeds for reproductibility
@@ -131,31 +89,45 @@ class Fog_env(gym.Env):
 		set_seed(seed)
 		return [seed]
 
-	def step(self, action):
+	def step(self, action_n):
 		# to make sure you give actions in the FORMATED action space
-		action = action.astype(np.uint8)
-		assert self.action_space.contains(action)
-		# current state
-		state = self._next_observation()
+		assert self.action_space.contains(action_n)
 
-		# information dict to pass back
-		total = 0; overflow = 0; success = 0;
-		info = {
-			"discarded" : 0,
-			"delay_list" : [],
-			"success_rate": 0.0,
-			"overflow_rate": 0.0,
-			};
+		# to return it's necessary to return a lists in
+		obs_n = [] # observations (POMDP)
+		reward_n = [] # local rewards
+		info_n = [{} for _ in range(N_NODES)] # information per agent
 
 		# update some envrionment values
 		for n in self.nodes:
 			n.new_interval_update_service_rate()
 
-		# calculate the instant rewards, based on state, action pair
-		rw = self._reward_fun(state, action)
+		# current state
+		state_n = self._next_observation()
 
-		# and execute the action
-		self._take_action(action) 
+		# measure instant reward of an action taken and queue it
+		for i in range(N_NODES):
+			# unpack
+			action = 
+			state = state_n[i]
+			n = self.nodes[i]
+
+			# set the zeroed info
+			total = 0; overflow = 0; success = 0;
+			info = {
+				"discarded" : 0,
+				"delay_list" : [],
+				"success_rate": 0.0,
+				"overflow_rate": 0.0,
+				};
+
+
+			# calculate the instant rewards, based on state, action pair
+			rw = self._set_agent_action(self._get_agent_observation(n), action_n[i])
+			rw_n.append(rw)
+
+			# and execute the action
+			self._take_action(action) 
 
 		# increase the clock a timestep
 		self.clock += TIME_STEP
@@ -193,7 +165,7 @@ class Fog_env(gym.Env):
 		# just save it for render
 		self.saved_step_info = [obs, action]
 
-		return obs, rw, done, info
+		return obs_n, rw_n, done, info_n
 
 
 	def reset(self):
@@ -206,84 +178,68 @@ class Fog_env(gym.Env):
 		self.seed(RANDOM_SEED)
 		return self._next_observation()
 
-	def _next_observation(self):
-		# does a system observation
-		obs = []
-		for n in self.nodes:
-			for k in range(n.max_k):
-				if len(n.buffers[k]) > 0 and self.clock == n.buffers[k][-1]._timestamp:
-				 	obs.append(1)
-				else:
-					obs.append(0)
-			for k in range(n.max_k):
-				obs.append(len(n.buffers[k]))
-			for k in range(n.max_k):
-				obs.append(n._being_processed[k])
-			obs.append(n._avail_cpu_units)
-			obs.append(n._avail_ram_units)
-		return np.array(obs, dtype=np.uint8)
+	def _get_agent_observation(self, n):
+		# does a partial system observation
+		pobs = []
+		for k in range(n.max_k):
+			if len(n.buffers[k]) > 0 and self.clock == n.buffers[k][-1]._timestamp:
+			 	pobs.append(1)
+			else:
+				pobs.append(0)
+		for k in range(n.max_k):
+			pobs.append(len(n.buffers[k]))
+		for k in range(n.max_k):
+			pobs.append(n._being_processed[k])
+		pobs.append(n._avail_cpu_units)
+		pobs.append(n._avail_ram_units)
 
-	def _take_action(self, action):
-		# to make sure you give actions in the FORMATED action space
-		action = action.astype(np.int8)
+		return np.array(pobs, dtype=np.uint8)
+
+	def _set_agent_action(self, n, action):
 		# takes the action in the system, i.e. sets up the offloading events
-		nodes_actions = split_action_by_nodes(action)
-		for i in range(N_NODES):
-			# for node i: [f_0, ..., f_k, w_0, ..., w_k]
-			[fks, wks] = np.split(nodes_actions[i], 2)
-			# concurrent offloads on this step
-			con = len(fks)-np.count_nonzero(fks==i)
-			for k in range(DEFAULT_SLICES):
-				# if you are given a destination, add the offload event
-				if fks[k] != i:
-					self.evq.addEvent(Offload(self.clock, self.nodes[i], k, self.nodes[fks[k]], con))
-				# and start processing if there is any request
-				if wks[k] != 0:
-					self.evq.addEvent(Start_processing(self.clock, self.nodes[i], k, wks[k]))
+		# for node n: [f_0, ..., f_k, w_0, ..., w_k]
+		[fks, wks] = np.split(action, 2)
+		for k in range(DEFAULT_SLICES):
+			# if you are given a destination, add the offload event
+			if fks[k] != n.index:
+				self.evq.addEvent(Offload(self.clock, n, k, self.nodes[fks[k]], len(fks)-np.count_nonzero(fks==i)))
+			# and start processing if there is any request
+			if wks[k] != 0:
+				self.evq.addEvent(Start_processing(self.clock, n, k, wks[k]))
 
-	def _reward_fun(self, state, action):
-		# to make sure you give actions in the FORMATED action space
-		action = action.astype(np.int8)
-		# returns the instant reward of an action
-		obs_by_nodes = split_observation_by_node(state)
-		nodes_actions = split_action_by_nodes(action)
+	def _agent_reward_fun(self, n, obs, action):
+		# calculate the reward for the agent (node) n
+		node_reward = 0
+		for k in range(n.max_k):
+			D_ik = 0; Dt_ik = 0
+			# if it's offloaded adds communication time to delay
+			if action[k] != n.index:
+				Dt_ik = PACKET_SIZE / n._communication_rates[action[k]] 
+				D_ik += Dt_ik
+			# calculate the Queue delay: b_ik/service_rate_i
+			D_ik += obs[n.max_k+k]/n._service_rate
+			# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
+			D_ik +=  PACKET_SIZE*n._task_type_on_slices[k][1] / (CPU_UNIT*10**9)
+			# finally, check if slice delay constraint is met
+			if D_ik >= n._task_type_on_slices[k][0]:
+				coeficient = -1
+			else:
+				coeficient = 1
 
-		# reward sum of all nodes:
-		R = 0;
-		for i in range(len(self.nodes)):
-			# unpack and zero reward for each node
-			obs = obs_by_nodes[i]; act = nodes_actions[i]; n = self.nodes[i]
-			node_reward = 0
-			for k in range(n.max_k):
-				D_ik = 0; Dt_ik = 0
-				# if it's offloaded adds communication time to delay
-				if act[k] != n.index:
-					Dt_ik = PACKET_SIZE / n._communication_rates[act[k]] 
-					D_ik += Dt_ik
-				# calculate the Queue delay: b_ik/service_rate_i
-				D_ik += obs[n.max_k+k]/n._service_rate
-				# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
-				D_ik +=  PACKET_SIZE*n._task_type_on_slices[k][1] / (CPU_UNIT*10**9)
-				# finally, check if slice delay constraint is met
-				if D_ik >= n._task_type_on_slices[k][0]:
-					coeficient = -1
-				else:
-					coeficient = 1
+			# count the number of new arrivals in the arriving node
+			arr = 0
+			for ev in self.evq.queue():
+				if is_arrival_on_slice(ev, self.nodes[action[k]], k) and ev.time <= self.clock+Dt_ik:
+					arr += 1
+			# also, verify if there is an overload chance in the arriving node
+			arr_obs = self._get_agent_observation(self.nodes[action[k]])
+			if arr_obs[action[k]][DEFAULT_SLICES+k]+arr+1 >= MAX_QUEUE:
+				coeficient -= OVERLOAD_WEIGHT # tunable_weight
 
-				# count the number of new arrivals in the arriving node
-				arr = 0
-				for ev in self.evq.queue():
-					if is_arrival_on_slice(ev, self.nodes[act[k]], k) and ev.time <= self.clock+Dt_ik:
-						arr += 1
-				# also, verify if there is an overload chance in the arriving node
-				if obs_by_nodes[act[k]][self.nodes[act[k]].max_k+k]+arr+1 >= MAX_QUEUE:
-					coeficient -= OVERLOAD_WEIGHT # tunable_weight
+			# a_ik * ( (-1)if(delay_constraint_unmet) - (tunable_weight)if(overflow_chance) )
+			node_reward += obs[k] * coeficient
 
-				# a_ik * ( (-1)if(delay_constraint_unmet) - (tunable_weight)if(overflow_chance) )
-				node_reward += obs[k] * coeficient
-			R += node_reward/n.max_k
-
-		return R
+		return node_reward
 
 	def render(self, mode='human', close=False):
 		# Render the environment to the screen
