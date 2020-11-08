@@ -90,8 +90,8 @@ for case in cases:
 		success_rates_list.append(success_rates)
 
 x = [case["case"]+" "+alg for case in cases for alg in algs]
-plt_error_bar(x, success_rates_list, title="success_rates")
 plt_bar(x, [np.mean(d) for d in delays_list], mili=True, title="average_delays")
+plt_error_bar(x, success_rates_list, title="success_rates")
 
 """ OBSOLETE CODE --- will delete in the future
 if "a2c" in algs:
