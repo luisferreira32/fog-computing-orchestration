@@ -96,38 +96,28 @@ class Fog_env(gym.Env):
 		# to return it's necessary to return a lists in
 		obs_n = [] # observations (POMDP)
 		reward_n = [] # local rewards
-		info_n = [{} for _ in range(N_NODES)] # information per agent
+		info_n = {} # information per agent
 
 		# update some envrionment values
 		for n in self.nodes:
 			n.new_interval_update_service_rate()
 
-		# current state
-		state_n = self._next_observation()
-
 		# measure instant reward of an action taken and queue it
 		for i in range(N_NODES):
-			# unpack
-			action = 
-			state = state_n[i]
-			n = self.nodes[i]
-
 			# set the zeroed info
-			total = 0; overflow = 0; success = 0;
-			info = {
+			info_n[i] = {
 				"discarded" : 0,
 				"delay_list" : [],
 				"success_rate": 0.0,
 				"overflow_rate": 0.0,
 				};
 
-
 			# calculate the instant rewards, based on state, action pair
-			rw = self._set_agent_action(self._get_agent_observation(n), action_n[i])
-			rw_n.append(rw)
+			rw = self._agent_reward_fun(self.nodes[i], self._get_agent_observation(n), action_n[i])
+			reward_n.append(rw)
 
 			# and execute the action
-			self._take_action(action) 
+			self._set_agent_action(self.nodes[i], action_n[i]) 
 
 		# increase the clock a timestep
 		self.clock += TIME_STEP
@@ -136,36 +126,17 @@ class Fog_env(gym.Env):
 		while self.evq.hasEvents() and self.evq.first_time() <= self.clock:
 			ev = self.evq.popEvent()
 			t = ev.execute(self.evq)
-			# update the info on offload sucess rate
-			if ev.classtype == "Task_arrival" and ev.task_time() < self.clock:
-				total += 1
-				if t is None:
-					success += 1
-				elif not t.is_completed():
-					overflow += 1
-			# update info on completed (with delay) and discarded numbers
-			if t is not None: # a task was returned
-				if t.is_completed():
-					info["delay_list"].append(t.task_delay())
-				else:
-					info["discarded"] += 1
 
-		# save some info
-		if total > 0:
-			info["success_rate"] = (success)/(total)
-			info["overflow_rate"] = (overflow)/(total)
-		else:
-			info["success_rate"] = []
-			info["overflow_rate"] = []
+			# --- GET INFORMAITON HERE ---
 
 
 		# obtain next observation
-		obs = self._next_observation()
+		obs_n = self._get_state_obs()
 
 		# just save it for render
-		self.saved_step_info = [obs, action]
+		self.saved_step_info = [obs_n, action_n]
 
-		return obs_n, rw_n, done, info_n
+		return obs_n, reward_n, done, info_n
 
 
 	def reset(self):
@@ -176,7 +147,10 @@ class Fog_env(gym.Env):
 			node.reset()	
 		self.clock = 0
 		self.seed(RANDOM_SEED)
-		return self._next_observation()
+		return self._get_state_obs()
+
+	def _get_state_obs(self):
+		return np.array([self._get_agent_observation(n) for n in self.nodes], dtype=np.uint8)
 
 	def _get_agent_observation(self, n):
 		# does a partial system observation
@@ -199,10 +173,12 @@ class Fog_env(gym.Env):
 		# takes the action in the system, i.e. sets up the offloading events
 		# for node n: [f_0, ..., f_k, w_0, ..., w_k]
 		[fks, wks] = np.split(action, 2)
+		# concurrent offloads
+		concurr = sum([1 if fk!=n.index and fk!=0 else 0 for fk in fks])
 		for k in range(DEFAULT_SLICES):
 			# if you are given a destination, add the offload event
-			if fks[k] != n.index:
-				self.evq.addEvent(Offload(self.clock, n, k, self.nodes[fks[k]], len(fks)-np.count_nonzero(fks==i)))
+			if fks[k] != n.index and fks[k] != 0:
+				self.evq.addEvent(Offload(self.clock, n, k, self.nodes[fks[k]], concurr))
 			# and start processing if there is any request
 			if wks[k] != 0:
 				self.evq.addEvent(Start_processing(self.clock, n, k, wks[k]))
@@ -233,7 +209,7 @@ class Fog_env(gym.Env):
 					arr += 1
 			# also, verify if there is an overload chance in the arriving node
 			arr_obs = self._get_agent_observation(self.nodes[action[k]])
-			if arr_obs[action[k]][DEFAULT_SLICES+k]+arr+1 >= MAX_QUEUE:
+			if arr_obs[DEFAULT_SLICES+k]+arr+1 >= MAX_QUEUE:
 				coeficient -= OVERLOAD_WEIGHT # tunable_weight
 
 			# a_ik * ( (-1)if(delay_constraint_unmet) - (tunable_weight)if(overflow_chance) )
@@ -244,8 +220,8 @@ class Fog_env(gym.Env):
 	def render(self, mode='human', close=False):
 		# Render the environment to the screen
 		if self.saved_step_info is None: return
-		nodes_obs = split_observation_by_node(self.saved_step_info[0])
-		nodes_actions = split_action_by_nodes(self.saved_step_info[1])
+		nodes_obs = self.saved_step_info[0]
+		nodes_actions = self.saved_step_info[1]
 		print("------",self.clock,"------")
 		for i in range(N_NODES):
 			[a, b, be, rc, rm] = np.split(nodes_obs[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
