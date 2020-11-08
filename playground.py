@@ -19,10 +19,6 @@ from sim_env.envrionment import Fog_env
 from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
 from utils.display import plt_bar, plt_error_bar
 
-from stable_baselines.common.vec_env import DummyVecEnv
-from stable_baselines.common.policies import MlpPolicy
-from stable_baselines import PPO2 #, A2C
-
 import numpy as np
 
 
@@ -33,38 +29,20 @@ delays_list=[]; success_rates_list = [];
 
 # main loop
 for case in cases:
-	# --- PPO2 algorithm ---
-	if "ppo2" in algs:
-		env = DummyVecEnv([lambda: Fog_env(case)])
-		# PPO2 test
-		algorithm = PPO2(MlpPolicy, env, seed=ALGORITHM_SEED ,n_cpu_tf_sess=1, verbose=0)  
-		algorithm.learn(total_timesteps=TRAINING_STEPS)
-		obs = env.reset()
-		done = False; delays = [];success_rates=[]; discarded = 0
-		while not done:
-			action, _states = algorithm.predict(obs)
-			obs, rw, done, info = env.step(action)
-			if debug: env.render()
-			# info gathering
-			info = info[0]
-			delays = np.append(delays, info["delay_list"])
-			success_rates = np.append(success_rates, info["success_rate"])
-			discarded += info["discarded"]
-		delays_list.append(delays)
-		success_rates_list.append(success_rates)
+
+	# --- baselines for a multi-agent gym ---
 
 	# --- Nearest Node - Round Robin algorithm ---
 	if "rr" in algs:
-		env = DummyVecEnv([lambda: Fog_env(case)])
-		algorithm = Nearest_Round_Robin(env.envs[0])
+		env = Fog_env(case)
+		algorithm = Nearest_Round_Robin(env)
 		obs = env.reset()
 		done = False; delays = []; success_rates=[]; rr_discarded = 0
 		while not done:
-			action = algorithm.predict(obs[0])
-			obs, rw, done, info = env.step([action])
+			action = algorithm.predict(obs)
+			obs, rw, done, info = env.step(action)
 			if debug: env.render()
 			# info gathering
-			info = info[0]
 			delays = np.append(delays, info["delay_list"])
 			success_rates = np.append(success_rates, info["success_rate"])
 			rr_discarded += info["discarded"]
@@ -73,16 +51,15 @@ for case in cases:
 
 	# --- Nearest Node - Priority Queue algorithm --- 
 	if "pq" in algs:
-		env = DummyVecEnv([lambda: Fog_env(case)])
-		algorithm = Nearest_Priority_Queue(env.envs[0])
+		env = Fog_env(case)
+		algorithm = Nearest_Priority_Queue(env)
 		obs = env.reset()
 		done = False; delays = [];success_rates=[]; pq_discarded = 0
 		while not done:
-			action = algorithm.predict(obs[0])
-			obs, rw, done, info = env.step([action])
+			action = algorithm.predict(obs)
+			obs, rw, done, info = env.step(action)
 			if debug: env.render()
 			# info gathering
-			info = info[0]
 			delays = np.append(delays, info["delay_list"])
 			success_rates = np.append(success_rates, info["success_rate"])
 			pq_discarded += info["discarded"]
