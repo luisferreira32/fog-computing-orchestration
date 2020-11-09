@@ -4,7 +4,7 @@ import sys
 from abc import ABC, abstractmethod
 
 # our imports
-from sim_env.configs import SIM_TIME_STEPS
+from sim_env.configs import SIM_TIME
 from sim_env.calculators import bernoulli_arrival
 from sim_env.core_classes import Task, task_processing_time, task_communication_time
 
@@ -27,7 +27,7 @@ class Event_queue(object):
 
 	def addEvent(self, e):
 		# only process events within sim time
-		if e.time > SIM_TIME_STEPS or e.time < 0:
+		if e.time > SIM_TIME or e.time < 0:
 			return
 		# if there's no events just add it
 		if len(self.q) == 0:

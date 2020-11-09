@@ -12,7 +12,7 @@ import numpy as np
 from sim_env.core_classes import create_random_node
 from sim_env.events import Event_queue, Set_arrivals, Offload, Start_processing
 from sim_env.events_aux import is_arrival_on_slice
-from sim_env.configs import TIME_STEP, SIM_TIME_STEPS, RANDOM_SEED
+from sim_env.configs import TIME_STEP, SIM_TIME, RANDOM_SEED
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
 from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS
 
@@ -106,7 +106,7 @@ class Fog_env(gym.Env):
 
 		# increase the clock a timestep
 		self.clock += TIME_STEP
-		done = self.clock >= SIM_TIME_STEPS
+		done = self.clock >= SIM_TIME
 		# rollout the events until new timestep
 		while self.evq.hasEvents() and self.evq.first_time() <= self.clock:
 			ev = self.evq.popEvent()

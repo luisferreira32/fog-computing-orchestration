@@ -14,7 +14,7 @@ if not algs or not cases:
 
 # --- ALGORITHM AND ENVRIONMENT IMPORTS ---
 
-from sim_env.configs import TRAINING_STEPS, N_NODES, DEFAULT_SLICES, RANDOM_SEED
+from sim_env.configs import TOTAL_TIME_STEPS, N_NODES, DEFAULT_SLICES, RANDOM_SEED
 from sim_env.envrionment import Fog_env
 
 from algorithms.configs import ALGORITHM_SEED
