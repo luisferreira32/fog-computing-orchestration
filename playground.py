@@ -40,7 +40,7 @@ for case in cases:
 	if "rr" in algs:
 		env = Fog_env(case)
 		agents = [Nearest_Round_Robin(n) for n in env.nodes]
-		print("Started",agents[0],"with case",case); start_time = time.time()
+		print("Started",agents[0],case); start_time = time.time()
 		obs_n = env.reset()
 		done = False; delays = []; overflowed=[0 for n in env.nodes]; discarded=[0 for n in env.nodes];
 		while not done:
@@ -65,7 +65,7 @@ for case in cases:
 	if "pq" in algs:
 		env = Fog_env(case)
 		agents = [Nearest_Priority_Queue(n) for n in env.nodes]
-		print("Started",agents[0],"with case",case); start_time = time.time()
+		print("Started",agents[0],case); start_time = time.time()
 		obs_n = env.reset()
 		done = False; delays = []; overflowed=[0 for n in env.nodes]; discarded=[0 for n in env.nodes];
 		while not done:

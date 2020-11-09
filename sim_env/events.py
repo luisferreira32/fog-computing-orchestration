@@ -99,8 +99,8 @@ class Task_arrival(Event):
 		assert time >= task.task_time()
 
 	def execute(self, evq):
-		# if the task just arrived, schedule a discard for it's deadline (in milliseconds)
-		evq.addEvent(Discard_task(self.task.task_time()+(0.001*self.task.delay_constraint), self.node, self.k, self.task))
+		# if the task just arrived, schedule a discard for it's deadline (in milliseconds) # NOTE: only when deciding for now
+		# evq.addEvent(Discard_task(self.task.task_time()+(0.001*self.task.delay_constraint), self.node, self.k, self.task))
 		return self.node.add_task_on_slice(self.k, self.task)
 
 	def task_time(self):
@@ -131,9 +131,13 @@ class Start_processing(Event):
 		
 	def execute(self, evq):
 		tasks_under_processing = self.node.start_processing_in_slice(self.k, self.w)
+		# discard and set finish processing when decisions are made
 		for task in tasks_under_processing:
 			finish = self.time+task_processing_time(task)
-			evq.addEvent(Task_finished(finish, self.node, self.k, task))
+			if task.exceeded_contraint(finish):
+				evq.addEvent(Discard_task(task.constraint_time(), self.node, self.k, task))
+			else:
+				evq.addEvent(Task_finished(finish, self.node, self.k, task))
 		return None
 
 class Offload(Event):

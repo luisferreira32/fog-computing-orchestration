@@ -162,9 +162,9 @@ class Fog_node(Node):
 
 	# override
 	def start_processing_in_slice(self, k, w):
-		under_processing = []
+		under_processing = [];
 		# error shield
-		if w <= 0 or not (0<=k<self.max_k): return under_processing
+		# if w <= 0 or not (0<=k<self.max_k): return under_processing
 		# only process if there is a task on the buffer
 		for task in self.buffers[k]:
 			# only process if has cores and memory for it
@@ -240,6 +240,12 @@ class Task():
 
 	def task_time(self):
 		return self._timestamp
+
+	def constraint_time(self):
+		return self._timestamp+0.001*self.delay_constraint
+
+	def exceeded_contraint(self, current_time):
+		return self.constraint_time() < current_time
 
 def task_processing_time(t=None):
 	# calculates the time a task takes to process after starting to process

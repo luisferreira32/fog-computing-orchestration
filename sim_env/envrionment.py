@@ -115,11 +115,10 @@ class Fog_env(gym.Env):
 			# --- GET INFORMAITON HERE ---
 			if t is not None: # means it came from a node
 				if t.is_completed(): # finished
-					if t.task_delay() <0:print(t.task_delay())
 					info_n[n.index-1]["delay_list"].append(t.task_delay())
 				elif t.task_time() == ev.time: # overflowed
 					info_n[n.index-1]["overflow"] += 1
-				else:
+				else: # discarded because of delay constraint
 					info_n[n.index-1]["discarded"] += 1
 
 
@@ -206,7 +205,7 @@ class Fog_env(gym.Env):
 		if self.saved_step_info is None: return
 		nodes_obs = self.saved_step_info[0]
 		nodes_actions = self.saved_step_info[1]
-		print("------",self.clock,"------")
+		print("------",round(self.clock*1000,2),"ms ------")
 		for i in range(N_NODES):
 			print("--- ",self.nodes[i]," ---")
 			[a, b, be, rc, rm] = np.split(nodes_obs[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
@@ -216,6 +215,10 @@ class Fog_env(gym.Env):
 			print("-- current state: --")
 			for k,buf in enumerate(self.nodes[i].buffers):
 				print("slice",k,"buffer",[round(t._timestamp,4) for t in buf])
+		for ev in self.evq.queue():
+			if ev.classtype != "Task_arrival" and ev.classtype != "Task_finished":
+				print(ev.classtype+"["+str(round(ev.time*1000))+"ms]", end='-->')
+		print(round(1000*(self.clock+TIME_STEP)),"ms")
 		input("\nEnter to continue...")
 		pass
 
