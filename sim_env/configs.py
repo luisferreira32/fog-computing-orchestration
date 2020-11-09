@@ -22,7 +22,7 @@ RAM_UNIT = 400 # MB
 BASE_SLICE_CHARS = {
 	"case": "n1",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[0, 1, 0], [0, 2, 0], [0, 1, 1]]
+	"task_type" : [[10, 400, 400], [10, 600, 400], [10, 400, 1200]]
 }
 
 # ENV CONSTANTS
@@ -33,9 +33,10 @@ THERMAL_NOISE_DENSITY = -174 # dBm/Hz
 
 # TASK CONSTANTS
 PACKET_SIZE = 5000 # bit
-DEADLINES = [10, 50, 100] # ms
-CPU_DEMANDS = [200, 400, 600] # cycles/bit
-RAM_DEMANDS = [400, 1200] # MB
+# this values are directly described in the simulation cases
+# DEADLINES = [10, 50, 100] # ms
+# CPU_DEMANDS = [200, 400, 600] # cycles/bit
+# RAM_DEMANDS = [400, 1200] # MB
 
 # ---- simulation cases ---- 
 
@@ -44,27 +45,27 @@ NORMAL_CASE_1 = BASE_SLICE_CHARS
 HEAVY_CASE_1 ={
 	"case": "h1",
 	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[0, 1, 0], [0, 2, 0], [0, 1, 1]]
+	"task_type" : [[10, 400, 400], [10, 600, 400], [10, 400, 1200]]
 }
 # Case 2
 NORMAL_CASE_2 = {
 	"case": "n2",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[0, 1, 0], [1, 1, 0], [2, 1, 0]]
+	"task_type" : [[10, 400, 400], [50, 400, 400], [100, 400, 400]]
 }
 HEAVY_CASE_2 = {
 	"case": "h2",
 	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[0, 1, 0], [1, 1, 0], [2, 1, 0]]
+	"task_type" : [[10, 400, 400], [50, 400, 400], [100, 400, 400]]
 }
 # Case 3
 NORMAL_CASE_3 = {
 	"case": "n3",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[0, 1, 0], [1, 2, 0], [1, 1, 0]]
+	"task_type" : [[10, 400, 400], [50, 600, 400], [50, 400, 400]]
 }
 HEAVY_CASE_3 = {
 	"case": "h3",
 	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[0, 1, 0], [1, 2, 0], [1, 1, 0]]
+	"task_type" : [[10, 400, 400], [50, 600, 400], [50, 400, 400]]
 }
