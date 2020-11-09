@@ -1,6 +1,6 @@
 # GLOBAL FOG VARIABLES
 TIME_STEP = 0.001 # seconds
-TRAINING_STEPS = 5000
+TRAINING_STEPS = 3000 # stable results in baselines after 3000
 SIM_TIME_STEPS = TRAINING_STEPS*TIME_STEP
 RANDOM_SEED = 2**31-1 # mersenne prime seeds at 2, 3, 5, 7, 13, 17, 19, 31
 DEBUG = False
@@ -8,7 +8,7 @@ DEBUG = False
 # NODES CONSTANTS
 N_NODES = 5
 # transmission
-NODE_BANDWIDTH = 1*10**6 # Hz
+NODE_BANDWIDTH = 1e6 # Hz
 TRANSMISSION_POWER = 20 # dBm
 # resources
 DEFAULT_SLICES = 3
@@ -20,7 +20,7 @@ RAM_UNIT = 400 # MB
 
 # slice characteristics 
 BASE_SLICE_CHARS = {
-	"case": "n_case_1",
+	"case": "n1",
 	"arrivals" : [0.6, 0.6, 0.6],
 	"task_type" : [[0, 1, 0], [0, 2, 0], [0, 1, 1]]
 }
@@ -42,29 +42,29 @@ RAM_DEMANDS = [400, 1200] # MB
 # Case 1
 NORMAL_CASE_1 = BASE_SLICE_CHARS
 HEAVY_CASE_1 ={
-	"case": "h_case_1",
+	"case": "h1",
 	"arrivals" : [0.8, 0.8, 0.8],
 	"task_type" : [[0, 1, 0], [0, 2, 0], [0, 1, 1]]
 }
 # Case 2
 NORMAL_CASE_2 = {
-	"case": "n_case_2",
+	"case": "n2",
 	"arrivals" : [0.6, 0.6, 0.6],
 	"task_type" : [[0, 1, 0], [1, 1, 0], [2, 1, 0]]
 }
 HEAVY_CASE_2 = {
-	"case": "h_case_2",
+	"case": "h2",
 	"arrivals" : [0.8, 0.8, 0.8],
 	"task_type" : [[0, 1, 0], [1, 1, 0], [2, 1, 0]]
 }
 # Case 3
 NORMAL_CASE_3 = {
-	"case": "n_case_3",
+	"case": "n3",
 	"arrivals" : [0.6, 0.6, 0.6],
 	"task_type" : [[0, 1, 0], [1, 2, 0], [1, 1, 0]]
 }
 HEAVY_CASE_3 = {
-	"case": "h_case_3",
+	"case": "h3",
 	"arrivals" : [0.8, 0.8, 0.8],
 	"task_type" : [[0, 1, 0], [1, 2, 0], [1, 1, 0]]
 }

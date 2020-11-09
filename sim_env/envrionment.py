@@ -115,6 +115,7 @@ class Fog_env(gym.Env):
 			# --- GET INFORMAITON HERE ---
 			if t is not None: # means it came from a node
 				if t.is_completed(): # finished
+					if t.task_delay() <0:print(t.task_delay())
 					info_n[n.index-1]["delay_list"].append(t.task_delay())
 				elif t.task_time() == ev.time: # overflowed
 					info_n[n.index-1]["overflow"] += 1

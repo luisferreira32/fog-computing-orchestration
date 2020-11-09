@@ -13,8 +13,7 @@ import numpy as np
 # sim_env imports
 from sim_env.configs import MAX_QUEUE, CPU_UNIT, RAM_UNIT, CPU_CLOCKS, RAM_SIZES, BASE_SLICE_CHARS, DEFAULT_SLICES
 from sim_env.configs import AREA, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT, THERMAL_NOISE_DENSITY
-from sim_env.configs import NODE_BANDWIDTH, TRANSMISSION_POWER
-from sim_env.configs import DEADLINES, CPU_DEMANDS, RAM_DEMANDS, PACKET_SIZE
+from sim_env.configs import NODE_BANDWIDTH, TRANSMISSION_POWER, PACKET_SIZE
 from sim_env.configs import DEBUG
 from sim_env.calculators import euclidean_distance, channel_gain, shannon_hartley, db_to_linear
 
@@ -99,7 +98,7 @@ class Fog_node(Node):
 		self._service_rate = 0
 		# task slices constants
 		self._arrivals_on_slices = [ar for ar in slice_characteristics["arrivals"]]
-		self._task_type_on_slices = [[DEADLINES[tp[0]],CPU_DEMANDS[tp[1]],RAM_DEMANDS[tp[2]]] for tp in slice_characteristics["task_type"]]
+		self._task_type_on_slices = [tp for tp in slice_characteristics["task_type"]]
 		# com times within fog nodes
 		self._communication_rates = []
 		self._distances = []

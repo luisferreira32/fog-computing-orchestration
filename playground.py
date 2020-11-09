@@ -20,7 +20,8 @@ from sim_env.envrionment import Fog_env
 from algorithms.configs import ALGORITHM_SEED
 from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
 
-from utils.display import plt_bar, plt_error_bar
+from utils.tools import dictionary_append, append_to_file
+from utils.display import plt_bar, plt_error_bar, plt_box_plot
 
 import numpy as np
 import time
@@ -28,7 +29,7 @@ import time
 
 # ---- algorithms runnning for every case ----
 # info variables
-delays_list=[]; success_rates_list = [];
+delays_df={};
 
 # main loop
 for case in cases:
@@ -51,12 +52,16 @@ for case in cases:
 				delays = np.append(delays, info["delay_list"])
 				overflowed[key-1] += info["overflow"]
 				discarded[key-1] += info["discarded"]
+
+		# info logs
 		print("Finished",agents[0],"on case",case)
 		print("extime:",round(time.time()-start_time,2),"s")
 		print("-average delay:",round(1000*sum(delays)/len(delays),2),"ms")
 		print("-success rate:",round(len(delays)/(len(delays)+sum(overflowed)+sum(discarded)),2))
 		print("-overflow rate:",round(sum(overflowed)/(len(delays)+sum(overflowed)+sum(discarded)),2))
-		delays_list.append(delays)
+		# for further use
+		delays_df = dictionary_append(delays_df, "rr"+case["case"], delays)
+		append_to_file("delays.txt",{"Round Robin "+case["case"]:delays})
 
 	# --- Nearest Node - Priority Queue algorithm --- 
 	if "pq" in algs:
@@ -74,14 +79,18 @@ for case in cases:
 				delays = np.append(delays, info["delay_list"])
 				overflowed[key-1] += info["overflow"]
 				discarded[key-1] += info["discarded"]
+
+		# info logs
 		print("Finished",agents[0],"on case",case)
 		print("extime:",round(time.time()-start_time,2),"s")
 		print("-average delay:",round(1000*sum(delays)/len(delays),2),"ms")
 		print("-success rate:",round(len(delays)/(len(delays)+sum(overflowed)+sum(discarded)),2))
 		print("-overflow rate:",round(sum(overflowed)/(len(delays)+sum(overflowed)+sum(discarded)),2))
-		delays_list.append(delays)
+		# for further use
+		delays_df = dictionary_append(delays_df, "pq"+case["case"], delays)
+		append_to_file("delays.txt",{"Priority Queue "+case["case"]:delays})
 
 
-x = [case["case"]+" "+alg for case in cases for alg in algs]
-#plt_bar(x, [np.mean(d) for d in delays_list], mili=True, title="average_delays")
-plt_error_bar(x, delays_list, title="average_delays")
+#plt_bar(delays_df, mili=True, title="average_delays")
+#plt_error_bar(delays_df, mili=True, title="average_delays")
+plt_box_plot(delays_df, mili=True, title="average_delays")
