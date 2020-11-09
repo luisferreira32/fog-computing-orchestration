@@ -21,7 +21,7 @@ from algorithms.configs import ALGORITHM_SEED
 from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
 
 from utils.tools import dictionary_append, append_to_file
-from utils.display import plt_bar, plt_error_bar, plt_box_plot
+from utils.display import plt_bar, plt_error_bar, plt_box_plot, info_logs
 
 import numpy as np
 import time
@@ -54,11 +54,9 @@ for case in cases:
 				discarded[key-1] += info["discarded"]
 
 		# info logs
-		print("Finished",agents[0],"on case",case)
-		print("extime:",round(time.time()-start_time,2),"s")
-		print("-average delay:",round(1000*sum(delays)/len(delays),2),"ms")
-		print("-success rate:",round(len(delays)/(len(delays)+sum(overflowed)+sum(discarded)),2))
-		print("-overflow rate:",round(sum(overflowed)/(len(delays)+sum(overflowed)+sum(discarded)),2))
+		info_logs(agents[0],case, round(time.time()-start_time,2), round(1000*sum(delays)/len(delays),2),
+			round(len(delays)/(len(delays)+sum(overflowed)+sum(discarded)),2),
+			round(sum(overflowed)/(len(delays)+sum(overflowed)+sum(discarded)),2))
 		# for further use
 		delays_df = dictionary_append(delays_df, "rr"+case["case"], delays)
 		append_to_file("delays.txt",{"Round Robin "+case["case"]:delays})
@@ -81,11 +79,9 @@ for case in cases:
 				discarded[key-1] += info["discarded"]
 
 		# info logs
-		print("Finished",agents[0],"on case",case)
-		print("extime:",round(time.time()-start_time,2),"s")
-		print("-average delay:",round(1000*sum(delays)/len(delays),2),"ms")
-		print("-success rate:",round(len(delays)/(len(delays)+sum(overflowed)+sum(discarded)),2))
-		print("-overflow rate:",round(sum(overflowed)/(len(delays)+sum(overflowed)+sum(discarded)),2))
+		info_logs(agents[0],case, round(time.time()-start_time,2), round(1000*sum(delays)/len(delays),2),
+			round(len(delays)/(len(delays)+sum(overflowed)+sum(discarded)),2),
+			round(sum(overflowed)/(len(delays)+sum(overflowed)+sum(discarded)),2))
 		# for further use
 		delays_df = dictionary_append(delays_df, "pq"+case["case"], delays)
 		append_to_file("delays.txt",{"Priority Queue "+case["case"]:delays})

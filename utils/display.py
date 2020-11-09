@@ -44,3 +44,10 @@ def plt_box_plot(df, mili=False, title="default_title"):
 	plt.boxplot(data)
 	plt.xticks(range(1, len(labels) + 1), labels)
 	fig.savefig(my_path+title+".png")
+
+def info_logs(algorithm_description, case_description, extime, average_delay, success_rate, overflow_rate):
+	print("Finished",algorithm_description,"on case",case_description)
+	print("extime:",extime,"s")
+	print("-average delay:",average_delay,"ms")
+	print("-success rate:",success_rate)
+	print("-overflow rate:",overflow_rate)
