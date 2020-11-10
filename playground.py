@@ -31,14 +31,14 @@ import time
 # ---- algorithms runnning for every case ----
 # info variables
 delays_df={}; success_rate_df={}; overflow_rate_df={};
-random_seeds = random_seed_primes(200) # primes from 0 - N
+random_seeds = random_seed_primes(235) # 30: first 10 primes, 100: first 25 primes, 235: first 50 primes
 
 # main loop
 for case in cases:
 
 	# --- baselines for a multi-agent gym ---
 	# get some simulations to do the average
-	for seed in RANDOM_SEED_LIST:
+	for seed in random_seeds:
 		# --- Nearest Node - Round Robin algorithm ---
 		if "rr" in algs:
 			# -- information related
@@ -64,10 +64,10 @@ for case in cases:
 			success_rate_df = dictionary_append(success_rate_df, "rr"+case["case"], compiled_info["success_rate"])
 			overflow_rate_df = dictionary_append(overflow_rate_df, "rr"+case["case"], compiled_info["overflow_rate"])
 			# --
-		print(success_rate_df)
+		#print(success_rate_df)
 
 		
-	for seed in RANDOM_SEED_LIST:
+	for seed in random_seeds:
 		# --- Nearest Node - Priority Queue algorithm --- 
 		if "pq" in algs:
 			# -- information related

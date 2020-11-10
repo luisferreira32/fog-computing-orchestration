@@ -15,8 +15,8 @@ TRANSMISSION_POWER = 20 # dBm
 # resources
 DEFAULT_SLICES = 3
 MAX_QUEUE = 10
-CPU_CLOCKS = [5, 6, 7, 8, 9, 10] # GHz
-RAM_SIZES = [2400, 4000, 8000] # MB
+CPU_CLOCKS = [5, 6, 7, 8, 9, 10] # GHz = [5, 6, 7, 8, 9, 10] units
+RAM_SIZES = [2400, 4000, 8000] # MB = [6, 10, 20] units
 CPU_UNIT = 1 # GHz
 RAM_UNIT = 400 # MB
 

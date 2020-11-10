@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-'''
-TODO@luis: check this list and implement stuff
-class Cloud_node
-'''
-
 # external imports
 from abc import ABC, abstractmethod
 from collections import deque
@@ -254,7 +249,7 @@ def task_processing_time(t=None):
 	# task has cpu_demand cycles/bit
 	total_cycles = t.cpu_demand*t.packet_size
 	# processing units are in 1GHz each
-	total_time = total_cycles/(t._cpu_units*CPU_UNIT*(10**9))
+	total_time = total_cycles/(t._cpu_units*CPU_UNIT*(1e9))
 	return total_time
 
 def task_communication_time(t, bit_rate):

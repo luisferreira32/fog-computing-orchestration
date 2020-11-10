@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # external imports
 import collections
 import sys
