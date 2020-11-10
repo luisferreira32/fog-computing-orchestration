@@ -29,9 +29,10 @@ class Fog_env(gym.Env):
 	it is a custom environment that follows gym interface"""
 	metadata = {'render.modes': ['human']}
 
-	def __init__(self, case=BASE_SLICE_CHARS):
+	def __init__(self, case=BASE_SLICE_CHARS, rd_seed=RANDOM_SEED):
 		super(Fog_env, self).__init__()
-		set_seed(RANDOM_SEED)
+		# Set up seeds for reproductibility
+		self.seed(rd_seed)
 
 		# envrionment variables
 		# self.nodes, self.evq, etc...
@@ -60,19 +61,8 @@ class Fog_env(gym.Env):
 		state_possibilities = np.array(state_possibilities, dtype=np.uint8)
 		self.observation_space = spaces.MultiDiscrete(state_possibilities)
 
-		# Set up seeds for reproductibility
-		self.seed(RANDOM_SEED)
-
 		# and the first event that will trigger subsequent arrivals
 		self.evq.addEvent(Set_arrivals(0, TIME_STEP, self.nodes))
-
-	def seed(self, seed=None):
-		# set all the necessary seeds for reproductibility
-		self.np_random, seed = seeding.np_random(seed)
-		self.action_space.seed(seed)
-		self.observation_space.seed(seed)
-		set_seed(seed)
-		return [seed]
 
 	def step(self, action_n):
 		# to make sure you give actions in the FORMATED action space
@@ -221,4 +211,10 @@ class Fog_env(gym.Env):
 		print(round(1000*(self.clock+TIME_STEP)),"ms")
 		input("\nEnter to continue...")
 		pass
+
+	def seed(self, seed=None):
+		# set all the necessary seeds for reproductibility
+		self.np_random, seed = seeding.np_random(seed)
+		set_seed(seed)
+		return [seed]
 

@@ -20,6 +20,9 @@ def uniform_rand_int(low=0, high=1):
 def uniform_rand_choice(l):
 	return np.random.choice(l)
 
+def random_seed_primes(max_val=100):
+	return [num for num in range(2, max_val) if all(num%i!=0 for i in range(2,int(np.sqrt(num))+1)) ]
+
 # --- data structure related tools ---
 
 def dictionary_append(d, key, info):
@@ -37,7 +40,10 @@ def format_delay(delay_dict):
 	df = pd.DataFrame.from_dict(delay_dict)
 	return df.describe()
 
-def append_to_file(filename, data, format_data=format_delay):
+def no_format(data):
+	return data
+
+def append_to_file(filename, data, format_data=no_format):
 	with open(results_path+filename, "a") as f:
 		d = format_data(data)
 		f.write(str(d))

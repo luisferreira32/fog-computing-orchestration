@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 
+# --- graphical display ---
 # aux functions
 def milliseconds(x, pos):
     return '%1.2f' % (x * 1e3)
@@ -45,9 +46,28 @@ def plt_box_plot(df, mili=False, title="default_title"):
 	plt.xticks(range(1, len(labels) + 1), labels)
 	fig.savefig(my_path+title+".png")
 
-def info_logs(algorithm_description, case_description, extime, average_delay, success_rate, overflow_rate):
-	print("extime:",extime,"s")
-	print("Finished",algorithm_description,case_description)
-	print("-average delay:",average_delay,"ms")
-	print("-success rate:",success_rate)
-	print("-overflow rate:",overflow_rate)
+# --- text log display ---
+# aux function
+def info_gather(compiled_info, info_n):
+	#print(compiled_info)
+	for key, info in info_n.items():
+		compiled_info["delay_sum"] += sum(info["delay_list"])
+		compiled_info["succeeded"] += len(info["delay_list"])
+		compiled_info["overflowed"] += info["overflow"]
+		compiled_info["discarded"] += info["discarded"]
+	compiled_info["total"] = compiled_info["discarded"] + compiled_info["succeeded"] + compiled_info["overflowed"]
+	if compiled_info["total"] > 0:
+		compiled_info["average_delay"] = compiled_info["delay_sum"]/compiled_info["total"]
+		compiled_info["success_rate"] = compiled_info["succeeded"]/compiled_info["total"]
+		compiled_info["overflow_rate"] = compiled_info["overflowed"]/compiled_info["total"]
+	return compiled_info
+
+def info_gather_init():
+	return {"delay_sum":0, "succeeded":0, "overflowed":0, "discarded":0}
+
+def info_logs(key, extime, compiled_info):
+	print("Finished",key,"within",extime,"seconds")
+	print("-total tasks:",compiled_info["total"])
+	print("-average delay:",round(1000*compiled_info["average_delay"],5),"ms")
+	print("-success rate:",round(compiled_info["success_rate"],5))
+	print("-overflow rate:",round(compiled_info["overflow_rate"],5))
