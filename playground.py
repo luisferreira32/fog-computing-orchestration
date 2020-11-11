@@ -23,7 +23,7 @@ from algorithms.runners import run_algorithm_on_envrionment
 
 # info variables
 delays_df={}; success_rate_df={}; overflow_rate_df={};
-random_seeds = random_seed_primes(4) # 30: first 10 primes, 100: first 25 primes, 235: first 50 primes
+random_seeds = random_seed_primes(0) # 30: first 10 primes, 100: first 25 primes, 235: first 50 primes
 if not random_seeds: random_seeds = [2]
 
 # ---- algorithms runnning for every case ----
@@ -39,7 +39,7 @@ for seed in random_seeds:
 			overflow_rate_df = dictionary_append(overflow_rate_df, alg.short_str()+case["case"], compiled_info["overflow_rate"])
 
 
-write_all_to_csvs(delays_df, success_rate_df, overflow_rate_df)
+#write_all_to_csvs(delays_df, success_rate_df, overflow_rate_df)
 plt_bar(delays_df, mili=True, title="average_delays")
 plt_error_bar(success_rate_df, mili=False, title="average_success_rate")
 plt_error_bar(overflow_rate_df, mili=False, title="average_overflow_rate")

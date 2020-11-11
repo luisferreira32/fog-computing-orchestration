@@ -24,6 +24,7 @@ def plt_bar(df,mili=False, title="default_title"):
 	means = [np.mean(np.array(b)) if b != [] else 0 for b in data]
 	plt.bar(range(len(df)), means)
 	plt.xticks(range(len(df)), list(labels))
+	plt.tight_layout()
 	fig.savefig(my_path+title+".png")
 
 def plt_error_bar(df, mili=False,title="default_title"):
@@ -35,6 +36,7 @@ def plt_error_bar(df, mili=False,title="default_title"):
 	std_devs = [np.std(np.array(b)) if b != [] else 0 for b in data]
 	plt.bar(range(len(df)), means, yerr=std_devs, align='center', alpha=0.5, ecolor='black', capsize=10)
 	plt.xticks(range(len(df)), list(labels))
+	plt.tight_layout()
 	fig.savefig(my_path+title+".png")
 
 def plt_box_plot(df, mili=False, title="default_title"):
@@ -44,6 +46,7 @@ def plt_box_plot(df, mili=False, title="default_title"):
 		ax.yaxis.set_major_formatter(mili_formater)
 	plt.boxplot(data)
 	plt.xticks(range(1, len(labels) + 1), labels)
+	plt.tight_layout()
 	fig.savefig(my_path+title+".png")
 
 # --- text log display ---

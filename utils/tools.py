@@ -66,10 +66,11 @@ def write_to_csv(filename, data, format_data=no_format):
 # HARDCODE - just for this work
 def write_all_to_csvs(delay_df, success_df, overflow_df):
 	for key in delay_df:
-		d = format_to_miliseconds(delay_df[key])
-		s = success_df[key]
-		o = overflow_df[key]
-		data = [["average_delays_ms",d],["success_rates",s],["overflow_rates",o]]
+		d_n= format_to_miliseconds(delay_df[key])
+		s_n = success_df[key]
+		o_n = overflow_df[key]
 		with open(results_path+key+".csv","w") as f:
 			wr = csv.writer(f)
-			wr.writerows(data)
+			wr.writerows([["average_delay_ms",d] for d in d_n])
+			wr.writerows([["success_rate",s] for s in s_n])
+			wr.writerows([["overflow_rate",o] for o in o_n])
