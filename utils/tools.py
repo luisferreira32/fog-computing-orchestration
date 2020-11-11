@@ -5,6 +5,7 @@ from numpy import random
 import numpy as np
 import pandas as pd
 import os
+import csv
 
 # --- random related tools ---
 
@@ -36,15 +37,39 @@ def dictionary_append(d, key, info):
 
 results_path = os.getcwd()+"/results/"
 
-def format_delay(delay_dict):
-	df = pd.DataFrame.from_dict(delay_dict)
-	return df.describe()
+# format types
+def format_to_miliseconds(data):
+	return np.array([d*1000 for d in data])
 
 def no_format(data):
 	return data
 
+# aux functions
+def write_dictionary_on_csvs(d, format_data=no_format):
+	for key, value in d.items():
+		write_to_csv(key+".csv", value, format_data)
+
+# file operations
 def append_to_file(filename, data, format_data=no_format):
 	with open(results_path+filename, "a") as f:
 		d = format_data(data)
 		f.write(str(d))
 	return
+
+def write_to_csv(filename, data, format_data=no_format):
+	with open(results_path+filename, "w") as f:
+		d = format_data(data)
+		wr = csv.writer(f)
+		wr.writerow(d)
+	return
+
+# HARDCODE - just for this work
+def write_all_to_csvs(delay_df, success_df, overflow_df):
+	for key in delay_df:
+		d = format_to_miliseconds(delay_df[key])
+		s = success_df[key]
+		o = overflow_df[key]
+		data = [["average_delays_ms",d],["success_rates",s],["overflow_rates",o]]
+		with open(results_path+key+".csv","w") as f:
+			wr = csv.writer(f)
+			wr.writerows(data)
