@@ -136,7 +136,7 @@ class Start_processing(Event):
 		# discard and set finish processing when decisions are made
 		for task in tasks_under_processing:
 			finish = self.time+task_processing_time(task)
-			if task.exceeded_contraint(finish):
+			if task.exceeded_contraint(finish): # TODO@luis: redo this on another place
 				evq.addEvent(Discard_task(task.constraint_time(), self.node, self.k, task))
 			else:
 				evq.addEvent(Task_finished(finish, self.node, self.k, task))

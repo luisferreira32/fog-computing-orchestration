@@ -4,6 +4,7 @@
 from sim_env.configs import BASE_SLICE_CHARS
 from sim_env.configs import NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3
 from sim_env.configs import HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3
+from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
 
 def argument_check(argv):
 	# running variables
@@ -38,9 +39,9 @@ def argument_check(argv):
 	for s in argv:
 		if "--algorithm=" in s or "-A=" in s:
 			if "rr" in s:
-				algs.append("rr")
+				algs.append(Nearest_Round_Robin)
 			if "pq" in s:
-				algs.append("pq")
+				algs.append(Nearest_Priority_Queue)
 		if "--cases=" in s or "-C=" in s:
 			cases = []
 			if "all" in s:
@@ -63,12 +64,12 @@ def argument_check(argv):
 			if "h3" in s:
 				cases.append(HEAVY_CASE_3)
 		if "--basic" in s or "-B" in s:
-			algs.append("rr")
+			algs.append(Nearest_Round_Robin)
 			cases = [BASE_SLICE_CHARS]
 
 	# default values if it was not chosen
 	if not algs:
-		algs = ["rr"]
+		algs = [Nearest_Round_Robin]
 	if not cases:
 		cases = [BASE_SLICE_CHARS]
 

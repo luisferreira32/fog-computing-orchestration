@@ -15,6 +15,9 @@ class Nearest_Round_Robin(object):
 
 	def __str__(self):
 		return "Nearest Round Robin"
+	@classmethod
+	def short_str(cls):
+		return "nRR"
 
 	def decide(self, obs):
 		# node action struct: [f_i0, ..., f_ik, w_i0, ..., w_ik]
@@ -68,6 +71,9 @@ class Nearest_Priority_Queue(object):
 
 	def __str__(self):
 		return "Nearest Priority Queue"
+	@classmethod
+	def short_str(cls):
+		return "nPQ"
 
 	def decide(self, obs):
 		# action struct: [f_00, ..., f_0k, w_00, ..., w_0k, ..., f_i0, ..., f_ik, w_i0, ..., w_ik]
