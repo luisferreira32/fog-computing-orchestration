@@ -8,7 +8,7 @@ from utils.basic_info import average_delays
 
 # ---- command line input ----
 
-[debug, algs, cases] = argument_check(sys.argv)
+[debug, algs, cases, max_seed] = argument_check(sys.argv)
 if not algs or not cases:
 	sys.exit(1)
 
@@ -23,8 +23,9 @@ from algorithms.runners import run_algorithm_on_envrionment
 
 # info variables
 delays_df={}; success_rate_df={}; overflow_rate_df={};
-random_seeds = random_seed_primes(0) # 30: first 10 primes, 100: first 25 primes, 235: first 50 primes
+random_seeds = random_seed_primes(max_seed) # 30: first 10 primes, 100: first 25 primes, 235: first 50 primes
 if not random_seeds: random_seeds = [2]
+print("[LOG] Running",len(algs),"algorithms for",len(cases),"cases with",len(random_seeds),"different seeds")
 
 # ---- algorithms runnning for every case ----
 

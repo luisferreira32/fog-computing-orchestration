@@ -81,12 +81,12 @@ class Nearest_Priority_Queue(object):
 		# begining with the higher to the lower priorities (slice k)
 		for k in self.priorities:
 			# to process based on availabe memory and there is still tasks to process
-			while rm_k >= self.node._task_type_on_slices[k][2]/RAM_UNIT and rc_k > 0 and not b_k[k] == be_k[k]:
+			while rm_k >= np.ceil(self.node._task_type_on_slices[k][2]/RAM_UNIT) and rc_k > 0 and not b_k[k] == be_k[k]:
 				if b_k[k] > be_k[k]:
 					# set the w_ik to process +1
 					action[DEFAULT_SLICES+k] += 1
 					# and take the resources on the available obs
-					rm_k -= int(self.node._task_type_on_slices[k][2]/RAM_UNIT)
+					rm_k -= int(np.ceil(self.node._task_type_on_slices[k][2]/RAM_UNIT))
 					rc_k -= 1
 					be_k[k] += 1
 

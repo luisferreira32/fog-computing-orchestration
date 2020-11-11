@@ -1,6 +1,6 @@
 # GLOBAL FOG VARIABLES
 TIME_STEP = 0.001 # seconds
-TOTAL_TIME_STEPS = 1000 # stable results in baselines after 3000
+TOTAL_TIME_STEPS = 500 # stable results in baselines after 3000
 SIM_TIME = TOTAL_TIME_STEPS*TIME_STEP
 DEBUG = False
 
@@ -24,7 +24,7 @@ RAM_UNIT = 400 # MB
 BASE_SLICE_CHARS = {
 	"case": "n1",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 400, 400], [10, 600, 400], [10, 400, 1200]]
+	"task_type" : [[10, 400, 400], [10, 600, 400], [10, 200, 1200]]
 }
 
 # ENV CONSTANTS
@@ -41,13 +41,12 @@ PACKET_SIZE = 5000 # bit
 # RAM_DEMANDS = [400, 1200] # MB
 
 # ---- simulation cases ---- 
-
 # Case 1
 NORMAL_CASE_1 = BASE_SLICE_CHARS
 HEAVY_CASE_1 ={
 	"case": "h1",
 	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[10, 400, 400], [10, 600, 400], [10, 400, 1200]]
+	"task_type" : [[10, 400, 400], [10, 600, 400], [10, 200, 1200]]
 }
 # Case 2
 NORMAL_CASE_2 = {
@@ -71,3 +70,42 @@ HEAVY_CASE_3 = {
 	"arrivals" : [0.8, 0.8, 0.8],
 	"task_type" : [[10, 400, 400], [50, 600, 400], [50, 400, 400]]
 }
+# cases compilations
+ALL_CASES = [NORMAL_CASE_1, HEAVY_CASE_1, NORMAL_CASE_2, HEAVY_CASE_2, NORMAL_CASE_3, HEAVY_CASE_3]
+HEAVY_CASES = [HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
+NORMAL_CASES = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3]
+
+# --- Extra cases to find a limit situation
+cpi = 1.5
+NORMAL_A = {
+	"case": "nA",
+	"arrivals" : [0.6, 0.6, 0.6],
+	"task_type" : [[10, 400*cpi, 400], [10, 600*cpi, 400], [10, 200*cpi, 800]]
+}
+NORMAL_B = {
+	"case": "nB",
+	"arrivals" : [0.6, 0.6, 0.6],
+	"task_type" : [[10, 400*cpi, 400], [50, 400*cpi, 400], [100, 400*cpi, 400]]
+}
+NORMAL_C = {
+	"case": "nC",
+	"arrivals" : [0.6, 0.6, 0.6],
+	"task_type" : [[10, 400*cpi, 400], [50, 600*cpi, 400], [50, 400*cpi, 400]]
+}
+HEAVY_A = {
+	"case": "hA",
+	"arrivals" : [0.8, 0.8, 0.8],
+	"task_type" : [[10, 400*cpi, 400], [10, 600*cpi, 400], [10, 200*cpi, 800]]
+}
+HEAVY_B = {
+	"case": "hB",
+	"arrivals" : [0.8, 0.8, 0.8],
+	"task_type" : [[10, 400*cpi, 400], [50, 400*cpi, 400], [100, 400*cpi, 400]]
+}
+HEAVY_C = {
+	"case": "hC",
+	"arrivals" : [0.8, 0.8, 0.8],
+	"task_type" : [[10, 400*cpi, 400], [50, 600*cpi, 400], [50, 400*cpi, 400]]
+}
+
+EXPERIMENTAL_CASES = [NORMAL_A, NORMAL_B, NORMAL_C, HEAVY_A, HEAVY_B, HEAVY_C]

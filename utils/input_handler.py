@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 # necessary constants import
-from sim_env.configs import BASE_SLICE_CHARS
+from sim_env.configs import BASE_SLICE_CHARS, EXPERIMENTAL_CASES
+from sim_env.configs import NORMAL_CASES, HEAVY_CASES, ALL_CASES
 from sim_env.configs import NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3
 from sim_env.configs import HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3
 from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
@@ -10,11 +11,12 @@ def argument_check(argv):
 	# running variables
 	debug = False
 	algs = []; cases = []
+	max_seed = 100
 
 	# argument check
 	if len(argv) < 2:
 		print("run with --help or -H for more information")
-		return [debug, algs, cases]
+		return [debug, algs, cases, max_seed]
 
 	# help print
 	if "--help" in argv or "-H" in argv:
@@ -29,8 +31,9 @@ def argument_check(argv):
 		print("   heavy : runs case 1, 2 and 3, with heavy traffic")
 		print("   n1 : runs case X =[1, 2 or 3] with normal traffic")
 		print("   h1 : runs case X =[1, 2 or 3] with heavy traffic")
+		print("--seedmax= : by default 100, maximum value for a prime number seed")
 		print("--debug : will render every step")
-		return [debug, algs, cases]
+		return [debug, algs, cases, max_seed]
 
 	# pick up the flags
 	if "--debug" in argv:
@@ -38,18 +41,20 @@ def argument_check(argv):
 
 	for s in argv:
 		if "--algorithm=" in s or "-A=" in s:
-			if "rr" in s:
-				algs.append(Nearest_Round_Robin)
 			if "pq" in s:
 				algs.append(Nearest_Priority_Queue)
+			if "rr" in s:
+				algs.append(Nearest_Round_Robin)
 		if "--cases=" in s or "-C=" in s:
 			cases = []
 			if "all" in s:
-				cases = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3, HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
+				cases = ALL_CASES
 			elif "normal" in s:
-				cases = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3]
+				cases = NORMAL_CASES
 			elif "heavy" in s:
-				cases = [HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
+				cases = HEAVY_CASES
+			elif "exp" in s:
+				cases = EXPERIMENTAL_CASES
 			# add ons	
 			if "n1" in s:
 				cases.append(NORMAL_CASE_1)
@@ -67,10 +72,17 @@ def argument_check(argv):
 			algs.append(Nearest_Round_Robin)
 			cases = [BASE_SLICE_CHARS]
 
+		if "--seedmax=" in s:
+			try:
+				max_seed = int(s.replace("--seedmax=",''))
+			except:
+				max_seed = 100
+	print(max_seed)
+
 	# default values if it was not chosen
 	if not algs:
 		algs = [Nearest_Round_Robin]
 	if not cases:
 		cases = [BASE_SLICE_CHARS]
 
-	return [debug, algs, cases]
+	return [debug, algs, cases, max_seed]
