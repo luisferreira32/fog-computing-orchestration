@@ -69,8 +69,8 @@ def info_gather_init():
 	return {"delay_sum":0, "succeeded":0, "overflowed":0, "discarded":0}
 
 def info_logs(key, extime, compiled_info):
-	print("Finished",key,"within",extime,"seconds")
-	print("-total tasks:",compiled_info["total"])
-	print("-average delay:",round(1000*compiled_info["average_delay"],5),"ms")
-	print("-success rate:",round(compiled_info["success_rate"],5))
-	print("-overflow rate:",round(compiled_info["overflow_rate"],5))
+	print("[INFO LOG] Finished",key,"within",extime,"seconds")
+	print("[1/4] total tasks:",compiled_info["total"])
+	print("[2/4] average delay:",round(1000*compiled_info["average_delay"],5),"ms")
+	print("[3/4] success rate:",round(compiled_info["success_rate"],5))
+	print("[4/4] overflow rate:",round(compiled_info["overflow_rate"],5))

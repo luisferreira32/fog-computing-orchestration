@@ -23,9 +23,10 @@ from algorithms.runners import run_algorithm_on_envrionment
 
 # info variables
 delays_df={}; success_rate_df={}; overflow_rate_df={};
-random_seeds = random_seed_primes(max_seed) # 30: first 10 primes, 100: first 25 primes, 235: first 50 primes
+random_seeds = random_seed_primes(max_seed)
 if not random_seeds: random_seeds = [2]
 print("[LOG] Running",len(algs),"algorithms for",len(cases),"cases with",len(random_seeds),"different seeds")
+total = str(len(algs)*len(cases)*len(random_seeds)); current = 0
 
 # ---- algorithms runnning for every case ----
 
@@ -34,6 +35,8 @@ for seed in random_seeds:
 	for case in cases:
 		for alg in algs:
 			compiled_info = run_algorithm_on_envrionment(alg, case, seed, info_gather_init(), debug)
+			# just to know
+			current+=1; print("[LOG] simulations ran ["+str(current)+"/"+total+"]")
 			# for further use
 			delays_df = dictionary_append(delays_df, alg.short_str()+case["case"], compiled_info["average_delay"])
 			success_rate_df = dictionary_append(success_rate_df, alg.short_str()+case["case"], compiled_info["success_rate"])

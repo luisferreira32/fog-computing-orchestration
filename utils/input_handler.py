@@ -77,7 +77,6 @@ def argument_check(argv):
 				max_seed = int(s.replace("--seedmax=",''))
 			except:
 				max_seed = 100
-	print(max_seed)
 
 	# default values if it was not chosen
 	if not algs:

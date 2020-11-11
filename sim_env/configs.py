@@ -1,6 +1,6 @@
 # GLOBAL FOG VARIABLES
 TIME_STEP = 0.001 # seconds
-TOTAL_TIME_STEPS = 500 # stable results in baselines after 3000
+TOTAL_TIME_STEPS = 1000 # ensured stable results in baselines after 3000
 SIM_TIME = TOTAL_TIME_STEPS*TIME_STEP
 DEBUG = False
 
@@ -34,7 +34,7 @@ PATH_LOSS_CONSTANT = 0.001
 THERMAL_NOISE_DENSITY = -174 # dBm/Hz
 
 # TASK CONSTANTS
-PACKET_SIZE = 5000 # bit
+PACKET_SIZE = 5000 # 5000 default bit
 # this values are directly described in the simulation cases
 # DEADLINES = [10, 50, 100] # ms
 # CPU_DEMANDS = [200, 400, 600] # cycles/bit
@@ -76,7 +76,7 @@ HEAVY_CASES = [HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
 NORMAL_CASES = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3]
 
 # --- Extra cases to find a limit situation
-cpi = 1.5
+cpi = 1.8 # 1.8 seems to work well
 NORMAL_A = {
 	"case": "nA",
 	"arrivals" : [0.6, 0.6, 0.6],
