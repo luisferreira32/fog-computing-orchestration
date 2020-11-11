@@ -28,22 +28,17 @@ class Nearest_Round_Robin(object):
 		[a_k, b_k, be_k, rc_k, rm_k] = np.split(obs, [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
 		
 		# to process based on availabe memory, cpu, and RR priority
-		checked_slice = 0
-		while checked_slice < self.node.max_k and rm_k > 0 and rc_k > 0 and not np.all(b_k == be_k):
-			if b_k[self.process] > be_k[self.process] and rm_k >= np.ceil(self.node._task_type_on_slices[self.process][2]/RAM_UNIT):
-				# set the w_ik to process +1
-				action[DEFAULT_SLICES+self.process] += 1
-				# and take the resources on the available obs
-				rm_k -= int(np.ceil(self.node._task_type_on_slices[self.process][2]/RAM_UNIT))
-				rc_k -= 1
-				be_k[self.process] += 1
-
-			# if memory is being a limit here, might not be on another slice
-			if rm_k>= np.ceil(self.node._task_type_on_slices[self.process][2]/RAM_UNIT):
-				checked_slice +=1
-			self.process += 1
-			if self.process == DEFAULT_SLICES:
-				self.process = 0
+		while b_k[self.process] > be_k[self.process] and rm_k >= np.ceil(self.node._task_type_on_slices[self.process][2]/RAM_UNIT) and rc_k > 0:
+			# set the processing, w_ik
+			action[DEFAULT_SLICES+self.process] += 1
+			# and take the resources on the available obs
+			rm_k -= int(np.ceil(self.node._task_type_on_slices[self.process][2]/RAM_UNIT))
+			rc_k -= 1
+			be_k[self.process] += 1
+		# next time step we'll process a different slice
+		self.process +=1
+		if self.process == DEFAULT_SLICES:
+			self.process = 0
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		for k in range(self.node.max_k):
