@@ -158,11 +158,13 @@ class Fog_env(gym.Env):
 	def _agent_reward_fun(self, n, obs, action):
 		# calculate the reward for the agent (node) n
 		node_reward = 0
+		[fks, wks] = np.split(action, 2)
+		concurr = sum([1 if fk!=n.index and fk!=0 else 0 for fk in fks])
 		for k in range(n.max_k):
 			D_ik = 0; Dt_ik = 0
 			# if it's offloaded adds communication time to delay
-			if action[k] != n.index and action[k] != 0:
-				Dt_ik = PACKET_SIZE / n._communication_rates[action[k]-1] 
+			if fks[k] != n.index and fks[k] != 0:
+				Dt_ik = PACKET_SIZE / (n._communication_rates[fks[k]-1]/concurr)
 				D_ik += Dt_ik
 			# calculate the Queue delay: b_ik/service_rate_i
 			D_ik += obs[n.max_k+k]/n._service_rate
@@ -177,10 +179,10 @@ class Fog_env(gym.Env):
 			# count the number of new arrivals in the arriving node
 			arr = 0
 			for ev in self.evq.queue():
-				if is_arrival_on_slice(ev, self.nodes[action[k]-1], k) and ev.time <= self.clock+Dt_ik:
+				if is_arrival_on_slice(ev, self.nodes[fks[k]-1], k) and ev.time <= self.clock+Dt_ik:
 					arr += 1
 			# also, verify if there is an overload chance in the arriving node
-			arrival_node = self.nodes[action[k]-1] if action[k] > 0 else n
+			arrival_node = self.nodes[fks[k]-1] if fks[k] > 0 else n
 			arr_obs = self._get_agent_observation(arrival_node)
 			if arr_obs[DEFAULT_SLICES+k]+arr+1 >= MAX_QUEUE:
 				coeficient -= OVERLOAD_WEIGHT # tunable_weight
