@@ -34,6 +34,8 @@ total = str(len(algs)*len(cases)*len(random_seeds)); current = 0
 for seed in random_seeds:
 	for case in cases:
 		for alg in algs:
+			# TODO@luis: add a training runner for trainable algorithms
+			# run the algorithm to collect info
 			compiled_info = run_algorithm_on_envrionment(alg, case, seed, info_gather_init(), debug)
 			# just to know
 			current+=1; print("[LOG] simulations ran ["+str(current)+"/"+total+"]")

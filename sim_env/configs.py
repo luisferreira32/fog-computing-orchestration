@@ -4,6 +4,9 @@ TOTAL_TIME_STEPS = 1000 # ensured stable results in baselines after 3000
 SIM_TIME = TOTAL_TIME_STEPS*TIME_STEP
 DEBUG = False
 
+# envrionment reward related
+OVERLOAD_WEIGHT = 2
+
 # random related
 RANDOM_SEED = 2**19-1 # mersenne prime seeds at 2, 3, 5, 7, 13, 17, 19, 31
 RANDOM_SEED_LIST = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
@@ -72,7 +75,7 @@ HEAVY_CASE_3 = {
 	"task_type" : [[10, 400, 400], [50, 600, 400], [50, 400, 400]]
 }
 # cases compilations
-ALL_CASES = [NORMAL_CASE_1, HEAVY_CASE_1, NORMAL_CASE_2, HEAVY_CASE_2, NORMAL_CASE_3, HEAVY_CASE_3]
+ALL_CASES = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3, HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
 HEAVY_CASES = [HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
 NORMAL_CASES = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3]
 

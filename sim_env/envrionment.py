@@ -12,12 +12,9 @@ import numpy as np
 from sim_env.core_classes import create_random_node
 from sim_env.events import Event_queue, Set_arrivals, Offload, Start_processing
 from sim_env.events_aux import is_arrival_on_slice
-from sim_env.configs import TIME_STEP, SIM_TIME, RANDOM_SEED
+from sim_env.configs import TIME_STEP, SIM_TIME, RANDOM_SEED, OVERLOAD_WEIGHT
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
 from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS
-
-# algorithm related imports
-from algorithms.configs import OVERLOAD_WEIGHT
 
 # for reproductibility
 from utils.tools import set_seed
