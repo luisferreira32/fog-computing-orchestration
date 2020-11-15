@@ -45,7 +45,7 @@ for seed in random_seeds:
 			overflow_rate_df = dictionary_append(overflow_rate_df, alg.short_str()+case["case"], compiled_info["overflow_rate"])
 
 
-#write_all_to_csvs(delays_df, success_rate_df, overflow_rate_df)
+write_all_to_csvs(delays_df, success_rate_df, overflow_rate_df)
 plt_bar(delays_df, mili=True, title="average_delays")
 plt_error_bar(success_rate_df, mili=False, title="average_success_rate")
 plt_error_bar(overflow_rate_df, mili=False, title="average_overflow_rate")

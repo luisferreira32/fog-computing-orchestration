@@ -17,7 +17,7 @@ from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UN
 from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS
 
 # for reproductibility
-from utils.tools import set_seed
+from utils.tools import set_tools_seed
 
 # ---------- Fog Envrionment ----------
 
@@ -213,7 +213,9 @@ class Fog_env(gym.Env):
 
 	def seed(self, seed=None):
 		# set all the necessary seeds for reproductibility
+		# one for the sim_env random requirements
 		self.np_random, seed = seeding.np_random(seed)
-		set_seed(seed)
+		# and another for the global randoms
+		set_tools_seed(seed)
 		return [seed]
 
