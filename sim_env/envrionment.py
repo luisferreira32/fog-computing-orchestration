@@ -47,7 +47,6 @@ class Fog_env(gym.Env):
 		action_possibilities = [np.append([N_NODES+1 for _ in range(n.max_k)],
 			[min(n._avail_cpu_units, n._avail_ram_units)+1 for _ in range(n.max_k)]) for n in self.nodes]
 		action_possibilities = np.array(action_possibilities, dtype=np.uint8)
-		print(action_possibilities)
 		self.action_space = spaces.MultiDiscrete(action_possibilities)
 
 		# and the state space with I nodes and K slices each
