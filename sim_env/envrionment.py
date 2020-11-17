@@ -43,10 +43,11 @@ class Fog_env(gym.Env):
 		# define the action space with I nodes and K slices each
 		# [[f_00, ..., f_0k, w_00, ..., w_0k], ..., [f_i0, ..., f_ik, w_i0, ..., w_ik]]
 		# for each node there is an action [f_i0, ..., f_ik, w_i0, ..., w_ik]
-		# where values can be between 0 and I for f_ik, and 0 and N for w_ik
+		# where values can be between 0 and I for f_ik, and 0 and N=limited by either memory or cpu for w_ik
 		action_possibilities = [np.append([N_NODES+1 for _ in range(n.max_k)],
-			[n._avail_cpu_units+1 for _ in range(n.max_k)]) for n in self.nodes]
+			[min(n._avail_cpu_units, n._avail_ram_units)+1 for _ in range(n.max_k)]) for n in self.nodes]
 		action_possibilities = np.array(action_possibilities, dtype=np.uint8)
+		print(action_possibilities)
 		self.action_space = spaces.MultiDiscrete(action_possibilities)
 
 		# and the state space with I nodes and K slices each
@@ -54,7 +55,8 @@ class Fog_env(gym.Env):
 		# ..., a_i0, ..., a_ik, b_i0, ..., b_ik, be_i0, ..., be_ik, rc_i, rm_i]
 		# state_lows has to be remade if nodes don't have same slices
 		state_possibilities = [np.concatenate(([2 for _ in range(n.max_k)],[MAX_QUEUE+1 for _ in range(n.max_k)],
-			[n._avail_cpu_units+1 for _ in range(n.max_k)], [n._avail_cpu_units+1], [n._avail_ram_units+1])) for n in self.nodes]
+			[min(n._avail_cpu_units, n._avail_ram_units)+1 for _ in range(n.max_k)],
+			[n._avail_cpu_units+1], [n._avail_ram_units+1])) for n in self.nodes]
 		state_possibilities = np.array(state_possibilities, dtype=np.uint8)
 		self.observation_space = spaces.MultiDiscrete(state_possibilities)
 
