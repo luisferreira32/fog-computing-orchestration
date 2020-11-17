@@ -78,4 +78,26 @@ class Conv1d_Frame(tf.keras.Model):
 		return self.ouptut_layer(e)
 
 
+class Rnn_Frame(tf.keras.Model):
+	"""Rnn_Frame implements a  GRU recurrent layers followed by dense layers
+	"""
+	def __init__(self, output_size: int):
+		super(Rnn_Frame, self).__init__()
+		
+		# a GRU RNN layers
+		self.rnn_input = layers.GRU(128)
+		# fully connected layers output
+		self.dense_1 = layers.Dense(128)
+		self.dense_2 = layers.Dense(64)
+		self.ouptut_layer = layers.Dense(output_size)
+	
+	def call(self, inputs: tf.Tensor) -> tf.Tensor:
+		""" inputs : tf.Tensor, (batch_size, time_steps, [input_shape])
+			returns : N-D tensor (batch_size, [output_shape])
+		"""
+		# pass inputs on model and return the output value Tensor
+		a = self.rnn_input(inputs)
+		b = self.dense_1(a)
+		c = self.dense_2(b)
+		return self.ouptut_layer(c)
 

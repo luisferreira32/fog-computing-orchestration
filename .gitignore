@@ -7,3 +7,4 @@ todolist.txt
 results/*
 sim_env/test/*
 utils/test/*
+test.py
