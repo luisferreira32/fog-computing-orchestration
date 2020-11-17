@@ -54,9 +54,9 @@ class Conv1d_Frame(tf.keras.Model):
 		super(Conv1d_Frame, self).__init__()
 
 		# 32 filters, kernal size of 3, ReLU
-		self.conv1d_input = layers.Conv1D(32, 3, activation="relu", input_shape=(None, input_size))
+		self.conv1d_input = layers.Conv1D(32, 3, padding="same", activation="relu", input_shape=(None, input_size))
 		# 64 filters, kernel size of 3, ReLU
-		self.conv1d_hidden = layers.Conv1D(64,3, activation="relu")
+		self.conv1d_hidden = layers.Conv1D(64, 3, padding="same", activation="relu")
 		# connection
 		self.flattener = layers.Flatten()
 		# dense  layers 128, 64
@@ -100,4 +100,35 @@ class Rnn_Frame(tf.keras.Model):
 		b = self.dense_1(a)
 		c = self.dense_2(b)
 		return self.ouptut_layer(c)
+
+class Conv1d_Rnn_Frame(tf.keras.Model):
+	"""Conv1d_Rnn_Frame: conv1d layer to GRU to dense ouput
+	"""
+	def __init__(self, output_size: int, input_size: int):
+		super(Conv1d_Rnn_Frame, self).__init__()
+
+		# 32 filters, kernal size of 3, ReLU
+		self.conv1d_input = layers.Conv1D(32, 3, padding="same", activation="relu", input_shape=(None, input_size))
+		# 64 filters, kernel size of 3, ReLU
+		self.conv1d_hidden = layers.Conv1D(64, 3, padding="same", activation="relu")
+		# connection
+		self.rnn_connector = layers.GRU(128)
+		# dense  layers 128, 64
+		self.dense_1 = layers.Dense(128)
+		self.dense_2 = layers.Dense(64)
+		# output layer
+		self.ouptut_layer = layers.Dense(output_size)
+
+	def call(self, inputs: tf.Tensor) -> tf.Tensor:
+		""" inputs : tf.Tensor, (batch_size, time_steps, [input_shape]) : keep time_steps constant
+			returns : N-D tensor (batch_size, [output_shape])
+		"""
+		# pass inputs on model and return the output value Tensor
+		a = self.conv1d_input(inputs)
+		b = self.conv1d_hidden(a)
+		c = self.rnn_connector(b)
+		d = self.dense_1(c)
+		e = self.dense_2(d)
+		return self.ouptut_layer(e)
+		
 
