@@ -65,22 +65,29 @@ def run_episode(env: Fog_env, agents: List[tf.keras.Model], max_steps: int) -> L
 			# Run the model and to get action probabilities and critic value
 			action_logits_t, value = agent(state_i)
 
-			# Sample next action from the action probability distribution
-			action_i = tf.convert_to_tensor([tf.random.categorical(al, 1)[0, 0] for al in action_logits_t])
-			action_probs_t = tf.nn.softmax(action_logits_t)
-			action.append(action_i)
+			# Get the action and probability distributions for data
+			action_i = []; action_probs_t = []
+			# Since it's multi-discrete, for every discrete set of actions:
+			for action_logits_t_k in action_logits_t:
+				# Sample next action from the action probability distribution
+				action_i_k = tf.random.categorical(action_logits_t_k,1)[0,0]
+				action_i.append(action_i_k.numpy())
+				action_probs_t_k = tf.nn.softmax(action_logits_t_k)
+				action_probs_t.append(action_probs_t_k[0, action_i_k])
 
 			# Store critic values
 			values[i] = values[i].write(t, tf.squeeze(value))
-
 			# Store log probability of the action chosen
-			action_probs[i] = action_probs[i].write(t, action_probs_t[0, action_i])
+			action_probs[i] = action_probs[i].write(t, action_probs_t)
+
+			# And append to the actual action that is gonna run
+			action.append(action_i)
 
 		# Apply action to the environment to get next state and reward
-		state, reward, done, _ = env.step([a.numpy() for a in action])
+		state, reward, done, _ = env.step(np.array(action))
 		state, reward, done = tensor_list([state, reward, done])
 		state.set_shape(initial_state_shape)
-
+		#print(state, reward, done, action)
 		# Store reward
 		for i in tf.range(len(agents)):
 			rewards[i] = rewards[i].write(t, reward[i])
@@ -92,7 +99,7 @@ def run_episode(env: Fog_env, agents: List[tf.keras.Model], max_steps: int) -> L
 	for i in tf.range(len(agents)):
 		action_probs[i] = action_probs[i].stack()
 		values[i] = values[i].stack()
-		rewards = rewards[i].stack()
+		rewards[i] = rewards[i].stack()
 
 	return action_probs, values, rewards
 

@@ -116,7 +116,7 @@ class Fog_env(gym.Env):
 		# just save it for render
 		self.saved_step_info = [state_t, action_n]
 
-		return obs_n, reward_n, done, info_n
+		return obs_n, np.array(reward_n, dtype=np.float32), done, info_n
 
 
 	def reset(self):
