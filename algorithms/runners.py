@@ -17,7 +17,7 @@ from typing import Any, List, Sequence, Tuple
 
 # -- baseline related runners --
 
-def run_algorithm_on_envrionment(alg, case, seed, compiled_info, debug=False):
+def run_algorithm_on_envrionment(alg, case, seed, compiled_info=None, debug=False):
 	# runner for simple baseline algorithms
 	start_time = time.time()
 	env = Fog_env(case, seed)
@@ -25,19 +25,22 @@ def run_algorithm_on_envrionment(alg, case, seed, compiled_info, debug=False):
 	obs_n = env.reset()
 	done = False;
 	while not done:
-		action_n = np.array([agent.decide(obs) for agent,obs in zip(agents, obs_n)], dtype=np.uint8)
+		action_n = np.array([agent(obs) for agent,obs in zip(agents, obs_n)], dtype=np.uint8)
 		obs_n, rw_n, done, info_n = env.step(action_n)
 		if debug: env.render()
 		# -- info gathering
-		compiled_info = info_gather(compiled_info, info_n)
+		if compiled_info is not None: compiled_info = info_gather(compiled_info, info_n)
 		# --
 
 	# -- info logs
-	info_logs(str(agents[0])+str(case), round(time.time()-start_time,2), compiled_info)
+	if compiled_info is not None: info_logs(str(agents[0])+str(case), round(time.time()-start_time,2), compiled_info)
 	# --
 	return compiled_info
 
 # -- RL related runners --
+
+def tensor_list(l: List) -> List[tf.Tensor]:
+	return [tf.convert_to_tensor(item) for item in l]
 
 def run_episode(env: Fog_env, agents: List[tf.keras.Model], max_steps: int) -> List[List[tf.Tensor]]:
 	"""Runs a single episode to collect training data."""
@@ -103,6 +106,3 @@ def run_episode(env: Fog_env, agents: List[tf.keras.Model], max_steps: int) -> L
 
 	return action_probs, values, rewards
 
-# Wrap OpenAI Gym's `env.step` call as an operation in a TensorFlow function.
-def tensor_list(l: List) -> List[tf.Tensor]:
-	return [tf.convert_to_tensor(item) for item in l]

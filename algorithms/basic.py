@@ -19,7 +19,7 @@ class Nearest_Round_Robin(object):
 	def short_str(cls):
 		return "nRR"
 
-	def decide(self, obs):
+	def __call__(self, obs):
 		# node action struct: [f_i0, ..., f_ik, w_i0, ..., w_ik]
 		# default no offloads and no processing
 		action = np.zeros(DEFAULT_SLICES*2, dtype=np.uint8)
@@ -70,7 +70,7 @@ class Nearest_Priority_Queue(object):
 	def short_str(cls):
 		return "nPQ"
 
-	def decide(self, obs):
+	def __call__(self, obs):
 		# action struct: [f_00, ..., f_0k, w_00, ..., w_0k, ..., f_i0, ..., f_ik, w_i0, ..., w_ik]
 		# default no offloads and no processing
 		action = np.zeros(DEFAULT_SLICES*2, dtype=np.uint8)

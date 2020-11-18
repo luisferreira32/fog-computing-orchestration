@@ -146,12 +146,12 @@ class Fog_env(gym.Env):
 		# concurrent offloads
 		concurr = sum([1 if fk!=n.index and fk!=0 else 0 for fk in fks])
 		for k in range(DEFAULT_SLICES):
-			# if you are given a destination, add the offload event
-			if fks[k] != n.index and fks[k] != 0:
-				self.evq.addEvent(Offload(self.clock, n, k, self.nodes[fks[k]-1], concurr))
-			# and start processing if there is any request
+			# start processing if there is any request
 			if wks[k] != 0:
 				self.evq.addEvent(Start_processing(self.clock, n, k, wks[k]))
+			# and if you are given a destination, add the offload event
+			if fks[k] != n.index and fks[k] != 0:
+				self.evq.addEvent(Offload(self.clock, n, k, self.nodes[fks[k]-1], concurr))
 
 	def _agent_reward_fun(self, n, obs, action):
 		# calculate the reward for the agent (node) n
