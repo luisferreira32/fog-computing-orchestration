@@ -1,12 +1,24 @@
 #!/usr/bin/env python
+
+# external imports
 import numpy as np
 import copy
 import tensorflow as tf
 from typing import Tuple
+# env imports
+from sim_env.envrionment import Fog_env
 
 # near 0 number
 eps = np.finfo(np.float32).eps.item()
 
+# --- training function ---
+@tf.function
+def train(env: Fog_env, model: tf.keras.Model, optimizer: tf.keras.optimizers.Optimizer,
+	gamma: float, max_steps_per_episode: int):
+	# implement the trainning of the agent
+	pass
+
+# --- advantage estimations ---
 # General Advantage Estimator
 def get_gaes(rewards: tf.Tensor, values: tf.Tensor, next_values: tf.Tensor, lbd: float,
 	gamma: float, standardize: bool = True) -> Tuple[tf.Tensor, tf.Tensor]:
