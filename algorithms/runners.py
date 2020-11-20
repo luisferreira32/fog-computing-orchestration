@@ -66,7 +66,11 @@ def run_episode(env: Fog_env, agents: List[tf.keras.Model], max_steps: int) -> L
 			state_i = tf.expand_dims(state[i], 0)
 
 			# Run the model and to get action probabilities and critic value
-			action_logits_t, value = agent(state_i)
+			retv = agent(state_i)
+			if len(retv) == 2:
+				action_logits_t, value = retv
+			else:
+				action_logits_t = retv; value = 0.0
 
 			# Get the action and probability distributions for data
 			action_i = []; action_probs_t = []

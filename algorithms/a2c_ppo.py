@@ -3,7 +3,7 @@
 # advantages of PPO are found in a discrete actions and multi-process style; offers fast convergence
 
 # since we're implementing ppo with deep neural networks
-from algorithms.deep_tools import frames, losses
+from algorithms.deep_tools.frames import set_tf_seed, Simple_Frame, Actor_Critic_Output_Frame
 
 # some necesary constants
 from algorithms.configs import ALGORITHM_SEED
@@ -14,7 +14,7 @@ import numpy as np
 import tensorflow as tf
 
 # and to make it reproducible
-frames.set_tf_seed(ALGORITHM_SEED)
+set_tf_seed(ALGORITHM_SEED)
 
 class A2C_PPO_Agent(object):
 	"""A2C_PPO_Agent
@@ -25,7 +25,7 @@ class A2C_PPO_Agent(object):
 			[min(n._avail_cpu_units, n._avail_ram_units)+1 for _ in range(n.max_k)])
 		action_possibilities = np.array(action_possibilities, dtype=np.uint8)
 		# actual agent - the NN
-		self.network = frames.Simple_Frame(action_possibilities)
+		self.network = Simple_Frame(action_possibilities, output_frame=Actor_Critic_Output_Frame)
 		# meta-data
 		# ...
 
