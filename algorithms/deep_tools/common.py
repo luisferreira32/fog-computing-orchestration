@@ -7,7 +7,11 @@ import tensorflow as tf
 from typing import Tuple, List
 # env imports
 from sim_env.envrionment import Fog_env
-# and runners?
+
+
+# to set the tf random seed for reproducibility
+def set_tf_seed(seed=1):
+	tf.random.set_seed(seed)
 
 # near 0 number
 eps = np.finfo(np.float32).eps.item()

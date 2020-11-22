@@ -15,9 +15,6 @@ import tqdm
 import numpy as np
 import collections
 
-# to set the tf random seed for reproducibility
-def set_tf_seed(seed=1):
-	tf.random.set_seed(seed)
 
 # --- output frames ---
 
