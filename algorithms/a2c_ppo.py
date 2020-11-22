@@ -16,11 +16,6 @@ import tensorflow as tf
 # and to make it reproducible
 set_tf_seed(ALGORITHM_SEED)
 
-# huber loss function
-huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
-# and adam optimizer
-optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
-
 # the class itself
 class A2C_PPO_Agent(object):
 	"""A2C_PPO_Agent
@@ -54,13 +49,3 @@ class A2C_PPO_Agent(object):
 		# return the action for this agent
 		return np.array(action_i)
 
-	def compute_combined_loss( action_probs: tf.Tensor, advantages: tf.Tensor, 
-		returns: tf.Tensor) -> tf.Tensor:
-		action_log_probs = tf.math.log(action_probs)
-		actor_loss = 0 #self._ppo_loss()
-		critic_loss = huber_loss(values, returns)
-
-		return actor_loss + critic_loss
-
-	def _ppo_loss(self):
-		pass

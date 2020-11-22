@@ -6,10 +6,8 @@ import copy
 import tensorflow as tf
 from typing import Tuple, List
 
-from algorithms.deep_tools.common import get_expected_returns
+from algorithms.deep_tools.common import get_expected_returns, compute_combined_loss
 
-# huber loss function
-huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 # and adam optimizer
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
 
@@ -101,15 +99,6 @@ def run_episode(initial_state: tf.Tensor, agents: List[tf.keras.Model], max_step
 	return action_probs, values, rewards
 
 
-
-def compute_combined_loss(action_probs: tf.Tensor, values: tf.Tensor, 
-	returns: tf.Tensor) -> tf.Tensor:
-	advantages = returns-values
-	action_log_probs = tf.math.log(action_probs)
-	actor_loss = -tf.math.reduce_sum(action_log_probs * advantages)
-	critic_loss = huber_loss(values, returns)
-
-	return actor_loss + critic_loss
 
 # to train an actor critic algorithm
 #@tf.function
