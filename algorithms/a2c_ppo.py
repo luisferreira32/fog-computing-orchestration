@@ -25,8 +25,8 @@ optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
 class A2C_PPO_Agent(object):
 	"""A2C_PPO_Agent
 	"""
-	def __init__(self, n):
-		super(A2C_PPO_Agent, self, ppo_eps=DEFAULT_PPO_EPS).__init__()
+	def __init__(self, n, ppo_eps=DEFAULT_PPO_EPS):
+		super(A2C_PPO_Agent, self).__init__()
 		action_possibilities = np.append([N_NODES+1 for _ in range(n.max_k)],
 			[min(n._avail_cpu_units, n._avail_ram_units)+1 for _ in range(n.max_k)])
 		action_possibilities = np.array(action_possibilities, dtype=np.uint8)

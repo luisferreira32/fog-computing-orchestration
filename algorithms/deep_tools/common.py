@@ -62,9 +62,5 @@ def get_simple_advantage(rewards: tf.Tensor, values: tf.Tensor,
 	if standardize:
 		returns = ((returns - tf.math.reduce_mean(returns)) / (tf.math.reduce_std(returns) + eps))
 
-	# deal with multi-discrete action spaces
-	returns = tf.convert_to_tensor([returns for v in values[0]])
-	returns = tf.transpose(returns)
-
 	# advantage and expected returns Q(s,a)
 	return returns-values, returns

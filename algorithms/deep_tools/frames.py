@@ -55,12 +55,11 @@ class Actor_Critic_Output_Frame(tf.keras.Model):
 		# output layer
 		# and set up the output layers (possibly multi-discrete)
 		self.output_layers = []
-		self.output_values = []
 		for output_size in output_sizes:
 			self.output_layers.append(layers.Dense(output_size))
-			self.output_values.append(layers.Dense(1))
+		self.output_value = layers.Dense(1)
 
-	def call(self, inputs: tf.Tensor) -> tf.Tensor:
+	def call(self, inputs: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor]:
 		""" inputs : tf.Tensor, (batch_size, time_steps, [input_shape])
 			returns : N-D tensor (batch_size, [output_shape])
 		"""
@@ -68,7 +67,7 @@ class Actor_Critic_Output_Frame(tf.keras.Model):
 		a = self.dense_1(inputs)
 		grinded = self.dense_2(a)
 		return [[output_layer(grinded) for output_layer in self.output_layers],
-			[output_value(grinded) for output_value in self.output_values]]
+			self.output_value(grinded)]
 
 # --- input frames ---
 		
