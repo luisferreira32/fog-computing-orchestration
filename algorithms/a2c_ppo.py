@@ -31,7 +31,7 @@ class A2C_PPO_Agent(object):
 			[min(n._avail_cpu_units, n._avail_ram_units)+1 for _ in range(n.max_k)])
 		action_possibilities = np.array(action_possibilities, dtype=np.uint8)
 		# actual agent - the NN
-		self.network = Simple_Frame(action_possibilities, output_frame=Actor_Critic_Output_Frame)
+		self.model = Simple_Frame(action_possibilities, output_frame=Actor_Critic_Output_Frame)
 		
 		# meta-data
 		self.learning_rate = DEFAULT_LEARNING_RATE
@@ -42,8 +42,8 @@ class A2C_PPO_Agent(object):
 		# wrapp in batches
 		if batches == 1:
 			obs = tf.expand_dims(obs, 0)
-		# call its network
-		action_logits_t,_ = self.network(obs)
+		# call its model
+		action_logits_t,_ = self.model(obs)
 		# and decipher the action
 		action_i = []
 		# Since it's multi-discrete, for every discrete set of actions:

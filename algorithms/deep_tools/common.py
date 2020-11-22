@@ -58,43 +58,10 @@ def get_simple_advantage(rewards: tf.Tensor, values: tf.Tensor,
 	# advantage and expected returns Q(s,a)
 	return returns-values, returns
 
-# and adam optimizer
-optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
-
-# to train an actor critic algorithm
-@tf.function
-def train_actor_critic(env: Fog_env, agents: List[tf.keras.Model],
-	optimizer: tf.keras.optimizers.Optimizer = optimizer,
-	advantage_calculator = get_simple_advantage,
-	gamma: float = 0.99, max_steps_per_episode: int = 100):
-
-	# Run the model for one episode to collect training data
-	action_probs, values, rewards = run_episode(env, agents, max_steps_per_episode) 
-
-	for agent, a_probs, v, rw in zip(agents,action_probs,values,rewards):
-		with tf.GradientTape() as tape:
-
-			# Calculate simple advantage and returns
-			adv, returns = advantage_calculator(rw, gamma)
-
-			# Convert training data to appropriate TF tensor shapes
-			a_probs, adv, returns = [tf.expand_dims(x, 1) for x in [a_probs, adv, returns]] 
-
-			# Calculating loss values to update our network
-			loss = agent.compute_combined_loss(a_probs, adv, returns)
-
-		# Compute the gradients from the loss
-		grads = tape.gradient(loss, model.trainable_variables)
-
-		# Apply the gradients to the model's parameters
-		optimizer.apply_gradients(zip(grads, model.trainable_variables))
-
-	episode_reward = tf.math.reduce_sum(rewards)
-
-	return episode_reward
 
 def tensor_list(l: List) -> List[tf.Tensor]:
 	return [tf.convert_to_tensor(item) for item in l]
+
 
 def run_episode(env: Fog_env, agents: List[tf.keras.Model], max_steps: int) -> List[List[tf.Tensor]]:
 	"""Runs a single episode to collect training data."""
@@ -112,15 +79,12 @@ def run_episode(env: Fog_env, agents: List[tf.keras.Model], max_steps: int) -> L
 		action = []
 
 		# Run every agent
-		for i in tf.range(len(agents)):
-			# Pick up the model
-			agent = agents[i]
-
+		for i, agent in enumerate(agents):
 			# Convert state into a batched tensor (batch size = 1)
 			state_i = tf.expand_dims(state[i], 0)
 
 			# Run the model and to get action probabilities and critic value
-			retv = agent(state_i)
+			retv = agent.model(state_i)
 			if len(retv) == 2:
 				action_logits_t, value = retv
 			else:
@@ -132,7 +96,7 @@ def run_episode(env: Fog_env, agents: List[tf.keras.Model], max_steps: int) -> L
 			for action_logits_t_k in action_logits_t:
 				# Sample next action from the action probability distribution
 				action_i_k = tf.random.categorical(action_logits_t_k,1)[0,0]
-				action_i.append(action_i_k.numpy())
+				action_i.append(action_i_k)
 				action_probs_t_k = tf.nn.softmax(action_logits_t_k)
 				action_probs_t.append(action_probs_t_k[0, action_i_k])
 
@@ -150,17 +114,51 @@ def run_episode(env: Fog_env, agents: List[tf.keras.Model], max_steps: int) -> L
 		state.set_shape(initial_state_shape)
 		#print(state, reward, done, action)
 		# Store reward
-		for i in tf.range(len(agents)):
+		for i in range(len(agents)):
 			rewards[i] = rewards[i].write(t, reward[i])
 
 		if tf.cast(done, tf.bool):
 			break
 
 	# Stack them for every agent
-	for i in tf.range(len(agents)):
+	for i in range(len(agents)):
 		action_probs[i] = action_probs[i].stack()
 		values[i] = values[i].stack()
 		rewards[i] = rewards[i].stack()
 
 	return action_probs, values, rewards
 
+
+# and adam optimizer
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
+
+# to train an actor critic algorithm
+@tf.function
+def train_actor_critic(action_probs, values, rewards, agents: List[tf.keras.Model],
+	optimizer: tf.keras.optimizers.Optimizer = optimizer,
+	advantage_calculator = get_simple_advantage, gamma: float = 0.99):
+
+	for agent, a_probs, v, rw in zip(agents,action_probs,values,rewards):
+		with tf.GradientTape() as tape:
+			tape.watch(a_probs)
+			tape.watch(v)
+			tape.watch(rewards)
+
+			# Calculate simple advantage and returns
+			adv, returns = advantage_calculator(rw,v, gamma)
+
+			# Convert training data to appropriate TF tensor shapes
+			a_probs, v, adv, returns = [tf.expand_dims(x, 1) for x in [a_probs, v, adv, returns]] 
+
+			# Calculating loss values to update our network
+			loss = agent.compute_combined_loss(a_probs, v, adv, returns)
+
+		# Compute the gradients from the loss
+		grads = tape.gradient(loss, agent.model.trainable_variables)
+
+		# Apply the gradients to the model's parameters
+		optimizer.apply_gradients(zip(grads, agent.model.trainable_variables))
+
+	episode_reward = tf.math.reduce_sum(rewards)
+
+	return episode_reward
