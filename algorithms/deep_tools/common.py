@@ -155,6 +155,7 @@ def train_actor_critic(action_probs, values, rewards, agents: List[tf.keras.Mode
 
 		# Compute the gradients from the loss
 		grads = tape.gradient(loss, agent.model.trainable_variables)
+		print(grads.shape)
 
 		# Apply the gradients to the model's parameters
 		optimizer.apply_gradients(zip(grads, agent.model.trainable_variables))
