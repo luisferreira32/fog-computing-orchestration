@@ -16,9 +16,6 @@ import tensorflow as tf
 # and to make it reproducible
 set_tf_seed(ALGORITHM_SEED)
 
-# huber loss function
-huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
-
 # the class itself
 class A2C_Agent(object):
 	"""A2C_Agent
@@ -52,11 +49,4 @@ class A2C_Agent(object):
 		# return the action for this agent
 		return np.array(action_i)
 
-	def compute_combined_loss(self, action_probs: tf.Tensor, values: tf.Tensor, advantages: tf.Tensor, 
-		returns: tf.Tensor) -> tf.Tensor:
-		action_log_probs = tf.math.log(action_probs)
-		actor_loss = -tf.math.reduce_sum(action_log_probs * advantages)
-		critic_loss = huber_loss(values, returns)
-
-		return actor_loss + critic_loss
 
