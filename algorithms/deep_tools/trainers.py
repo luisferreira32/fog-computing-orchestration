@@ -101,17 +101,18 @@ def run_episode(initial_state: tf.Tensor, agents: List[tf.keras.Model], max_step
 
 
 # to train an actor critic algorithm
-#@tf.function
+@tf.function
 def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 	optimizer: tf.keras.optimizers.Optimizer = optimizer, gamma: float = 0.99,
-	max_steps: int = 100):
-
-	losses = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
+	max_steps: int = 10):
 
 	with tf.GradientTape(persistent=True) as tape:
+		
+		losses = []
 		action_probs, values, rewards = run_episode(initial_state, agents, max_steps)
 
 		for i, agent in enumerate(agents):
+			# compute stuff for each agent
 			aux_val = tf.identity(values[i])
 			aux_action_probs = tf.identity(action_probs[i])
 			# Calculate simple advantage and returns
@@ -123,16 +124,15 @@ def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 
 			# Calculating loss values to update our network
 			loss = compute_combined_loss(aux_action_probs, aux_val, returns)
-			losses = losses.write(i, loss)
+			losses.append(loss)
 
-	for i, agent in enumerate(agents):
+	for agent, loss in zip(agents, losses):
 		# Compute the gradients from the loss
-		grads = tape.gradient(losses.read(i), agent.model.trainable_variables)
-
+		grads = tape.gradient(loss, agent.model.trainable_variables)
 		# Apply the gradients to the model's parameters
 		optimizer.apply_gradients(zip(grads, agent.model.trainable_variables))
 	# drop reference to the tape
 	del tape
-	episode_reward = tf.math.reduce_sum(rewards)
 
+	episode_reward = tf.math.reduce_sum(tf.transpose(rewards),0)
 	return episode_reward
