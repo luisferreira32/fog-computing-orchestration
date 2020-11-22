@@ -11,7 +11,6 @@ import tensorflow as tf
 from tensorflow.keras import layers
 # other necessary imports
 from typing import Any, List, Sequence, Tuple
-import tqdm
 import numpy as np
 import collections
 

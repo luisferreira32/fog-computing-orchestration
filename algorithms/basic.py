@@ -4,6 +4,10 @@ import numpy as np
 
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, RAM_UNIT
 
+def generate_basic_agents(env, alg):
+	agents = [alg(n) for n in env.nodes]
+	return agents
+
 class Nearest_Round_Robin(object):
 	"""Nearest_Round_Robin this algorithm allows every slice that has tasks in the queue to take turns in processing on a
 	shared resource in a periodically repeated order. Offloading when the queue is 0.8 full to the nearest node

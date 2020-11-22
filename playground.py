@@ -16,7 +16,8 @@ if not algs or not cases:
 
 from utils.tools import dictionary_append, write_all_to_csvs, random_seed_primes
 from utils.display import plt_bar, plt_error_bar, plt_box_plot, info_gather_init
-
+from sim_env.envrionment import Fog_env
+from algorithms.basic import generate_basic_agents
 from algorithms.runners import run_algorithm_on_envrionment
 
 # --- the main playground ---
@@ -35,8 +36,10 @@ for seed in random_seeds:
 	for case in cases:
 		for alg in algs:
 			# TODO@luis: add a training runner for trainable algorithms
+			env = Fog_env(case, seed)
+			agents = generate_basic_agents(env, alg)
 			# run the algorithm to collect info
-			compiled_info = run_algorithm_on_envrionment(alg, case, seed, info_gather_init(), debug)
+			compiled_info = run_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
 			# just to know
 			current+=1; print("[LOG] simulations ran ["+str(current)+"/"+total+"]")
 			# for further use
