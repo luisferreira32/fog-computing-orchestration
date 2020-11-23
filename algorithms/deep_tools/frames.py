@@ -71,8 +71,7 @@ class Actor_Critic_Output_Frame(tf.keras.Model):
 class Simple_Frame(tf.keras.Model):
 	"""Simple_Frame deep neural network with dense layers
 	"""
-	def __init__(self, n_num_hidden_units: List[int] = [64, 128],
-		output_frame: tf.keras.Model = Simple_output_Frame):
+	def __init__(self, n_num_hidden_units: List[int] = [64, 128]):
 		super(Simple_Frame, self).__init__()
 
 		# do the number of requested hidden dense layers with RELU activation function
@@ -96,8 +95,7 @@ class Conv1d_Frame(tf.keras.Model):
 	""" Conv1d_Frame deep neural network with feature extration with Convulutional 1D layer
 		and output dense layers
 	"""
-	def __init__(self, output_sizes: List[int], input_size: int,
-		output_frame: tf.keras.Model = Simple_output_Frame):
+	def __init__(self, input_size: int):
 		super(Conv1d_Frame, self).__init__()
 
 		# 32 filters, kernal size of 3, ReLU
@@ -106,8 +104,6 @@ class Conv1d_Frame(tf.keras.Model):
 		self.conv1d_hidden = layers.Conv1D(64, 3, padding="same", activation="relu")
 		# connection
 		self.flattener = layers.Flatten()
-		# output frame
-		self.output_f = output_frame(output_sizes)
 
 	def call(self, inputs: tf.Tensor) -> tf.Tensor:
 		""" inputs : tf.Tensor, (batch_size, time_steps, [input_shape]) : keep time_steps constant
@@ -117,20 +113,17 @@ class Conv1d_Frame(tf.keras.Model):
 		a = self.conv1d_input(inputs)
 		b = self.conv1d_hidden(a)
 		grinded = self.flattener(b)
-		return self.output_f(grinded)
+		return grinded
 
 
 class Rnn_Frame(tf.keras.Model):
 	"""Rnn_Frame implements a  GRU recurrent layers followed by dense layers
 	"""
-	def __init__(self, output_sizes: List[int],
-		output_frame: tf.keras.Model = Simple_output_Frame):
+	def __init__(self):
 		super(Rnn_Frame, self).__init__()
 		
 		# a GRU RNN layers
 		self.rnn_input = layers.GRU(128)
-		# output frame
-		self.output_f = output_frame(output_sizes)
 	
 	def call(self, inputs: tf.Tensor) -> tf.Tensor:
 		""" inputs : tf.Tensor, (batch_size, time_steps, [input_shape])
@@ -138,13 +131,12 @@ class Rnn_Frame(tf.keras.Model):
 		"""
 		# pass inputs on model and return the output value Tensor
 		grinded = self.rnn_input(inputs)
-		return self.output_f(grinded)
+		return grinded
 
 class Conv1d_Rnn_Frame(tf.keras.Model):
 	"""Conv1d_Rnn_Frame: conv1d layer to GRU to dense ouput
 	"""
-	def __init__(self, output_sizes: List[int], input_size: int,
-		output_frame: tf.keras.Model = Simple_output_Frame):
+	def __init__(self, input_size: int):
 		super(Conv1d_Rnn_Frame, self).__init__()
 
 		# 32 filters, kernal size of 3, ReLU
@@ -153,8 +145,6 @@ class Conv1d_Rnn_Frame(tf.keras.Model):
 		self.conv1d_hidden = layers.Conv1D(64, 3, padding="same", activation="relu")
 		# connection
 		self.rnn_connector = layers.GRU(128)
-		# output frame
-		self.output_f = output_frame(output_sizes)
 
 	def call(self, inputs: tf.Tensor) -> tf.Tensor:
 		""" inputs : tf.Tensor, (batch_size, time_steps, [input_shape]) : keep time_steps constant
@@ -164,7 +154,7 @@ class Conv1d_Rnn_Frame(tf.keras.Model):
 		a = self.conv1d_input(inputs)
 		b = self.conv1d_hidden(a)
 		grinded = self.rnn_connector(b)
-		return self.output_f(grinded)
+		return grinded
 
 
 

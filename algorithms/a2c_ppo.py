@@ -24,7 +24,8 @@ class A2C_PPO_Agent(object):
 			[min(n._avail_cpu_units, n._avail_ram_units)+1 for _ in range(n.max_k)])
 		action_possibilities = np.array(action_possibilities, dtype=np.uint8)
 		# actual agent - the NN
-		self.model = Simple_Frame(action_possibilities, output_frame=Actor_Critic_Output_Frame)
+		self.input_model = Simple_Frame()
+		self.output_model = Actor_Critic_Output_Frame(action_possibilities)
 		
 		# meta-data
 		self.learning_rate = DEFAULT_LEARNING_RATE
@@ -46,4 +47,8 @@ class A2C_PPO_Agent(object):
 			action_i.append(action_i_k.numpy())
 		# return the action for this agent
 		return np.array(action_i)
+
+	def model(self, obs):
+		return self.output_model(self.input_model(obs))
+
 
