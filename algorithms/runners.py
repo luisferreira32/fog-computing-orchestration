@@ -41,7 +41,7 @@ def run_algorithm_on_envrionment(agents, env, case, compiled_info=None, debug=Fa
 def set_training_env(env):
 	global training_env
 	training_env = env
-	return env._get_state_obs()
+	return env.reset() #env._get_state_obs()#
 
 
 # Wrap OpenAI Gym's `env.step` call as an operation in a TensorFlow function.

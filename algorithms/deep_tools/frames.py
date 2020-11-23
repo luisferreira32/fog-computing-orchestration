@@ -65,6 +65,9 @@ class Actor_Critic_Output_Frame(tf.keras.Model):
 		return [[output_layer(grinded) for output_layer in self.output_layers],
 			self.output_value(grinded)]
 
+	def hidden_layers(self):
+		return [self.dense_1, self.dense_2]
+
 # --- input frames ---
 		
 # a simple frame with just with dense layers

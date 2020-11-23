@@ -221,3 +221,6 @@ class Fog_env(gym.Env):
 		set_tools_seed(seed)
 		return [seed]
 
+	def is_done(self):
+		return self.clock >= SIM_TIME
+

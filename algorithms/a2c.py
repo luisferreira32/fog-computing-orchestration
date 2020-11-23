@@ -66,7 +66,8 @@ huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 def compute_combined_loss(action_probs: tf.Tensor, values: tf.Tensor, returns: tf.Tensor) -> tf.Tensor:
 	advantages = returns-values
 	action_log_probs = tf.math.log(action_probs)
-	actor_loss = -tf.math.reduce_sum(action_log_probs * advantages, 1)
+	# T * T timesteps for 6 different actions - reduce sum to actor_loss[6]
+	actor_loss = -tf.math.reduce_sum(action_log_probs * advantages, [0,1])
 	critic_loss = huber_loss(values, returns)
 
 	return actor_loss + critic_loss
@@ -79,7 +80,7 @@ def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 
 	with tf.GradientTape(persistent=True) as tape:
 		
-		losses = []
+		action_losses = []; common_losses = []
 		action_probs, values, rewards = run_episode(initial_state, agents, max_steps)
 
 		for i, agent in enumerate(agents):
@@ -95,16 +96,23 @@ def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 
 			# Calculating loss values to update our network
 			loss = compute_combined_loss(aux_action_probs, aux_val, returns)
-			losses.append(loss)
+			common_losses.append(tf.reduce_sum(loss))
+			action_losses.append(loss)
 
-	# TODO@luis: split losses in an approriate way for the gradient L = (100, 6)
-	for agent, loss in zip(agents, losses):
+
+	for agent, action_loss, common_loss in zip(agents, action_losses, common_losses):
 		# Compute the gradients from the loss
-		grads1 = tape.gradient(loss, agent.input_model.trainable_variables)
-		grads2 = tape.gradient(loss, agent.output_model.trainable_variables)
-		# Apply the gradients to the model's parameters
-		optimizer.apply_gradients(zip(grads1, agent.input_model.trainable_variables))
-		optimizer.apply_gradients(zip(grads2, agent.output_model.trainable_variables))
+		# for each output layer
+		for layer in agent.output_model.output_layers:
+			grads = tape.gradient(action_loss, layer.trainable_variables)
+			optimizer.apply_gradients(zip(grads, layer.trainable_variables))
+		# for the rest of the output layers
+		for layer in agent.output_model.hidden_layers():
+			grads = tape.gradient(common_loss, layer.trainable_variables)
+			optimizer.apply_gradients(zip(grads, layer.trainable_variables))
+		# and for the input layers
+		grads = tape.gradient(common_loss, agent.input_model.trainable_variables)
+		optimizer.apply_gradients(zip(grads, agent.input_model.trainable_variables))
 	# drop reference to the tape
 	del tape
 
@@ -115,7 +123,7 @@ def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 def run_a2c_agents_on_env(agents, env, case, max_episodes: int = 100):
 	running_reward = 0
 	reward_threshold = 10000
-	max_steps_per_episode = 1000
+	max_steps_per_episode = 600
 	# Run the model for one episode to collect training data
 	with tqdm.trange(max_episodes) as t:
 		for i in t:
