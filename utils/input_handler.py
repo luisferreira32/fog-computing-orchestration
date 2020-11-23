@@ -6,6 +6,7 @@ from sim_env.configs import NORMAL_CASES, HEAVY_CASES, ALL_CASES
 from sim_env.configs import NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3
 from sim_env.configs import HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3
 from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
+from algorithms.a2c import A2C_Agent
 
 def argument_check(argv):
 	# running variables
@@ -25,6 +26,7 @@ def argument_check(argv):
 		print("--algorithm= [-A=] : choose your algorithm, by default rr is chosen")
 		print("   rr : Nearest Round Robin basline algorithm")
 		print("   pq : Nearest Priority Queue basline algorithm")
+		print("   a2c : Advantage Actor Critic RL algorithm")
 		print("--cases= [-C=] : by default runs case 1 with normal traffic")
 		print("   all : runs case 1, 2 and 3, with normal and heavy traffic")
 		print("   normal : runs case 1, 2 and 3, with normal traffic")
@@ -45,6 +47,8 @@ def argument_check(argv):
 				algs.append(Nearest_Priority_Queue)
 			if "rr" in s:
 				algs.append(Nearest_Round_Robin)
+			if "a2c" in s:
+				algs.append(A2C_Agent)
 		if "--cases=" in s or "-C=" in s:
 			cases = []
 			if "all" in s:

@@ -18,6 +18,7 @@ import tensorflow as tf
 class A2C_PPO_Agent(object):
 	"""A2C_PPO_Agent
 	"""
+	basic = False
 	def __init__(self, n, ppo_eps=DEFAULT_PPO_EPS):
 		super(A2C_PPO_Agent, self).__init__()
 		action_possibilities = np.append([N_NODES+1 for _ in range(n.max_k)],

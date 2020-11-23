@@ -64,6 +64,7 @@ class Fog_env(gym.Env):
 
 	def step(self, action_n):
 		# to make sure you give actions in the FORMATED action space
+		action_n = self._cap_action_n(action_n)
 		assert self.action_space.contains(action_n)
 		state_t = self._get_state_obs()
 
@@ -139,6 +140,13 @@ class Fog_env(gym.Env):
 			[len(n.buffers[k]) for k in range(n.max_k)], [n._being_processed[k] for k in range(n.max_k)],
 			[n._avail_cpu_units],[n._avail_ram_units]))
 		return np.array(pobs, dtype=np.uint8)
+
+	def _cap_action_n(self, action_n):
+		for n in range(len(action_n)):
+			for i in range(len(action_n[n])):
+				if action_n[n][i] >= self.action_space.nvec[n][i]:
+					action_n[n][i] = self.action_space.nvec[n][i]-1
+		return action_n
 
 	def _set_agent_action(self, n, action):
 		# takes the action in the system, i.e. sets up the offloading events

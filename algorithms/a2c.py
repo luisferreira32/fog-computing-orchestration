@@ -8,8 +8,8 @@ from algorithms.deep_tools.common import get_expected_returns
 from algorithms.runners import run_episode, set_training_env
 
 # some necesary constants
-from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE
-from sim_env.configs import N_NODES
+from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE, DEFAULT_ACTION_SPACE
+from sim_env.configs import N_NODES, DEFAULT_SLICES
 
 # and external imports
 import numpy as np
@@ -22,16 +22,15 @@ from typing import Tuple, List
 class A2C_Agent(object):
 	"""A2C_Agent
 	"""
-	def __init__(self, n):
+	basic = False
+	def __init__(self, action_space=DEFAULT_ACTION_SPACE):
 		super(A2C_Agent, self).__init__()
-		action_possibilities = np.append([N_NODES+1 for _ in range(n.max_k)],
-			[min(n._avail_cpu_units, n._avail_ram_units)+1 for _ in range(n.max_k)])
-		action_possibilities = np.array(action_possibilities, dtype=np.uint8)
 		# actual agent - the NN
 		self.input_model = Simple_Frame()
-		self.output_model = Actor_Critic_Output_Frame(action_possibilities)
+		self.output_model = Actor_Critic_Output_Frame(action_space)
 		
 		# meta-data
+		self.action_space = action_space
 		self.learning_rate = DEFAULT_LEARNING_RATE
 		self.gamma = 0.99
 
@@ -50,7 +49,7 @@ class A2C_Agent(object):
 			action_i_k = tf.random.categorical(action_logits_t_k,1)[0,0]
 			action_i.append(action_i_k)
 		# return the action for this agent
-		return action_i
+		return self.cap_to_action_space(action_i)
 
 	def model(self, obs):
 		return self.output_model(self.input_model(obs))
@@ -61,6 +60,36 @@ class A2C_Agent(object):
 	def load_models(self, path):
 		self.input_model = tf.keras.models.load_model(path+"input", compile=False)
 		self.output_model = tf.keras.models.load_model(path+"output", compile=False)
+		
+	def set_action_space(self, action_space):
+		self.action_space = action_space
+	def cap_to_action_space(self, action_i):
+		for i in range(len(self.action_space)):
+			if action_i[i] >= self.action_space[i]:
+				action_i[i] = self.action_space[i]-1
+		return action_i
+
+	@staticmethod
+	def short_str():
+		return "a2c_"
+	# to train RL agents  on an envrionment
+	@staticmethod
+	def run_agents_on_env(agents, env, max_episodes: int = 10):
+		running_reward = 0
+		reward_threshold = 10000
+		max_steps_per_episode = 1000
+		# Run the model for one episode to collect training data
+		with tqdm.trange(max_episodes) as t:
+			for i in t:
+				initial_state = set_training_env(env)
+				episode_reward = train_actor_critic(initial_state, agents, gamma=0.9, max_steps=max_steps_per_episode)
+
+				t.set_description(f'Episode {i}')
+				#t.set_postfix(episode_reward=episode_reward, running_reward=running_reward)
+				print(episode_reward)
+				if episode_reward > reward_threshold:  
+					break
+		return agents
 
 
 # optimizer to apply the gradient change
@@ -125,21 +154,3 @@ def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 
 	episode_reward = tf.math.reduce_sum(rw)
 	return episode_reward
-
-# to train RL agents  on an envrionment
-def run_a2c_agents_on_env(agents, env, case, max_episodes: int = 10):
-	running_reward = 0
-	reward_threshold = 10000
-	max_steps_per_episode = 600
-	# Run the model for one episode to collect training data
-	with tqdm.trange(max_episodes) as t:
-		for i in t:
-			initial_state = set_training_env(env)
-			episode_reward = train_actor_critic(initial_state, agents, gamma=0.9, max_steps=max_steps_per_episode)
-
-			t.set_description(f'Episode {i}')
-			#t.set_postfix(episode_reward=episode_reward, running_reward=running_reward)
-			print(episode_reward)
-			if episode_reward > reward_threshold:  
-				break
-	return agents

@@ -17,8 +17,8 @@ if not algs or not cases:
 from utils.tools import dictionary_append, write_all_to_csvs, random_seed_primes
 from utils.display import plt_bar, plt_error_bar, plt_box_plot, info_gather_init
 from sim_env.envrionment import Fog_env
-from algorithms.basic import generate_basic_agents
-from algorithms.runners import run_algorithm_on_envrionment
+from algorithms.basic import create_basic_agents
+from algorithms.runners import run_algorithm_on_envrionment, create_and_train_agents
 
 # --- the main playground ---
 
@@ -32,12 +32,21 @@ total = str(len(algs)*len(cases)*len(random_seeds)); current = 0
 # ---- algorithms runnning for every case ----
 
 # get some simulations to do the average
-for seed in random_seeds:
-	for case in cases:
-		for alg in algs:
-			# TODO@luis: add a training runner for trainable algorithms
+for case in cases:
+	for alg in algs:
+		# trainable agents
+		env = Fog_env(case, 2)
+		if not alg.basic: agents = create_and_train_agents(env, alg, case)
+		for seed in random_seeds:
+			# generate the env
 			env = Fog_env(case, seed)
-			agents = generate_basic_agents(env, alg)
+			# and the basic agents
+			if alg.basic:
+				agents = create_basic_agents(env, alg)
+			else:
+				for agent, act_space in zip(agents, env.action_space.nvec):
+					agent.set_action_space(act_space)
+				
 			# run the algorithm to collect info
 			compiled_info = run_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
 			# just to know
