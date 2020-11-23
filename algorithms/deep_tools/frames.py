@@ -71,7 +71,7 @@ class Actor_Critic_Output_Frame(tf.keras.Model):
 class Simple_Frame(tf.keras.Model):
 	"""Simple_Frame deep neural network with dense layers
 	"""
-	def __init__(self, output_sizes: List[int], n_num_hidden_units: List[int] = [64, 128],
+	def __init__(self, n_num_hidden_units: List[int] = [64, 128],
 		output_frame: tf.keras.Model = Simple_output_Frame):
 		super(Simple_Frame, self).__init__()
 
@@ -80,8 +80,6 @@ class Simple_Frame(tf.keras.Model):
 		for num_hidden_units in n_num_hidden_units:
 			self.hidden_layers.append(layers.Dense(num_hidden_units, activation="relu"))
 		
-		# and set up the output layers
-		self.output_f = output_frame(output_sizes)
 
 	def call(self, inputs: tf.Tensor) -> List[tf.Tensor]:
 		""" inputs : tf.Tensor, (batch_size, [input_shape])
@@ -91,7 +89,7 @@ class Simple_Frame(tf.keras.Model):
 		grinded = inputs
 		for hidden_layer in self.hidden_layers:
 			grinded = hidden_layer(grinded)
-		return self.output_f(grinded)
+		return grinded
 
 # CNN feature extraction then dense layers
 class Conv1d_Frame(tf.keras.Model):

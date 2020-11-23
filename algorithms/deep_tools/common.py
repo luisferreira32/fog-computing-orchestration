@@ -61,19 +61,3 @@ def get_expected_returns(rewards: tf.Tensor, values: tf.Tensor,
 
 	# expected returns
 	return returns
-
-
-# huber loss function
-huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
-
-# combineed AC loss (with simple advantage)
-def compute_combined_loss(action_probs: tf.Tensor, values: tf.Tensor, returns: tf.Tensor) -> tf.Tensor:
-	advantages = returns-values
-	action_log_probs = tf.math.log(action_probs)
-	actor_loss = -tf.math.reduce_sum(action_log_probs * advantages)
-	critic_loss = huber_loss(values, returns)
-
-	return actor_loss + critic_loss
-
-def ppo_loss():
-	pass
