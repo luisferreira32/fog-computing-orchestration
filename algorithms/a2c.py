@@ -74,7 +74,7 @@ class A2C_Agent(object):
 		return "a2c_"
 	# to train RL agents  on an envrionment
 	@staticmethod
-	def run_agents_on_env(agents, env, max_episodes: int = 10):
+	def train_agents_on_env(agents, env, max_episodes: int = 1):
 		running_reward = 0
 		reward_threshold = 10000
 		max_steps_per_episode = 1000

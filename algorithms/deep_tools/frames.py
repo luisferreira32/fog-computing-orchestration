@@ -36,8 +36,8 @@ class Simple_output_Frame(tf.keras.Model):
 			returns : N-D tensor (batch_size, [output_shape])
 		"""
 		# pass inputs on model and return the output value Tensor
-		a = self.dense_1(inputs)
-		grinded = self.dense_2(a)
+		x = self.dense_1(inputs)
+		grinded = self.dense_2(x)
 		return [output_layer(grinded) for output_layer in self.output_layers]
 
 class Actor_Critic_Output_Frame(tf.keras.Model):
@@ -60,8 +60,8 @@ class Actor_Critic_Output_Frame(tf.keras.Model):
 			returns : N-D tensor (batch_size, [output_shape])
 		"""
 		# pass inputs on model and return the output value Tensor
-		a = self.dense_1(inputs)
-		grinded = self.dense_2(a)
+		x = self.dense_1(inputs)
+		grinded = self.dense_2(x)
 		return [[output_layer(grinded) for output_layer in self.output_layers],
 			self.output_value(grinded)]
 
@@ -113,9 +113,9 @@ class Conv1d_Frame(tf.keras.Model):
 			returns : N-D tensor (batch_size, [output_shape])
 		"""
 		# pass inputs on model and return the output value Tensor
-		a = self.conv1d_input(inputs)
-		b = self.conv1d_hidden(a)
-		grinded = self.flattener(b)
+		x = self.conv1d_input(inputs)
+		x = self.conv1d_hidden(x)
+		grinded = self.flattener(x)
 		return grinded
 
 
@@ -154,9 +154,9 @@ class Conv1d_Rnn_Frame(tf.keras.Model):
 			returns : N-D tensor (batch_size, [output_shape])
 		"""
 		# pass inputs on model and return the output value Tensor
-		a = self.conv1d_input(inputs)
-		b = self.conv1d_hidden(a)
-		grinded = self.rnn_connector(b)
+		x = self.conv1d_input(inputs)
+		x = self.conv1d_hidden(x)
+		grinded = self.rnn_connector(x)
 		return grinded
 
 

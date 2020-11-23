@@ -43,18 +43,6 @@ def run_algorithm_on_envrionment(agents, env, case, compiled_info=None, debug=Fa
 
 # --- training related running ---
 
-#
-def create_and_train_agents(env, alg, case):
-	set_tf_seed(ALGORITHM_SEED)
-	# save path for the models
-	my_path = os.getcwd() + "/algorithms/saved_models/"+alg.short_str()+case["case"]+"/"
-	# the agents and run them for training
-	agents = [alg() for n in env.nodes]
-	agents = alg.run_agents_on_env(agents, env)
-	for agent in agents:
-		agent.save_models(my_path)
-	return agents
-
 def set_training_env(env):
 	global training_env
 	training_env = env

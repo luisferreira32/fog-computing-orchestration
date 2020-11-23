@@ -3,12 +3,13 @@
 # ---- JUST ESSENTIAL IMPORTS ----
 
 import sys
-from utils.input_handler import argument_check
+import os
+from utils.input_handler import argument_check, fetch_trained_agents
 from utils.basic_info import average_delays
 
 # ---- command line input ----
 
-[debug, algs, cases, max_seed] = argument_check(sys.argv)
+[debug, algs, cases, max_seed, train] = argument_check(sys.argv)
 if not algs or not cases:
 	sys.exit(1)
 
@@ -18,7 +19,7 @@ from utils.tools import dictionary_append, write_all_to_csvs, random_seed_primes
 from utils.display import plt_bar, plt_error_bar, plt_box_plot, info_gather_init
 from sim_env.envrionment import Fog_env
 from algorithms.basic import create_basic_agents
-from algorithms.runners import run_algorithm_on_envrionment, create_and_train_agents
+from algorithms.runners import run_algorithm_on_envrionment
 
 # --- the main playground ---
 
@@ -26,17 +27,28 @@ from algorithms.runners import run_algorithm_on_envrionment, create_and_train_ag
 delays_df={}; success_rate_df={}; overflow_rate_df={};
 random_seeds = random_seed_primes(max_seed)
 if not random_seeds: random_seeds = [2]
+
+# ---- training ONE algorithm for ONE case ----
+if train:
+	alg = algs[0]
+	case = cases[0]
+	n_episodes = 100
+	env = Fog_env(case, 2)
+	print("[LOG] Training",alg.short_str(),"in case",case["case"],"for",n_episodes,"episodes")
+	agents = [alg() for _ in env.nodes]
+	agents = alg.train_agents_on_env(agents, env, n_episodes)
+	my_path = os.getcwd() + "/algorithms/saved_models/"+alg.short_str()+case["case"]+"/"
+	for agent in agents:
+		agent.save_models(my_path)
+	sys.exit()
+# ---- algorithms runnning for every case - GRAPHICAL RESULTS ----
+
 print("[LOG] Running",len(algs),"algorithms for",len(cases),"cases with",len(random_seeds),"different seeds")
 total = str(len(algs)*len(cases)*len(random_seeds)); current = 0
-
-# ---- algorithms runnning for every case ----
 
 # get some simulations to do the average
 for case in cases:
 	for alg in algs:
-		# trainable agents
-		env = Fog_env(case, 2)
-		if not alg.basic: agents = create_and_train_agents(env, alg, case)
 		for seed in random_seeds:
 			# generate the env
 			env = Fog_env(case, seed)
@@ -44,9 +56,9 @@ for case in cases:
 			if alg.basic:
 				agents = create_basic_agents(env, alg)
 			else:
-				for agent, act_space in zip(agents, env.action_space.nvec):
-					agent.set_action_space(act_space)
-				
+				agents = fetch_trained_agents(env, alg, case)
+			if not agents:
+				break
 			# run the algorithm to collect info
 			compiled_info = run_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
 			# just to know

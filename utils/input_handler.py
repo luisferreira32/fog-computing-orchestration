@@ -5,12 +5,18 @@ from sim_env.configs import BASE_SLICE_CHARS, EXPERIMENTAL_CASES
 from sim_env.configs import NORMAL_CASES, HEAVY_CASES, ALL_CASES
 from sim_env.configs import NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3
 from sim_env.configs import HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3
+from algorithms.configs import ALGORITHM_SEED
+# algorithms
 from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
 from algorithms.a2c import A2C_Agent
+# and functions to fetch the trained agents
+from algorithms.deep_tools.common import set_tf_seed
+import os
+
 
 def argument_check(argv):
 	# running variables
-	debug = False
+	debug = False; train = False
 	algs = []; cases = []
 	max_seed = 100
 
@@ -81,6 +87,8 @@ def argument_check(argv):
 				max_seed = int(s.replace("--seedmax=",''))
 			except:
 				max_seed = 100
+		if "--train" in s:
+			train = True
 
 	# default values if it was not chosen
 	if not algs:
@@ -88,4 +96,18 @@ def argument_check(argv):
 	if not cases:
 		cases = [BASE_SLICE_CHARS]
 
-	return [debug, algs, cases, max_seed]
+	return [debug, algs, cases, max_seed, train]
+
+def fetch_trained_agents(env, alg, case):
+	set_tf_seed(ALGORITHM_SEED)
+	# save path for the models
+	my_path = os.getcwd() + "/algorithms/saved_models/"+alg.short_str()+case["case"]+"/"
+	# the agents and run them for training (or pick up trained ones)
+	agents = [alg() for n in env.nodes]
+	# if there are trainned agents
+	try:
+		for agent in agents:
+			agent.load_models(my_path)
+	except:
+		return None
+	return agents
