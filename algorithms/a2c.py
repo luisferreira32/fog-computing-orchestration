@@ -55,6 +55,13 @@ class A2C_Agent(object):
 	def model(self, obs):
 		return self.output_model(self.input_model(obs))
 
+	def save_models(self, path):
+		self.input_model.save(path+"input")
+		self.output_model.save(path+"output")
+	def load_models(self, path):
+		self.input_model = tf.keras.models.load_model(path+"input", compile=False)
+		self.output_model = tf.keras.models.load_model(path+"output", compile=False)
+
 
 # optimizer to apply the gradient change
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
@@ -81,7 +88,7 @@ def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 	with tf.GradientTape(persistent=True) as tape:
 		
 		action_losses = []; common_losses = []
-		action_probs, values, rewards = run_episode(initial_state, agents, max_steps)
+		action_probs, values, rw = run_episode(initial_state, agents, max_steps)
 
 		for i, agent in enumerate(agents):
 			# compute stuff for each agent
@@ -89,14 +96,14 @@ def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 			aux_action_probs = tf.identity(action_probs[i])
 			
 			# Calculate simple advantage and returns
-			returns = get_expected_returns(rewards[i],aux_val, gamma)
+			returns = get_expected_returns(rw, aux_val, gamma)
 
 			# Convert training data to appropriate TF tensor shapes
 			aux_action_probs, aux_val, returns = [tf.expand_dims(x, 1) for x in [aux_action_probs, aux_val, returns]] 
 
 			# Calculating loss values to update our network
 			loss = compute_combined_loss(aux_action_probs, aux_val, returns)
-			common_losses.append(tf.reduce_sum(loss))
+			common_losses.append(tf.math.reduce_sum(loss))
 			action_losses.append(loss)
 
 
@@ -116,11 +123,11 @@ def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 	# drop reference to the tape
 	del tape
 
-	episode_reward = tf.math.reduce_sum(tf.transpose(rewards),0)
+	episode_reward = tf.math.reduce_sum(rw)
 	return episode_reward
 
 # to train RL agents  on an envrionment
-def run_a2c_agents_on_env(agents, env, case, max_episodes: int = 100):
+def run_a2c_agents_on_env(agents, env, case, max_episodes: int = 10):
 	running_reward = 0
 	reward_threshold = 10000
 	max_steps_per_episode = 600
@@ -132,8 +139,7 @@ def run_a2c_agents_on_env(agents, env, case, max_episodes: int = 100):
 
 			t.set_description(f'Episode {i}')
 			#t.set_postfix(episode_reward=episode_reward, running_reward=running_reward)
-			print(sum(episode_reward))
-
-			if sum(episode_reward) > reward_threshold:  
+			print(episode_reward)
+			if episode_reward > reward_threshold:  
 				break
 	return agents

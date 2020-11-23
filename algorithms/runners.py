@@ -70,17 +70,8 @@ def run_episode(initial_state: tf.Tensor, agents: List[tf.keras.Model], max_step
 	initial_state_shape = initial_state.shape
 	state = initial_state
 
-	# run a couple times the env
-	"""
-	obs_n = initial_state
-	
-	for t in tf.range(100):
-		action_n = []
-		for i,agent in enumerate(agents):
-			action_n.append(agent(obs_n[i]))
-		obs_n, _, _ = tf_env_step(action_n)
-		obs_n.set_shape(initial_state_shape)
-	"""
+	# run a couple times the env without collecting? TODO@luis
+
 	# then collect the data
 	for t in tf.range(max_steps):
 		# needed vars
