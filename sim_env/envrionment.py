@@ -197,8 +197,8 @@ class Fog_env(gym.Env):
 			# a_ik * ( (-1)if(delay_constraint_unmet) - (tunable_weight)if(overflow_chance) )
 			node_reward += obs[k] * coeficient
 
-		# float point reward
-		return node_reward
+		# float point reward: 1/k * reward on each slice
+		return node_reward/n.max_k
 
 	def render(self, mode='human', close=False):
 		# Render the environment to the screen
