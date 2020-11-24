@@ -63,7 +63,7 @@ def write_to_csv(filename, data, format_data=no_format):
 		wr.writerow(d)
 	return
 
-# HARDCODE - just for this work
+# hardcoded for this work
 def write_all_to_csvs(delay_df, success_df, overflow_df):
 	for key in delay_df:
 		d_n= format_to_miliseconds(delay_df[key])
@@ -74,3 +74,25 @@ def write_all_to_csvs(delay_df, success_df, overflow_df):
 			wr.writerows([["average_delay_ms",d] for d in d_n])
 			wr.writerows([["success_rate",s] for s in s_n])
 			wr.writerows([["overflow_rate",o] for o in o_n])
+
+# hard coded for this work too
+def read_all_from_csvs(path_to_files=results_path):
+	# create necessary dicts
+	delay_df = {}
+	success_df = {}
+	overflow_df = {}
+
+	# check all things in the results directory
+	for name in os.listdir(path_to_files):
+		if name.endswith(".csv"):
+			key = name[:-4] # without the csv
+			with open(path_to_files+name) as f:
+				reader = csv.reader(f)
+				for row in reader:
+					if row[0] == "average_delay_ms":
+						delay_df = dictionary_append(delay_df, key, float(row[1]))
+					elif row[0] == "success_rate":
+						success_df = dictionary_append(success_df, key, float(row[1]))
+					elif row[0] == "overflow_rate":
+						overflow_df = dictionary_append(overflow_df, key, float(row[1]))
+	return delay_df, success_df, overflow_df
