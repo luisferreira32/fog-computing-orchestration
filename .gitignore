@@ -1,5 +1,6 @@
 1.15venv/*
 2.0venv/*
+venv/*
 *.pyc
 *.pyo
 *.cache/*

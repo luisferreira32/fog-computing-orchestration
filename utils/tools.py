@@ -36,6 +36,7 @@ def dictionary_append(d, key, info):
 # --- I/O related tools ---
 
 results_path = os.getcwd()+"/results/"
+windows_path = os.getcwd()+"\\results\\"
 
 # format types
 def format_to_miliseconds(data):
@@ -49,15 +50,15 @@ def write_dictionary_on_csvs(d, format_data=no_format):
 	for key, value in d.items():
 		write_to_csv(key+".csv", value, format_data)
 
-# file operations
+# file operations - note newline='' is for the windows csv avoid double \n
 def append_to_file(filename, data, format_data=no_format):
-	with open(results_path+filename, "a") as f:
+	with open(windows_path+filename, "a",newline='') as f:
 		d = format_data(data)
 		f.write(str(d))
 	return
 
 def write_to_csv(filename, data, format_data=no_format):
-	with open(results_path+filename, "w") as f:
+	with open(windows_path+filename, "w",newline='') as f:
 		d = format_data(data)
 		wr = csv.writer(f)
 		wr.writerow(d)
@@ -69,14 +70,14 @@ def write_all_to_csvs(delay_df, success_df, overflow_df):
 		d_n= format_to_miliseconds(delay_df[key])
 		s_n = success_df[key]
 		o_n = overflow_df[key]
-		with open(results_path+key+".csv","w") as f:
+		with open(windows_path+key+".csv","w",newline='') as f:
 			wr = csv.writer(f)
 			wr.writerows([["average_delay_ms",d] for d in d_n])
 			wr.writerows([["success_rate",s] for s in s_n])
 			wr.writerows([["overflow_rate",o] for o in o_n])
 
 # hard coded for this work too
-def read_all_from_csvs(path_to_files=results_path):
+def read_all_from_csvs(path_to_files=windows_path):
 	# create necessary dicts
 	delay_df = {}
 	success_df = {}

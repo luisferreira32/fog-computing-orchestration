@@ -28,6 +28,9 @@ delays_df={}; success_rate_df={}; overflow_rate_df={};
 random_seeds = random_seed_primes(max_seed)
 if not random_seeds: random_seeds = [2]
 
+models_linux_path = os.getcwd() + "/algorithms/saved_models/"
+models_windows_path = os.getcwd() + "\\algorithms\\saved_models\\"
+
 # ---- training ONE algorithm for ONE case ----
 if train:
 	alg = algs[0]
@@ -37,7 +40,7 @@ if train:
 	print("[LOG] Training",alg.short_str(),"in case",case["case"],"for",n_episodes,"episodes")
 	agents = [alg(n.index) for n in env.nodes]
 	agents = alg.train_agents_on_env(agents, env, n_episodes)
-	my_path = os.getcwd() + "/algorithms/saved_models/"+alg.short_str()+case["case"]+"/"
+	my_path = models_windows_path+alg.short_str()+case["case"]+"\\"
 	for agent in agents:
 		agent.save_models(my_path)
 	sys.exit()
