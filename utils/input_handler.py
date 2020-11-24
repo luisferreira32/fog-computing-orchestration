@@ -23,7 +23,7 @@ def argument_check(argv):
 	# argument check
 	if len(argv) < 2:
 		print("run with --help or -H for more information")
-		return [debug, algs, cases, max_seed]
+		return [debug, algs, cases, max_seed, train]
 
 	# help print
 	if "--help" in argv or "-H" in argv:
@@ -41,7 +41,7 @@ def argument_check(argv):
 		print("   h1 : runs case X =[1, 2 or 3] with heavy traffic")
 		print("--seedmax= : by default 100, maximum value for a prime number seed")
 		print("--debug : will render every step")
-		return [debug, algs, cases, max_seed]
+		return [debug, algs, cases, max_seed, train]
 
 	# pick up the flags
 	if "--debug" in argv:
@@ -103,7 +103,7 @@ def fetch_trained_agents(env, alg, case):
 	# save path for the models
 	my_path = os.getcwd() + "/algorithms/saved_models/"+alg.short_str()+case["case"]+"/"
 	# the agents and run them for training (or pick up trained ones)
-	agents = [alg() for n in env.nodes]
+	agents = [alg(n.index) for n in env.nodes]
 	# if there are trainned agents
 	try:
 		for agent in agents:

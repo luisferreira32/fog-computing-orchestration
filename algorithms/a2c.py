@@ -23,13 +23,14 @@ class A2C_Agent(object):
 	"""A2C_Agent
 	"""
 	basic = False
-	def __init__(self, action_space=DEFAULT_ACTION_SPACE):
+	def __init__(self, n,action_space=DEFAULT_ACTION_SPACE):
 		super(A2C_Agent, self).__init__()
 		# actual agent - the NN
 		self.input_model = Simple_Frame()
 		self.output_model = Actor_Critic_Output_Frame(action_space)
 		
 		# meta-data
+		self.name = str(n)
 		self.action_space = action_space
 		self.learning_rate = DEFAULT_LEARNING_RATE
 		self.gamma = 0.99
@@ -55,11 +56,11 @@ class A2C_Agent(object):
 		return self.output_model(self.input_model(obs))
 
 	def save_models(self, path):
-		self.input_model.save(path+"input")
-		self.output_model.save(path+"output")
+		self.input_model.save(path+"input"+self.name)
+		self.output_model.save(path+"output"+self.name)
 	def load_models(self, path):
-		self.input_model = tf.keras.models.load_model(path+"input", compile=False)
-		self.output_model = tf.keras.models.load_model(path+"output", compile=False)
+		self.input_model = tf.keras.models.load_model(path+"input"+self.name, compile=False)
+		self.output_model = tf.keras.models.load_model(path+"output"+self.name, compile=False)
 		
 	def set_action_space(self, action_space):
 		self.action_space = action_space
@@ -77,7 +78,7 @@ class A2C_Agent(object):
 	def train_agents_on_env(agents, env, max_episodes: int = 1):
 		running_reward = 0
 		reward_threshold = 10000
-		max_steps_per_episode = 1000
+		max_steps_per_episode = 100
 		# Run the model for one episode to collect training data
 		with tqdm.trange(max_episodes) as t:
 			for i in t:

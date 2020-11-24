@@ -32,10 +32,10 @@ if not random_seeds: random_seeds = [2]
 if train:
 	alg = algs[0]
 	case = cases[0]
-	n_episodes = 100
+	n_episodes = 2
 	env = Fog_env(case, 2)
 	print("[LOG] Training",alg.short_str(),"in case",case["case"],"for",n_episodes,"episodes")
-	agents = [alg() for _ in env.nodes]
+	agents = [alg(n.index) for n in env.nodes]
 	agents = alg.train_agents_on_env(agents, env, n_episodes)
 	my_path = os.getcwd() + "/algorithms/saved_models/"+alg.short_str()+case["case"]+"/"
 	for agent in agents:
