@@ -53,17 +53,17 @@ def set_training_env(env):
 # This would allow it to be included in a callable TensorFlow graph.
 
 def env_step(action: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-  """Returns state, reward and done flag given an action."""
+	"""Returns state, reward and done flag given an action."""
 
-  state, reward, done, _ = training_env.step(action)
-  return (state.astype(np.uint8), 
-          np.array(reward, np.float32), 
-          np.array(done, np.int32))
+	state, reward, done, _ = training_env.step(action)
+	return (state.astype(np.uint8), 
+		np.array(reward, np.float32), 
+		np.array(done, np.int32))
 
 
 def tf_env_step(action: tf.Tensor) -> List[tf.Tensor]:
-  return tf.numpy_function(env_step, [action], 
-                           [tf.uint8, tf.float32, tf.int32])
+	return tf.numpy_function(env_step, [action], 
+		[tf.uint8, tf.float32, tf.int32])
 
 def run_episode(initial_state: tf.Tensor, agents: List[tf.keras.Model], max_steps: int) -> List[List[tf.Tensor]]:
 	"""Runs a single episode to collect training data."""

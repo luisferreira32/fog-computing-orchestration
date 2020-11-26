@@ -95,16 +95,16 @@ class Fog_node(Node):
 		self._arrivals_on_slices = [ar for ar in slice_characteristics["arrivals"]]
 		self._task_type_on_slices = [tp for tp in slice_characteristics["task_type"]]
 		# com times within fog nodes
-		self._communication_rates = []
-		self._distances = []
+		self._communication_rates = {}
+		self._distances = {}
 		# keep track of processed tasks
 		self._being_processed = np.zeros(number_of_slices, dtype=np.uint8)
 
 	def set_communication_rates(self, nodes):
 		for n in nodes:
-			self._distances.append(euclidean_distance(self.x, self.y, n.x, n.y))
-			self._communication_rates.append(point_to_point_transmission_rate(self,n))
-		if DEBUG: print("[DEBUG]",self.name, [str(round(r/1000000,2))+" Kb/ms" for r in self._communication_rates])
+			self._distances[n.index]= euclidean_distance(self.x, self.y, n.x, n.y)
+			self._communication_rates[n.index] = point_to_point_transmission_rate(self,n)
+		if DEBUG: print("[DEBUG]",self.name, [str(round(r/1000000,2))+" Kb/ms" for _,r in self._communication_rates.items()])
 
 	def new_interval_update_service_rate(self):
 		self._total_time_intervals += 1

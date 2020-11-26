@@ -51,7 +51,12 @@ class Nearest_Round_Robin(object):
 				action[k] = self.node.index
 			if b_k[k] >= 0.8*MAX_QUEUE and a_k[k] == 1:
 				# set the f_ik to the nearest node
-				action[k] = self.node._distances.index(min(d for d in self.node._distances if d > 0))+1
+				min_d = 10000; min_n = 0
+				for n, d in self.node._distances.items():
+					if d < min_d:
+						min_n = n
+						min_d = d
+				action[k] =min_n
 
 		# and return the action
 		return action
@@ -103,7 +108,12 @@ class Nearest_Priority_Queue(object):
 				action[k] = self.node.index
 			if b_k[k] >= 0.8*MAX_QUEUE and a_k[k] == 1:
 				# set the f_ik to the nearest node
-				action[k] = self.node._distances.index(min(d for d in self.node._distances if d > 0))+1
+				min_d = 10000; min_n = 0
+				for n, d in self.node._distances.items():
+					if d < min_d:
+						min_n = n
+						min_d = d
+				action[k] =min_n
 
 		# and return the action
 		return action

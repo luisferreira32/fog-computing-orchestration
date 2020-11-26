@@ -74,11 +74,10 @@ class A2C_Agent(object):
 
 	@staticmethod
 	def short_str():
-		return "a2c_"
+		return "a2c"
 	# to train RL agents  on an envrionment
 	@staticmethod
 	def train_agents_on_env(agents, env, max_episodes: int = 100, max_steps_per_episode: int = 1000):
-		reward_threshold = 4500 # 0.9 ar, 5 nodes, 1000 timesteps (max)
 		# Run the model for one episode to collect training data
 		with tqdm.trange(max_episodes) as t:
 			for i in t:
@@ -87,8 +86,6 @@ class A2C_Agent(object):
 
 				t.set_description(f'Episode {i}')
 				print(episode_reward)
-				if episode_reward > reward_threshold:  
-					break
 		return agents
 
 
