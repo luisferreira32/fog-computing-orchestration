@@ -23,10 +23,10 @@ class A2C_Agent(object):
 	"""A2C_Agent
 	"""
 	basic = False
-	def __init__(self, n,action_space=DEFAULT_ACTION_SPACE):
+	def __init__(self, n, action_space=DEFAULT_ACTION_SPACE, input_frame=Simple_Frame):
 		super(A2C_Agent, self).__init__()
 		# actual agent - the NN
-		self.input_model = Simple_Frame()
+		self.input_model = input_frame()
 		self.output_model = Actor_Critic_Output_Frame(action_space)
 		
 		# meta-data
@@ -109,7 +109,7 @@ def compute_combined_loss(action_probs: tf.Tensor, values: tf.Tensor, returns: t
 	return actor_loss + critic_loss
 
 # to train the advantage actor critic algorithm
-@tf.function
+#@tf.function
 def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 	optimizer: tf.keras.optimizers.Optimizer = optimizer, gamma: float = 0.99,
 	max_steps: int = 10):
