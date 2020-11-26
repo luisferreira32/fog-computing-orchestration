@@ -56,11 +56,13 @@ class A2C_Agent(object):
 		return self.output_model(self.input_model(obs))
 
 	def save_models(self, path):
-		self.input_model.save(path+"input"+self.name)
-		self.output_model.save(path+"output"+self.name)
+		arch_path = path + str(self.input_model) + "/"
+		self.input_model.save(arch_path+"input"+self.name)
+		self.output_model.save(arch_path+"output"+self.name)
 	def load_models(self, path):
-		self.input_model = tf.keras.models.load_model(path+"input"+self.name, compile=False)
-		self.output_model = tf.keras.models.load_model(path+"output"+self.name, compile=False)
+		arch_path = path + str(self.input_model) + "/"
+		self.input_model = tf.keras.models.load_model(arch_path+"input"+self.name, compile=False)
+		self.output_model = tf.keras.models.load_model(arch_path+"output"+self.name, compile=False)
 		
 	def set_action_space(self, action_space):
 		self.action_space = action_space
@@ -75,10 +77,8 @@ class A2C_Agent(object):
 		return "a2c_"
 	# to train RL agents  on an envrionment
 	@staticmethod
-	def train_agents_on_env(agents, env, max_episodes: int = 1):
-		running_reward = 0
-		reward_threshold = 10000
-		max_steps_per_episode = 100
+	def train_agents_on_env(agents, env, max_episodes: int = 100, max_steps_per_episode: int = 1000):
+		reward_threshold = 4500 # 0.9 ar, 5 nodes, 1000 timesteps (max)
 		# Run the model for one episode to collect training data
 		with tqdm.trange(max_episodes) as t:
 			for i in t:
@@ -86,7 +86,6 @@ class A2C_Agent(object):
 				episode_reward = train_actor_critic(initial_state, agents, gamma=0.9, max_steps=max_steps_per_episode)
 
 				t.set_description(f'Episode {i}')
-				#t.set_postfix(episode_reward=episode_reward, running_reward=running_reward)
 				print(episode_reward)
 				if episode_reward > reward_threshold:  
 					break

@@ -35,7 +35,7 @@ models_windows_path = os.getcwd() + "\\algorithms\\saved_models\\"
 if train:
 	alg = algs[0]
 	case = cases[0]
-	n_episodes = 2
+	n_episodes = 100
 	env = Fog_env(case, 2)
 	print("[LOG] Training",alg.short_str(),"in case",case["case"],"for",n_episodes,"episodes")
 	agents = [alg(n.index) for n in env.nodes]

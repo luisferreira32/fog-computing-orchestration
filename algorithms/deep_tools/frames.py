@@ -82,6 +82,8 @@ class Simple_Frame(tf.keras.Model):
 		for num_hidden_units in n_num_hidden_units:
 			self.hidden_layers.append(layers.Dense(num_hidden_units, activation="relu"))
 		
+	def __str__(self):
+		return "sf"
 
 	def call(self, inputs: tf.Tensor) -> List[tf.Tensor]:
 		""" inputs : tf.Tensor, (batch_size, [input_shape])
@@ -108,6 +110,9 @@ class Conv1d_Frame(tf.keras.Model):
 		# connection
 		self.flattener = layers.Flatten()
 
+	def __str__(self):
+		return "cf"
+
 	def call(self, inputs: tf.Tensor) -> tf.Tensor:
 		""" inputs : tf.Tensor, (batch_size, time_steps, [input_shape]) : keep time_steps constant
 			returns : N-D tensor (batch_size, [output_shape])
@@ -128,6 +133,9 @@ class Rnn_Frame(tf.keras.Model):
 		# a GRU RNN layers
 		self.rnn_input = layers.GRU(128)
 	
+	def __str__(self):
+		return "rf"
+
 	def call(self, inputs: tf.Tensor) -> tf.Tensor:
 		""" inputs : tf.Tensor, (batch_size, time_steps, [input_shape])
 			returns : N-D tensor (batch_size, [output_shape])
@@ -148,6 +156,9 @@ class Conv1d_Rnn_Frame(tf.keras.Model):
 		self.conv1d_hidden = layers.Conv1D(64, 3, padding="same", activation="relu")
 		# connection
 		self.rnn_connector = layers.GRU(128)
+
+	def __str__(self):
+		return "crf"
 
 	def call(self, inputs: tf.Tensor) -> tf.Tensor:
 		""" inputs : tf.Tensor, (batch_size, time_steps, [input_shape]) : keep time_steps constant
