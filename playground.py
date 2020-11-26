@@ -68,9 +68,9 @@ for case in cases:
 			# just to know
 			current+=1; print("[LOG] simulations ran ["+str(current)+"/"+total+"]")
 			# for further use
-			delays_df = dictionary_append(delays_df, alg.short_str()+case["case"], compiled_info["average_delay"])
-			success_rate_df = dictionary_append(success_rate_df, alg.short_str()+case["case"], compiled_info["success_rate"])
-			overflow_rate_df = dictionary_append(overflow_rate_df, alg.short_str()+case["case"], compiled_info["overflow_rate"])
+			delays_df = dictionary_append(delays_df, case["case"]+alg.short_str(), compiled_info["average_delay"])
+			success_rate_df = dictionary_append(success_rate_df, case["case"]+alg.short_str(), compiled_info["success_rate"])
+			overflow_rate_df = dictionary_append(overflow_rate_df, case["case"]+alg.short_str(), compiled_info["overflow_rate"])
 
 
 write_all_to_csvs(delays_df, success_rate_df, overflow_rate_df)
