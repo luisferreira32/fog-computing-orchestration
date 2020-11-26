@@ -138,13 +138,9 @@ def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 
 	for agent, action_loss, common_loss in zip(agents, action_losses, common_losses):
 		# Compute the gradients from the loss
-		# for each output layer
+		# for each output layer in a multidiscrete action space
 		for layer in agent.output_model.output_layers:
 			grads = tape.gradient(action_loss, layer.trainable_variables)
-			optimizer.apply_gradients(zip(grads, layer.trainable_variables))
-		# for the rest of the output layers
-		for layer in agent.output_model.hidden_layers():
-			grads = tape.gradient(common_loss, layer.trainable_variables)
 			optimizer.apply_gradients(zip(grads, layer.trainable_variables))
 		# and for the input layers
 		grads = tape.gradient(common_loss, agent.input_model.trainable_variables)

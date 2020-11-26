@@ -128,7 +128,6 @@ class Fog_env(gym.Env):
 		for node in self.nodes:
 			node.reset()	
 		self.clock = 0
-		self.seed(RANDOM_SEED)
 		return self._get_state_obs()
 
 	def _get_state_obs(self):
