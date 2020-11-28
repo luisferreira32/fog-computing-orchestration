@@ -14,7 +14,7 @@ def csv_to_graphs():
 		plt_error_bar(overflow_rate_df, mili=False, title="average_overflow_rate_1")
 	else:
 		print("[INFO] python csv_to_graphs.py [path-to-results-folder-with-csv:default-if-none-given=./results/]")
-		(delays_df, success_rate_df, overflow_rate_df) = read_all_from_csvs(sys.argv[1])
+		(delays_df, success_rate_df, overflow_rate_df) = read_all_from_csvs(os.getcwd()+sys.argv[1])
 		plt_bar(delays_df, mili=False, title="average_delays_1") # file should already be in mili
 		plt_error_bar(success_rate_df, mili=False, title="average_success_rate_1")
 		plt_error_bar(overflow_rate_df, mili=False, title="average_overflow_rate_1")

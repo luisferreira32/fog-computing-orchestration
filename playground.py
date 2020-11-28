@@ -50,12 +50,12 @@ if train:
 
 print("[LOG] Running",len(algs),"algorithms for",len(cases),"cases with",len(random_seeds),"different seeds")
 total = str(len(algs)*len(cases)*len(random_seeds)); current = 0
-start_time = time.time()
 
 # get some simulations to do the average
 for case in cases:
 	for alg in algs:
 		for seed in random_seeds:
+			start_time = time.time()
 			# generate the env
 			env = Fog_env(case, seed)
 			# and the basic agents
@@ -68,7 +68,7 @@ for case in cases:
 			# run the algorithm to collect info
 			compiled_info = run_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
 			# just to know
-			current+=1; print("[LOG] simulations ran ["+str(current)+"/"+total+"] in",round(start_time-time.time(),2),"seconds")
+			current+=1; print("[LOG] simulations ran ["+str(current)+"/"+total+"] in",round(time.time()-start_time,2),"seconds")
 			# for further use
 			delays_df = dictionary_append(delays_df, case["case"]+alg.short_str(), compiled_info["average_delay"])
 			success_rate_df = dictionary_append(success_rate_df, case["case"]+alg.short_str(), compiled_info["success_rate"])

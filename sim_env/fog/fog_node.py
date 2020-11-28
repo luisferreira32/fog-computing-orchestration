@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-# external imports
-from abc import ABC, abstractmethod
-from collections import deque
+from .core import Node
 import numpy as np
 
 # sim_env imports
@@ -10,12 +8,9 @@ from sim_env.configs import MAX_QUEUE, CPU_UNIT, RAM_UNIT, CPU_CLOCKS, RAM_SIZES
 from sim_env.configs import AREA, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT, THERMAL_NOISE_DENSITY
 from sim_env.configs import NODE_BANDWIDTH, TRANSMISSION_POWER, PACKET_SIZE
 from sim_env.configs import DEBUG
-from sim_env.calculators import euclidean_distance, channel_gain, shannon_hartley, db_to_linear
+from sim_env.fog import euclidean_distance, channel_gain, shannon_hartley, db_to_linear
 
-# tools
 from utils.tools import uniform_rand_choice, uniform_rand_int
-
-# ---------- Nodes related classes and functions ---------
 
 
 def point_to_point_transmission_rate(n1, n2):
@@ -34,52 +29,6 @@ def create_random_node(index=0, slices_characteristics=BASE_SLICE_CHARS):
 	ram = uniform_rand_choice(RAM_SIZES)
 	if DEBUG: print("[DEBUG] Node",index,"created at (x,y) = ",(x,y),"cpu =",cpu,"ram =",ram)
 	return Fog_node(index, x, y, cpu, ram, number_of_slices, slices_characteristics)
-
-	
-class Node(ABC):
-	""" Abstract node class
-	"""
-	def __init__(self, index, x, y, cpu_frequency, ram_size, number_of_slices):
-		super().__init__()
-		# Identifiers
-		self.index = index
-		self.name = "node_"+str(index)
-		# placement
-		self.x = x
-		self.y = y
-		# resources
-		self.cpu_frequency = cpu_frequency
-		self.ram_size = ram_size
-		self._avail_cpu_units = cpu_frequency/CPU_UNIT
-		self._avail_ram_units = int(ram_size/RAM_UNIT)
-		# slices buffers
-		self.max_k = number_of_slices
-		self.buffers = [deque(maxlen=MAX_QUEUE) for _ in range(number_of_slices)]
-		# states
-		self.transmitting = False
-
-	def __str__(self):
-		return self.name
-
-	@abstractmethod
-	def add_task_on_slice(self, k, task):
-		# returns the task if the slice buffer is full
-		pass
-
-	@abstractmethod
-	def remove_task_of_slice(self, k, task):
-		# removes and returns a task if it is or not on the buffer
-		pass
-
-	@abstractmethod
-	def start_processing_in_slice(self, k, w):
-		# starts processing w tasks in slice k
-		pass
-
-	@abstractmethod
-	def reset(self):
-		# resets the state of the node
-		pass
 
 
 class Fog_node(Node):
@@ -185,75 +134,3 @@ class Fog_node(Node):
 		self._avail_cpu_units = int(self.cpu_frequency/CPU_UNIT)
 		self._avail_ram_units = int(self.ram_size/RAM_UNIT)
 
-
-
-# ---------- Task related classes and functions ---------
-
-class Task():
-	""" A task attributed by the users
-	"""
-	def __init__(self, timestamp, packet_size=PACKET_SIZE, delay_constraint=10, cpu_demand=400, ram_demand=400, task_type=None):
-		# must either have task type or the other
-		self.packet_size = packet_size
-		if not task_type == None and len(task_type) == 3:
-			self.delay_constraint = task_type[0]
-			self.cpu_demand = task_type[1]
-			self.ram_demand = task_type[2]
-		else:
-			self.delay_constraint = delay_constraint
-			self.cpu_demand = cpu_demand
-			self.ram_demand = ram_demand
-
-		self._processing = False
-		self._memory_units = 0
-		self._cpu_units = 0
-		self._timestamp = timestamp
-		self._total_delay = -1
-		self._expected_delay = -1
-
-	def __str__(self):
-		return str(self._timestamp)+"s is_processing "+str(self._processing)
-
-	def is_processing(self):
-		return self._processing
-
-	def is_completed(self):
-		return False if self._total_delay == -1 else True
-
-	def start_processing(self, cpu_units, memory_units):
-		self._processing = True
-		self._cpu_units = cpu_units
-		self._memory_units = memory_units
-		self._expected_delay = task_processing_time(self)
-
-	def finish_processing(self, finish_time):
-		self._processing = False
-		self._total_delay = finish_time-self._timestamp
-
-	def task_delay(self):
-		return self._total_delay
-
-	def task_time(self):
-		return self._timestamp
-
-	def constraint_time(self):
-		return self._timestamp+0.001*self.delay_constraint
-
-	def exceeded_contraint(self, current_time):
-		return self.constraint_time() < current_time
-
-def task_processing_time(t=None):
-	# calculates the time a task takes to process after starting to process
-	if t is None: return "no task given"
-	if not t.is_processing(): return "task not processing"
-	# task has cpu_demand cycles/bit
-	total_cycles = t.cpu_demand*t.packet_size
-	# processing units are in 1GHz each
-	total_time = total_cycles/(t._cpu_units*CPU_UNIT*(1e9))
-	return total_time
-
-def task_communication_time(t, bit_rate):
-	if t is None: return "no task given"
-	if bit_rate == 0: return "invalid transmission route"
-	# simple packet_size calc
-	return (t.packet_size)/bit_rate

@@ -9,17 +9,14 @@ from gym.utils import seeding
 import numpy as np
 
 # fog related imports
-from sim_env.core_classes import create_random_node
-from sim_env.events import Event_queue, Set_arrivals, Offload, Start_processing
-from sim_env.events_aux import is_arrival_on_slice
+from sim_env.fog import create_random_node
+from sim_env.events import Event_queue, Set_arrivals, Offload_task, Start_processing, is_arrival_on_slice
 from sim_env.configs import TIME_STEP, SIM_TIME, RANDOM_SEED, OVERLOAD_WEIGHT
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
 from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS
 
 # for reproductibility
 from utils.tools import set_tools_seed
-
-# ---------- Fog Envrionment ----------
 
 class Fog_env(gym.Env):
 	""" Fog_env looks to replicate a FC envrionment, configured in sim_env.configs
@@ -60,7 +57,7 @@ class Fog_env(gym.Env):
 		self.observation_space = spaces.MultiDiscrete(state_possibilities)
 
 		# and the first event that will trigger subsequent arrivals
-		self.evq.addEvent(Set_arrivals(0, TIME_STEP, self.nodes))
+		self.evq.add_event(Set_arrivals(0, TIME_STEP, self.nodes))
 
 	def step(self, action_n):
 		# to make sure you give actions in the FORMATED action space
@@ -97,8 +94,8 @@ class Fog_env(gym.Env):
 		self.clock += TIME_STEP
 		done = self.clock >= SIM_TIME
 		# rollout the events until new timestep
-		while self.evq.hasEvents() and self.evq.first_time() <= self.clock:
-			ev = self.evq.popEvent()
+		while self.evq.has_events() and self.evq.first_time() <= self.clock:
+			ev = self.evq.pop_event()
 			t = ev.execute(self.evq)
 
 			# --- GET INFORMAITON HERE ---
@@ -124,7 +121,7 @@ class Fog_env(gym.Env):
 	def reset(self):
 		# Reset the state of the environment to an initial state
 		self.evq.reset()
-		self.evq.addEvent(Set_arrivals(0, TIME_STEP, self.nodes))
+		self.evq.add_event(Set_arrivals(0, TIME_STEP, self.nodes))
 		for node in self.nodes:
 			node.reset()	
 		self.clock = 0
@@ -156,10 +153,10 @@ class Fog_env(gym.Env):
 		for k in range(DEFAULT_SLICES):
 			# start processing if there is any request
 			if wks[k] != 0:
-				self.evq.addEvent(Start_processing(self.clock, n, k, wks[k]))
+				self.evq.add_event(Start_processing(self.clock, n, k, wks[k]))
 			# and if you are given a destination, add the offload event
 			if fks[k] != n.index and fks[k] != 0:
-				self.evq.addEvent(Offload(self.clock, n, k, self.nodes[fks[k]-1], concurr))
+				self.evq.add_event(Offload_task(self.clock, n, k, self.nodes[fks[k]-1], concurr))
 
 	def _agent_reward_fun(self, n, obs, action):
 		# calculate the reward for the agent (node) n
