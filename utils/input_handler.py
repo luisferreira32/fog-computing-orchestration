@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # necessary constants import
-from sim_env.configs import BASE_SLICE_CHARS, EXPERIMENTAL_CASES
+from sim_env.configs import BASE_SLICE_CHARS
 from sim_env.configs import NORMAL_CASES, HEAVY_CASES, ALL_CASES
 from sim_env.configs import NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3
 from sim_env.configs import HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3
@@ -63,8 +63,6 @@ def argument_check(argv):
 				cases = NORMAL_CASES
 			elif "heavy" in s:
 				cases = HEAVY_CASES
-			elif "exp" in s:
-				cases = EXPERIMENTAL_CASES
 			# add ons	
 			if "n1" in s:
 				cases.append(NORMAL_CASE_1)

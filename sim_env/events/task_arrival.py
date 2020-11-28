@@ -20,3 +20,9 @@ class Task_arrival(Event):
 	def task_time(self):
 		return self.task.task_time()
 
+
+def is_arrival_on_slice(ev, node, k):
+	return (ev.classtype == "Task_arrival" and ev.node == node and ev.k == k)
+
+def is_offload_arrival_event(ev, clock):
+	return (ev.classtype == "Task_arrival" and ev.task_time() < clock)

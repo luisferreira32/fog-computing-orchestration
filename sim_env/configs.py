@@ -38,7 +38,7 @@ PATH_LOSS_CONSTANT = 0.001
 THERMAL_NOISE_DENSITY = -174 # dBm/Hz
 
 # TASK CONSTANTS
-PACKET_SIZE = 7000 # 5000 default bit
+PACKET_SIZE = 5000 # 7000 worked well?
 # this values are directly described in the simulation cases
 # DEADLINES = [10, 50, 100] # ms
 # CPU_DEMANDS = [200, 400, 600] # cycles/bit
@@ -78,38 +78,3 @@ HEAVY_CASE_3 = {
 ALL_CASES = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3, HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
 HEAVY_CASES = [HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
 NORMAL_CASES = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3]
-
-# --- Extra cases to find a limit situation
-cpi = 1.8 # 1.8 seems to work well
-NORMAL_A = {
-	"case": "nA",
-	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 400*cpi, 400], [10, 600*cpi, 400], [10, 200*cpi, 800]]
-}
-NORMAL_B = {
-	"case": "nB",
-	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 400*cpi, 400], [50, 400*cpi, 400], [100, 400*cpi, 400]]
-}
-NORMAL_C = {
-	"case": "nC",
-	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 400*cpi, 400], [50, 600*cpi, 400], [50, 400*cpi, 400]]
-}
-HEAVY_A = {
-	"case": "hA",
-	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[10, 400*cpi, 400], [10, 600*cpi, 400], [10, 200*cpi, 800]]
-}
-HEAVY_B = {
-	"case": "hB",
-	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[10, 400*cpi, 400], [50, 400*cpi, 400], [100, 400*cpi, 400]]
-}
-HEAVY_C = {
-	"case": "hC",
-	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[10, 400*cpi, 400], [50, 600*cpi, 400], [50, 400*cpi, 400]]
-}
-
-EXPERIMENTAL_CASES = [NORMAL_A, NORMAL_B, NORMAL_C, HEAVY_A, HEAVY_B, HEAVY_C]
