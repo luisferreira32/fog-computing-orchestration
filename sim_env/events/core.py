@@ -16,6 +16,7 @@ from abc import ABC, abstractmethod
 
 # our imports
 from sim_env.configs import SIM_TIME
+from utils.custom_exceptions import InvalidValueError
 
 # <<<<<
 # >>>>> meta-data
@@ -34,26 +35,23 @@ class Event(ABC):
 
 	def __init__(self, time, classtype=None):
 		"""
-		Parameters
-		----------
-		time: float
-			time of the event execution
-		classtype: str = None
-			the class type of the subclass
+		Parameters:
+			time: float - time of the event execution
+			classtype: str = None - the class type of the subclass
 		"""
+
+		if time < 0:
+			raise InvalidValueError("an event execution time cannot be negative")
 		self.time = time
 		self.classtype = classtype
 
 	@abstractmethod
 	def execute(self, evq = None):
-		""" Should execute the event
+		""" Should execute the event and adds more events to the Event_queue if necessary
 
-		Parameters
-		----------
-		evq: Event_queue = None
-			the event queue of the discrete event simulator
+		Parameters:
+			evq: Event_queue = None - the event queue of the discrete event simulator
 		"""
-		# executes current event and adds more events to the Event_queue if necessary
 		pass
 
 class Event_queue(object):
@@ -64,12 +62,9 @@ class Event_queue(object):
 	remove and do various observations to the event queue. Note that if an event is poped,
 	the evq assumes the clock moved to that point, not accepting any previous new events.
 
-	Attributes
-	----------
-	q: deque
-		the event queue of an arbitrary lenght
-	current_time: float
-		a time keeper to avoid inserting event in the past
+	Attributes:
+		q: deque - the event queue of an arbitrary lenght
+		current_time: float - a time keeper to avoid inserting event in the past
 	"""
 
 	def __init__(self):
@@ -82,11 +77,10 @@ class Event_queue(object):
 	def add_event(self, e: Event):
 		"""Adds an event to the queue sorted from left (larger time) to right (shorter time)
 
-		Parameters
-		----------
-		e: Event
-			an event, subclass of Event
+		Parameters:
+			e: Event - an event, subclass of Event
 		"""
+
 		if not isinstance(e, Event):
 			return
 		# only process events within sim time
@@ -107,6 +101,7 @@ class Event_queue(object):
 
 	def pop_event(self):
 		"""Returns the first event to be processed on the queue """
+
 		if not self.has_events():
 			return None
 		ev = self.q.pop()
@@ -115,24 +110,29 @@ class Event_queue(object):
 
 	def queue_size(self):
 		"""Returns the queue size """
+
 		return len(self.q)
 
 	def has_events(self):
 		"""Returns a bool indicating wether there are or not events in the queue """
+
 		return len(self.q) > 0
 
 	def first_time(self):
 		"""Returns the first event to be processed clock time """
+
 		if not self.has_events():
 			return -1
 		return self.q[-1].time
 
 	def queue(self):
 		"""Returns the queue itself """
+
 		return self.q
 
 	def reset(self):
 		"""Resets the current queue"""
+		
 		self.current_time = 0
 		self.q.clear()
 

@@ -43,7 +43,7 @@ PATH_LOSS_CONSTANT = 0.001
 THERMAL_NOISE_DENSITY = -174 # dBm/Hz
 
 # TASK CONSTANTS
-PACKET_SIZE = 5000 # bits = 5 kBits
+PACKET_SIZE = 7000 # bits = 5 kBits
 
 # ---- simulation cases ---- 
 # Case 1

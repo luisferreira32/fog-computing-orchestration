@@ -21,7 +21,7 @@ class Start_processing(Event):
 		for task in tasks_under_processing:
 			finish = self.time+task_processing_time(task)
 			if task.exceeded_contraint(finish): # TODO@luis: redo this on another place
-				evq.add_event(Discard_task(task.constraint_time(), self.node, self.k, task))
+				evq.add_event(Discard_task(max(task.constraint_time(), self.time), self.node, self.k, task))
 			else:
 				evq.add_event(Task_finished(finish, self.node, self.k, task))
 		return None
