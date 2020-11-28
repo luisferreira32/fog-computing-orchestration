@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from .core import Node
 import numpy as np
+from collections import deque
 
 # sim_env imports
 from sim_env.configs import MAX_QUEUE, CPU_UNIT, RAM_UNIT, CPU_CLOCKS, RAM_SIZES, BASE_SLICE_CHARS, DEFAULT_SLICES
@@ -31,11 +31,27 @@ def create_random_node(index=0, slices_characteristics=BASE_SLICE_CHARS):
 	return Fog_node(index, x, y, cpu, ram, number_of_slices, slices_characteristics)
 
 
-class Fog_node(Node):
+class Fog_node():
 	""" A Fog node with limited resources
 	"""
 	def __init__(self, index, x, y, cpu_frequency, ram_size, number_of_slices, slice_characteristics=BASE_SLICE_CHARS):
-		super(Fog_node, self).__init__(index, x, y, cpu_frequency, ram_size, number_of_slices)
+		super(Fog_node, self).__init__()
+		# Identifiers
+		self.index = index
+		self.name = "node_"+str(index)
+		# placement
+		self.x = x
+		self.y = y
+		# resources
+		self.cpu_frequency = cpu_frequency
+		self.ram_size = ram_size
+		self._avail_cpu_units = cpu_frequency/CPU_UNIT
+		self._avail_ram_units = int(ram_size/RAM_UNIT)
+		# slices buffers
+		self.max_k = number_of_slices
+		self.buffers = [deque(maxlen=MAX_QUEUE) for _ in range(number_of_slices)]
+		# states
+		self.transmitting = False
 		# service rate constants
 		self._dealt_tasks = 0
 		self._total_time_intervals = 0
@@ -48,6 +64,9 @@ class Fog_node(Node):
 		self._distances = {}
 		# keep track of processed tasks
 		self._being_processed = np.zeros(number_of_slices, dtype=np.uint8)
+
+	def __str__(self):
+		return self.name
 
 	def set_communication_rates(self, nodes):
 		for n in nodes:
