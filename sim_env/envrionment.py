@@ -170,7 +170,7 @@ class Fog_env(gym.Env):
 			D_ik = 0; Dt_ik = 0
 			# if it's offloaded adds communication time to delay
 			if fks[k] != n.index and fks[k] != 0:
-				Dt_ik = PACKET_SIZE / (n._communication_rates[fks[k]-1]/concurr)
+				Dt_ik = PACKET_SIZE / (n._communication_rates[fks[k]]/concurr)
 				D_ik += Dt_ik
 			# calculate the Queue delay: b_ik/service_rate_i
 			D_ik += obs[n.max_k+k]/n._service_rate

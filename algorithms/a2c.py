@@ -3,13 +3,13 @@
 # advantages of PPO are found in a discrete actions and multi-process style; offers fast convergence
 
 # since we're implementing ppo with deep neural networks
-from algorithms.deep_tools.frames import Simple_Frame, Actor_Critic_Output_Frame
+from algorithms.deep_tools.frames import Simple_Frame
 from algorithms.deep_tools.common import get_expected_returns
-from algorithms.runners import run_episode, set_training_env
+from algorithms.runners import run_tragectory, set_training_env
 
 # some necesary constants
 from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE, DEFAULT_ACTION_SPACE
-from sim_env.configs import N_NODES, DEFAULT_SLICES
+from sim_env.configs import N_NODES, DEFAULT_SLICES, TOTAL_TIME_STEPS
 
 # and external imports
 import numpy as np
@@ -23,12 +23,10 @@ class A2C_Agent(object):
 	"""A2C_Agent
 	"""
 	basic = False
-	def __init__(self, n, action_space=DEFAULT_ACTION_SPACE, input_frame=Simple_Frame):
+	def __init__(self, n, action_space=DEFAULT_ACTION_SPACE, model_frame=Simple_Frame):
 		super(A2C_Agent, self).__init__()
 		# actual agent - the NN
-		self.input_model = input_frame()
-		self.output_model = Actor_Critic_Output_Frame(action_space)
-		
+		self.model = model_frame(action_space)		
 		# meta-data
 		self.name = str(n)
 		self.action_space = action_space
@@ -41,7 +39,7 @@ class A2C_Agent(object):
 		if batches == 1:
 			obs = tf.expand_dims(obs, 0)
 		# call its model
-		action_logits_t,_ = self.output_model(self.input_model(obs))
+		action_logits_t,_ = self.model(obs)
 		# and decipher the action
 		action_i = []
 		# Since it's multi-discrete, for every discrete set of actions:
@@ -53,7 +51,7 @@ class A2C_Agent(object):
 		return self.cap_to_action_space(action_i)
 
 	def model(self, obs):
-		return self.output_model(self.input_model(obs))
+		return self.model(obs)
 
 	def save_models(self, path):
 		arch_path = path + str(self.input_model) + "/"
@@ -77,14 +75,21 @@ class A2C_Agent(object):
 		return "a2c"
 	# to train RL agents  on an envrionment
 	@staticmethod
-	def train_agents_on_env(agents, env, max_episodes: int = 100, max_steps_per_episode: int = 1000):
-		# Run the model for one episode to collect training data
+	def train_agents_on_env(agents, env, max_episodes: int = 100, max_steps_per_episode: int = TOTAL_TIME_STEPS, batch_percentage: float = 0.032):
+		# Run the model for E episodes
+		T = int(max_steps_per_episode*batch_percentage)
+		completed_steps = T
 		with tqdm.trange(max_episodes) as t:
-			for i in t:
+			for episode in t:
 				initial_state = set_training_env(env)
-				episode_reward = train_actor_critic(initial_state, agents, gamma=0.9, max_steps=max_steps_per_episode)
+				state = initial_state
+				episode_reward = 0
+				while completed_steps < max_steps_per_episode:
+					tragectory_reward, state = train_actor_critic(state, agents, gamma=0.9, max_steps=T)
+					completed_steps += T
+					episode_reward += tragectory_reward
 
-				t.set_description(f'Episode {i}')
+				t.set_description(f'Episode {episode}')
 				print(episode_reward)
 		return agents
 
@@ -97,10 +102,12 @@ huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 
 # combineed AC loss (with simple advantage)
 def compute_combined_loss(action_probs: tf.Tensor, values: tf.Tensor, returns: tf.Tensor) -> tf.Tensor:
+	returns = tf.expand_dims(tf.tile(returns, tf.constant([1,N_NODES], tf.int32)), 1)
 	advantages = returns-values
 	action_log_probs = tf.math.log(action_probs)
-	# T * T timesteps for 6 different actions - reduce sum to actor_loss[6]
-	actor_loss = -tf.math.reduce_sum(action_log_probs * advantages, [0,1])
+	print(advantages.shape, action_log_probs.shape)
+	# 
+	actor_loss = -tf.math.reduce_sum(action_log_probs * advantages, [0,1]) # for 5 actors
 	critic_loss = huber_loss(values, returns)
 
 	return actor_loss + critic_loss
@@ -113,10 +120,30 @@ def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 
 	with tf.GradientTape(persistent=True) as tape:
 		
-		action_losses = []; common_losses = []
-		action_probs, values, rw = run_episode(initial_state, agents, max_steps)
+		action_losses = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
+		action_probs, values, rw, state = run_tragectory(initial_state, agents, max_steps)
 
-		for i, agent in enumerate(agents):
+		# Calculate simple advantage and returns
+		returns = get_expected_returns(rw, gamma)
+
+		# Convert training data to appropriate TF tensor shapes
+		action_probs, values, returns = [tf.expand_dims(x, 1) for x in [action_probs, values, returns]] 
+		print(action_probs.shape, values.shape, returns.shape)
+		
+		# Calculating loss values to update our network
+		loss = compute_combined_loss(action_probs, values, returns)
+
+	print(action_loss.shape)
+	# Compute the gradients from the loss for the model
+	grads = tape.gradient(action_loss, [agent.model.trainable_variables for agent in agents])
+	print(grads.shape)
+	optimizer.apply_gradients(zip(grads,[agent.model.trainable_variables for agent in agents]))
+	
+	tragectory_reward = tf.math.reduce_sum(rw)
+	return tragectory_reward, state
+
+
+"""		for i, agent in enumerate(agents):
 			# compute stuff for each agent
 			aux_val = tf.identity(values[i])
 			aux_action_probs = tf.identity(action_probs[i])
@@ -129,21 +156,20 @@ def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 
 			# Calculating loss values to update our network
 			loss = compute_combined_loss(aux_action_probs, aux_val, returns)
-			common_losses.append(tf.math.reduce_sum(loss))
-			action_losses.append(loss)
+			action_losses = action_losses.write(i, loss)
+		action_losses = action_losses.stack()
+		action_losses = tf.expand_dims(action_losses,1)
 
 
-	for agent, action_loss, common_loss in zip(agents, action_losses, common_losses):
-		# Compute the gradients from the loss
-		# for each output layer in a multidiscrete action space
-		for layer in agent.output_model.output_layers:
-			grads = tape.gradient(action_loss, layer.trainable_variables)
-			optimizer.apply_gradients(zip(grads, layer.trainable_variables))
-		# and for the input layers
-		grads = tape.gradient(common_loss, agent.input_model.trainable_variables)
-		optimizer.apply_gradients(zip(grads, agent.input_model.trainable_variables))
+	for i, agent in enumerate(agents):
+		action_loss = tf.gather(action_losses,1) # FIX THIS??
+		print("~~ ~~~~~~~~~~",action_loss)
+		# Compute the gradients from the loss for the model
+		grads = tape.gradient(action_loss, agent.model.trainable_variables)
+		optimizer.apply_gradients(zip(grads, agent.model.trainable_variables))
 	# drop reference to the tape
 	del tape
-
 	episode_reward = tf.math.reduce_sum(rw)
-	return episode_reward
+	return episode_reward, state
+"""	
+

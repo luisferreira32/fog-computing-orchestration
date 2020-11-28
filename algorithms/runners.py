@@ -65,8 +65,8 @@ def tf_env_step(action: tf.Tensor) -> List[tf.Tensor]:
 	return tf.numpy_function(env_step, [action], 
 		[tf.uint8, tf.float32, tf.int32])
 
-def run_episode(initial_state: tf.Tensor, agents: List[tf.keras.Model], max_steps: int) -> List[List[tf.Tensor]]:
-	"""Runs a single episode to collect training data."""
+def run_tragectory(initial_state: tf.Tensor, agents: List[tf.keras.Model], max_steps: int) -> List[List[tf.Tensor]]:
+	"""Runs a single tragectory to collect training data."""
 
 	action_probs = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
 	values = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
@@ -125,10 +125,10 @@ def run_episode(initial_state: tf.Tensor, agents: List[tf.keras.Model], max_step
 		if tf.cast(done, tf.bool):
 			break
 
-	# Stack them for every agent and set struct: shape=[agents, time_steps,[vars]]
-	action_probs = tf.transpose(action_probs.stack(), perm=[1,0,2])
-	values = tf.transpose(values.stack())
-	rewards = tf.transpose(rewards.stack())
+	# Stack them for every agent and set struct: shape=[time_steps, agents, [discrete_actions]]
+	action_probs = action_probs.stack()
+	values = values.stack()
+	rewards = rewards.stack()
 
-	return action_probs, values, rewards
+	return action_probs, values, rewards, state
 

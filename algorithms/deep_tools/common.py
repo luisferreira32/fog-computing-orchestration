@@ -35,8 +35,7 @@ def get_gaes(rewards: tf.Tensor, values: tf.Tensor, next_values: tf.Tensor, lbd:
 	return tf.convert_to_tensor(gaes), tf.convert_to_tensor(returns)
 
 # Or just the basic
-def get_expected_returns(rewards: tf.Tensor, values: tf.Tensor,
-	gamma: float, standardize: bool = True) -> tf.Tensor:
+def get_expected_returns(rewards: tf.Tensor, gamma: float, standardize: bool = True) -> tf.Tensor:
 	"""Compute expected returns per timestep with just discounted sum
 	G_t = sum(from t'=t to T){ gamma^(t'-t) * r_t'}
 	"""

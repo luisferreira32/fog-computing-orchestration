@@ -15,53 +15,12 @@ import numpy as np
 import collections
 
 
-# --- output frames ---
-
-class Simple_output_Frame(tf.keras.Model):
-	"""Simple_output_Frame: just fully connected layers with (possible) multi-action output_size
-	"""
-	def __init__(self, output_sizes: List[int]):
-		super(Simple_output_Frame, self).__init__()
-		# output layer
-		# and set up the output layers (possibly multi-discrete)
-		self.output_layers = []
-		for output_size in output_sizes:
-			self.output_layers.append(layers.Dense(output_size))
-
-	def call(self, inputs: tf.Tensor) -> tf.Tensor:
-		""" inputs : tf.Tensor, (batch_size, time_steps, [input_shape])
-			returns : N-D tensor (batch_size, [output_shape])
-		"""
-		# pass inputs on model and return the output value Tensor
-		return [output_layer(inputs) for output_layer in self.output_layers]
-
-class Actor_Critic_Output_Frame(tf.keras.Model):
-	"""Actor_Critic_Output_Frame: just fully connected layers with multi-action output_size + value
-	"""
-	def __init__(self, output_sizes: List[int]):
-		super(Actor_Critic_Output_Frame, self).__init__()
-		# output layer
-		# and set up the output layers (possibly multi-discrete)
-		self.output_layers = []
-		for output_size in output_sizes:
-			self.output_layers.append(layers.Dense(output_size))
-		self.output_value = layers.Dense(1)
-
-	def call(self, inputs: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor]:
-		""" inputs : tf.Tensor, (batch_size, time_steps, [input_shape])
-			returns : N-D tensor (batch_size, [output_shape])
-		"""
-		# pass inputs on model and return the output value Tensor
-		return [[output_layer(inputs) for output_layer in self.output_layers],
-			self.output_value(inputs)]
-
-# --- input frames ---
-		
+	
 # a simple frame with just with dense layers
 class Simple_Frame(tf.keras.Model):
 	"""Simple_Frame deep neural network with dense layers
 	"""
-	def __init__(self, n_num_hidden_units: List[int] = [64, 128]):
+	def __init__(self, output_sizes: List[int], n_num_hidden_units: List[int] = [64, 128]):
 		super(Simple_Frame, self).__init__()
 
 		# do the number of requested hidden dense layers with RELU activation function
@@ -71,6 +30,11 @@ class Simple_Frame(tf.keras.Model):
 		# dense  layers 128, 64
 		self.dense_1 = layers.Dense(128)
 		self.dense_2 = layers.Dense(64)
+		# output layers
+		self.output_layers = []
+		for output_size in output_sizes:
+			self.output_layers.append(layers.Dense(output_size))
+		self.output_value = layers.Dense(1)
 		
 	def __str__(self):
 		return "sf"
@@ -85,7 +49,8 @@ class Simple_Frame(tf.keras.Model):
 			x = hidden_layer(x)
 		x = self.dense_1(x)
 		grinded = self.dense_2(x)
-		return grinded
+		return [[output_layer(grinded) for output_layer in self.output_layers],
+			self.output_value(grinded)]
 
 # CNN feature extraction then dense layers
 class Conv1d_Frame(tf.keras.Model):
@@ -104,6 +69,11 @@ class Conv1d_Frame(tf.keras.Model):
 		# dense  layers 128, 64
 		self.dense_1 = layers.Dense(128)
 		self.dense_2 = layers.Dense(64)
+		# output layers
+		self.output_layers = []
+		for output_size in output_sizes:
+			self.output_layers.append(layers.Dense(output_size))
+		self.output_value = layers.Dense(1)
 
 	def __str__(self):
 		return "cf"
@@ -118,7 +88,8 @@ class Conv1d_Frame(tf.keras.Model):
 		x = self.flattener(x)
 		x = self.dense_1(x)
 		grinded = self.dense_2(x)
-		return grinded
+		return [[output_layer(grinded) for output_layer in self.output_layers],
+			self.output_value(grinded)]
 
 
 class Rnn_Frame(tf.keras.Model):
@@ -132,6 +103,11 @@ class Rnn_Frame(tf.keras.Model):
 		# dense  layers 128, 64
 		self.dense_1 = layers.Dense(128)
 		self.dense_2 = layers.Dense(64)
+		# output layers
+		self.output_layers = []
+		for output_size in output_sizes:
+			self.output_layers.append(layers.Dense(output_size))
+		self.output_value = layers.Dense(1)
 	
 	def __str__(self):
 		return "rf"
@@ -144,7 +120,8 @@ class Rnn_Frame(tf.keras.Model):
 		x = self.rnn_input(inputs)
 		x = self.dense_1(x)
 		grinded = self.dense_2(x)
-		return grinded
+		return [[output_layer(grinded) for output_layer in self.output_layers],
+			self.output_value(grinded)]
 
 class Conv1d_Rnn_Frame(tf.keras.Model):
 	"""Conv1d_Rnn_Frame: conv1d layer to GRU to dense ouput
@@ -161,6 +138,11 @@ class Conv1d_Rnn_Frame(tf.keras.Model):
 		# dense  layers 128, 64
 		self.dense_1 = layers.Dense(128)
 		self.dense_2 = layers.Dense(64)
+		# output layers
+		self.output_layers = []
+		for output_size in output_sizes:
+			self.output_layers.append(layers.Dense(output_size))
+		self.output_value = layers.Dense(1)
 
 	def __str__(self):
 		return "crf"
@@ -175,7 +157,8 @@ class Conv1d_Rnn_Frame(tf.keras.Model):
 		x = self.rnn_connector(x)
 		x = self.dense_1(x)
 		grinded = self.dense_2(x)
-		return grinded
+		return [[output_layer(grinded) for output_layer in self.output_layers],
+			self.output_value(grinded)]
 
 
 
