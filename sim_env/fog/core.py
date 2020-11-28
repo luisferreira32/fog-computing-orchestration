@@ -37,6 +37,11 @@ class Node(ABC):
 		pass
 
 	@abstractmethod
+	def pop_last_task(self, k, time):
+		# removes the last arriving task on the buffer to transmit it
+		pass
+
+	@abstractmethod
 	def remove_task_of_slice(self, k, task):
 		# removes and returns a task if it is or not on the buffer
 		pass

@@ -10,6 +10,7 @@ shannon-hartley bit rate theorem given a gain, transmission power, bandwidth and
 # >>>>> imports
 import numpy as np
 from utils.tools import uniform_rand_float # to use a seeded random in the simulations
+from utils.custom_exceptions import InvalidValueError
 
 # <<<<<
 # >>>>> meta-data
@@ -27,7 +28,7 @@ def db_to_linear(value):
 def linear_to_db(value):
 	"""Returns a dB value given its linear value """
 	if value <= 0:
-		return None
+		raise InvalidValueError("linear values must be positive", "[0, +inf[")
 	return 10*np.log10(float(value))
 
 def channel_gain(distance, linear_coefficient, exponential_coefficient):
@@ -47,7 +48,7 @@ def channel_gain(distance, linear_coefficient, exponential_coefficient):
 
 	"""
 	if distance <= 0 or linear_coefficient <= 0 or exponential_coefficient <= 0:
-		return 0
+		raise InvalidValueError("channel gain function arguments must be positive")
 	return linear_coefficient*distance**(-exponential_coefficient)
             
 def shannon_hartley(gain, power, bandwidth, noise_density):
@@ -67,7 +68,7 @@ def shannon_hartley(gain, power, bandwidth, noise_density):
 		noise density in linear units (mW/Hz)
 	"""
 	if bandwidth <= 0 or power <= 0 or gain <= 0 or gain > 1 or noise_density <= 0:
-		return 0
+		raise InvalidValueError("shannon_hartley function arguments must be positive and channel gain between [0,1]")
 	return float(bandwidth)*np.log2(1+((float(gain)*float(power))/(float(bandwidth)*float(noise_density)+eps))) 
 
 def euclidean_distance(x1, y1, x2, y2):

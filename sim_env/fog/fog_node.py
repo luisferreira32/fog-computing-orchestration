@@ -51,6 +51,7 @@ class Fog_node(Node):
 
 	def set_communication_rates(self, nodes):
 		for n in nodes:
+			if n.index == self.index: continue
 			self._distances[n.index]= euclidean_distance(self.x, self.y, n.x, n.y)
 			self._communication_rates[n.index] = point_to_point_transmission_rate(self,n)
 		if DEBUG: print("[DEBUG]",self.name, [str(round(r/1000000,2))+" Kb/ms" for _,r in self._communication_rates.items()])

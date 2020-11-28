@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 from .core import Event
+from .task_arrival import Task_arrival
+from .finished_transmitting import Finished_transmitting
 
 from sim_env.fog import Task, task_processing_time, task_communication_time
 
@@ -8,7 +10,7 @@ class Offload_task(Event):
 	""" Offloads the task that just arrived to a destination node
 	"""
 	def __init__(self, time, node, k, destination, con=1):
-		super(Offload, self).__init__(time, "Offload")
+		super(Offload_task, self).__init__(time, "Offload_task")
 		self.node = node
 		self.k = k
 		self.destination = destination
