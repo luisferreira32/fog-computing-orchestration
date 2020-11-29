@@ -9,8 +9,10 @@ from gym.utils import seeding
 import numpy as np
 
 # fog related imports
-from sim_env.fog import create_random_node
-from sim_env.events import Event_queue, Set_arrivals, Offload_task, Start_processing, is_arrival_on_slice
+from sim_env.fog import create_random_node, point_to_point_transmission_rate
+from sim_env.fog import task_communication_time
+from sim_env.events import Event_queue, is_arrival_on_slice
+from sim_env.events import Finished_transmitting, Set_arrivals, Offload_task, Start_transmitting, Start_processing
 from sim_env.configs import TIME_STEP, SIM_TIME, RANDOM_SEED, OVERLOAD_WEIGHT
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
 from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS
@@ -33,7 +35,7 @@ class Fog_env(gym.Env):
 		self.nodes = [create_random_node(i) for i in range(1,N_NODES+1)]
 		self.case = case
 		for n in self.nodes:
-			n.set_communication_rates(self.nodes)
+			n.set_distances(self.nodes)
 		self.evq = Event_queue()
 		self.clock = 0
 		self.saved_step_info = None
@@ -134,7 +136,7 @@ class Fog_env(gym.Env):
 	def _get_agent_observation(self, n):
 		# does a partial system observation
 		pobs = np.concatenate(([1 if len(n.buffers[k]) > 0 and self.clock == n.buffers[k][-1]._timestamp else 0 for k in range(n.max_k)],
-			[len(n.buffers[k]) for k in range(n.max_k)], [n._being_processed[k] for k in range(n.max_k)],
+			[len(n.buffers[k]) for k in range(n.max_k)], [n.being_processed_on_slice(k) for k in range(n.max_k)],
 			[n._avail_cpu_units],[n._avail_ram_units]))
 		return np.array(pobs, dtype=np.uint8)
 
@@ -151,13 +153,18 @@ class Fog_env(gym.Env):
 		[fks, wks] = np.split(action, 2)
 		# concurrent offloads
 		concurr = sum([1 if fk!=n.index and fk!=0 else 0 for fk in fks])
+		arrive_time = self.clock
 		for k in range(DEFAULT_SLICES):
 			# start processing if there is any request
-			if wks[k] != 0:
+			if wks[k] != 0 and fks[k] == n.index:
 				self.evq.add_event(Start_processing(self.clock, n, k, wks[k]))
 			# and if you are given a destination, add the offload event
 			if fks[k] != n.index and fks[k] != 0:
-				self.evq.add_event(Offload_task(self.clock, n, k, self.nodes[fks[k]-1], concurr))
+				arrive_time += task_communication_time(PACKET_SIZE, point_to_point_transmission_rate(n._distances[fks[k]],concurr))
+				self.evq.add_event(Offload_task(self.clock, n, k, self.nodes[fks[k]-1], arrive_time))
+		if concurr > 0:
+			self.evq.add_event(Start_transmitting(self.clock, n))
+			self.evq.add_event(Finished_transmitting(arrive_time, n))
 
 	def _agent_reward_fun(self, n, obs, action):
 		# calculate the reward for the agent (node) n
@@ -168,12 +175,12 @@ class Fog_env(gym.Env):
 			D_ik = 0; Dt_ik = 0
 			# if it's offloaded adds communication time to delay
 			if fks[k] != n.index and fks[k] != 0:
-				Dt_ik = PACKET_SIZE / (n._communication_rates[fks[k]]/concurr)
+				Dt_ik = PACKET_SIZE / (point_to_point_transmission_rate(n._distances[fks[k]],concurr))
 				D_ik += Dt_ik
 			# calculate the Queue delay: b_ik/service_rate_i
 			D_ik += obs[n.max_k+k]/n._service_rate
 			# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
-			D_ik +=  PACKET_SIZE*self.case["task_type"][k][1] / (CPU_UNIT*1e9)
+			D_ik +=  PACKET_SIZE*self.case["task_type"][k][1] / (CPU_UNIT*1e9) # TODO@luis: solve this bug
 			# finally, check if slice delay constraint is met
 			if D_ik >= self.case["task_type"][k][0]:
 				coeficient = -1
@@ -214,7 +221,7 @@ class Fog_env(gym.Env):
 				print("slice",k,"buffer",[round(t._timestamp,4) for t in buf])
 		for ev in self.evq.queue():
 			if ev.classtype != "Task_arrival" and ev.classtype != "Task_finished":
-				print(ev.classtype+"["+str(round(ev.time*1000))+"ms]", end='-->')
+				print(ev.classtype+"["+str(round(ev.time*1000,2))+"ms]", end='-->')
 		print(round(1000*(self.clock+TIME_STEP)),"ms")
 		input("\nEnter to continue...")
 		pass

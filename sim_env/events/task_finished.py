@@ -13,5 +13,4 @@ class Task_finished(Event):
 
 	def execute(self, evq):
 		self.task.finish_processing(self.time)
-		self.node._dealt_tasks += 1
 		return self.node.remove_task_of_slice(self.k, self.task)

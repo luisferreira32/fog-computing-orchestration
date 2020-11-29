@@ -10,5 +10,5 @@ class Finished_transmitting(Event):
 		self.node = node
 
 	def execute(self,evq):
-		self.node.transmitting = False
+		self.node.finished_transmitting()
 		return None

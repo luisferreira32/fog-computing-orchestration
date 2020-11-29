@@ -37,6 +37,7 @@ class Nearest_Round_Robin(object):
 		while b_k[self.process] > be_k[self.process] and rm_k >= np.ceil(self.case["task_type"][self.process][2]/RAM_UNIT) and rc_k > 0:
 			# set the processing, w_ik
 			action[DEFAULT_SLICES+self.process] += 1
+			action[self.process] = self.node.index
 			# and take the resources on the available obs
 			rm_k -= int(np.ceil(self.case["task_type"][self.process][2]/RAM_UNIT))
 			rc_k -= 1
@@ -48,8 +49,6 @@ class Nearest_Round_Robin(object):
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		for k in range(self.node.max_k):
-			if a_k[k] == 1:
-				action[k] = self.node.index
 			if b_k[k] >= 0.8*MAX_QUEUE and a_k[k] == 1:
 				# set the f_ik to the nearest node
 				min_d = 10000; min_n = 0
@@ -98,6 +97,7 @@ class Nearest_Priority_Queue(object):
 				if b_k[k] > be_k[k]:
 					# set the w_ik to process +1
 					action[DEFAULT_SLICES+k] += 1
+					action[k] = self.node.index
 					# and take the resources on the available obs
 					rm_k -= int(np.ceil(self.case["task_type"][k][2]/RAM_UNIT))
 					rc_k -= 1
@@ -106,8 +106,6 @@ class Nearest_Priority_Queue(object):
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		for k,b in enumerate(b_k):
-			if a_k[k] == 1:
-				action[k] = self.node.index
 			if b_k[k] >= 0.8*MAX_QUEUE and a_k[k] == 1:
 				# set the f_ik to the nearest node
 				min_d = 10000; min_n = 0

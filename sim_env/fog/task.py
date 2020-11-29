@@ -19,8 +19,8 @@ __author__ = "Luis Ferreira @ IST"
 
 # <<<<<
 # >>>>> functions and classes
-def task_processing_time(t):
-	""" Calculates the processing time of a task t, an instance of class Task, that started processing.
+def task_processing_time(t, cpu_units=1):
+	""" Calculates the processing time of a task t, an instance of class Task.
 
 	Parameters:
 		t: Task - a task that started processing in the fog node
@@ -28,28 +28,29 @@ def task_processing_time(t):
 	Exceptions:
 		InvalidStateError - raised when the task is not being processed
 	"""
-	if not t.is_processing():
-		raise InvalidStateError("task should be processing to have resources attributed is_processing", t.is_processing())
+	# if it is processing it might have different cpu units attributed
+	if t.is_processing():
+		cpu_units = t._cpu_units
 	# task has cpu_demand cycles/bit
 	total_cycles = t.cpu_demand*t.packet_size
 	# processing units are in 1GHz each
-	total_time = total_cycles/(t._cpu_units*CPU_UNIT*(1e9))
+	total_time = total_cycles/(cpu_units*CPU_UNIT*(1e9))
 	return total_time
 
-def task_communication_time(t, bit_rate):
+def task_communication_time(packet_size_, bit_rate):
 	""" Calculates the transmission/communication time of a task t, an instance of class Task, given a bit_rate
 
 	Parameters:
-		t: Task - a task that started processing in the fog node
+		packet_size_: int - a task packet size in bits
 		bit_rate: float - the number of bits per second transmitted
 
 	Exceptions:
 		InvalidValueError - raised when the argument values are incorrect
 	"""
-	if bit_rate == 0 or t is None:
+	if bit_rate <= 0 or packet_size_ <= 0:
 		raise InvalidValueError("task_communication_time must have a valid task with a positive bitrate")
 	# simple packet_size calc
-	return (t.packet_size)/bit_rate
+	return float(float(packet_size_)/bit_rate)
 
 		
 class Task(object):

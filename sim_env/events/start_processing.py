@@ -16,12 +16,15 @@ class Start_processing(Event):
 		self.w = w
 		
 	def execute(self, evq):
-		tasks_under_processing = self.node.start_processing_in_slice(self.k, self.w)
+		tasks_under_processing, discarded = self.node.start_processing_in_slice(self.k, self.w, self.time)
 		# discard and set finish processing when decisions are made
 		for task in tasks_under_processing:
 			finish = self.time+task_processing_time(task)
-			if task.exceeded_contraint(finish): # TODO@luis: redo this on another place
+			if task.exceeded_contraint(finish):
 				evq.add_event(Discard_task(max(task.constraint_time(), self.time), self.node, self.k, task))
 			else:
 				evq.add_event(Task_finished(finish, self.node, self.k, task))
+		for task in discarded:
+			evq.add_event(Discard_task(max(task.constraint_time(), self.time), self.node, self.k, task))
+							
 		return None
