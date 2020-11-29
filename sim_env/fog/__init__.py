@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+"""This package provides classes and functions to map and describe a fog envrionment"""
+
 from sim_env.fog.calculators import db_to_linear, linear_to_db, channel_gain, shannon_hartley, euclidean_distance, bernoulli_arrival
 
 from sim_env.fog.fog_node import Fog_node, create_random_node, point_to_point_transmission_rate

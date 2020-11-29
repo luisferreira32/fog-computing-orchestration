@@ -30,7 +30,8 @@ class Fog_env(gym.Env):
 
 		# envrionment variables
 		# self.nodes, self.evq, etc...
-		self.nodes = [create_random_node(i, case) for i in range(1,N_NODES+1)]
+		self.nodes = [create_random_node(i) for i in range(1,N_NODES+1)]
+		self.case = case
 		for n in self.nodes:
 			n.set_communication_rates(self.nodes)
 		self.evq = Event_queue()
@@ -57,7 +58,7 @@ class Fog_env(gym.Env):
 		self.observation_space = spaces.MultiDiscrete(state_possibilities)
 
 		# and the first event that will trigger subsequent arrivals
-		self.evq.add_event(Set_arrivals(0, TIME_STEP, self.nodes))
+		self.evq.add_event(Set_arrivals(0, TIME_STEP, self.nodes, self.case))
 
 	def step(self, action_n):
 		# to make sure you give actions in the FORMATED action space
@@ -121,7 +122,7 @@ class Fog_env(gym.Env):
 	def reset(self):
 		# Reset the state of the environment to an initial state
 		self.evq.reset()
-		self.evq.add_event(Set_arrivals(0, TIME_STEP, self.nodes))
+		self.evq.add_event(Set_arrivals(0, TIME_STEP, self.nodes, self.case))
 		for node in self.nodes:
 			node.reset()	
 		self.clock = 0
@@ -172,9 +173,9 @@ class Fog_env(gym.Env):
 			# calculate the Queue delay: b_ik/service_rate_i
 			D_ik += obs[n.max_k+k]/n._service_rate
 			# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
-			D_ik +=  PACKET_SIZE*n._task_type_on_slices[k][1] / (CPU_UNIT*10**9)
+			D_ik +=  PACKET_SIZE*self.case["task_type"][k][1] / (CPU_UNIT*1e9)
 			# finally, check if slice delay constraint is met
-			if D_ik >= n._task_type_on_slices[k][0]:
+			if D_ik >= self.case["task_type"][k][0]:
 				coeficient = -1
 			else:
 				coeficient = 1

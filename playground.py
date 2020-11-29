@@ -60,7 +60,7 @@ for case in cases:
 			env = Fog_env(case, seed)
 			# and the basic agents
 			if alg.basic:
-				agents = create_basic_agents(env, alg)
+				agents = create_basic_agents(env, alg, case)
 			else:
 				agents = fetch_trained_agents(env, alg, case)
 			if not agents:

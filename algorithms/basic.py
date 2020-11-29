@@ -4,8 +4,8 @@ import numpy as np
 
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, RAM_UNIT
 
-def create_basic_agents(env, alg):
-	agents = [alg(n) for n in env.nodes]
+def create_basic_agents(env, alg, case):
+	agents = [alg(n, case) for n in env.nodes]
 	return agents
 
 class Nearest_Round_Robin(object):
@@ -13,10 +13,11 @@ class Nearest_Round_Robin(object):
 	shared resource in a periodically repeated order. Offloading when the queue is 0.8 full to the nearest node
 	"""
 	basic = True
-	def __init__(self, node):
+	def __init__(self, node, case):
 		# to keep track of what slice is processing
 		self.process = 0
 		self.node = node
+		self.case = case
 
 	def __str__(self):
 		return "Nearest Round Robin"
@@ -33,11 +34,11 @@ class Nearest_Round_Robin(object):
 		[a_k, b_k, be_k, rc_k, rm_k] = np.split(obs, [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
 		
 		# to process based on availabe memory, cpu, and RR priority
-		while b_k[self.process] > be_k[self.process] and rm_k >= np.ceil(self.node._task_type_on_slices[self.process][2]/RAM_UNIT) and rc_k > 0:
+		while b_k[self.process] > be_k[self.process] and rm_k >= np.ceil(self.case["task_type"][self.process][2]/RAM_UNIT) and rc_k > 0:
 			# set the processing, w_ik
 			action[DEFAULT_SLICES+self.process] += 1
 			# and take the resources on the available obs
-			rm_k -= int(np.ceil(self.node._task_type_on_slices[self.process][2]/RAM_UNIT))
+			rm_k -= int(np.ceil(self.case["task_type"][self.process][2]/RAM_UNIT))
 			rc_k -= 1
 			be_k[self.process] += 1
 		# next time step we'll process a different slice
@@ -69,8 +70,9 @@ class Nearest_Priority_Queue(object):
 	empty, which is determined by a delay constraint. Offloading when the queue is 0.8 full to the nearest node.
 	"""
 	basic = True
-	def __init__(self, node):
+	def __init__(self, node, case):
 		self.node = node
+		self.case = case
 		# make slice priority on nodes
 		delay_constraints = [k[0] for k in node._task_type_on_slices]
 		self.priorities = np.argsort(delay_constraints)
@@ -92,12 +94,12 @@ class Nearest_Priority_Queue(object):
 		# begining with the higher to the lower priorities (slice k)
 		for k in self.priorities:
 			# to process based on availabe memory and there is still tasks to process
-			while rm_k >= np.ceil(self.node._task_type_on_slices[k][2]/RAM_UNIT) and rc_k > 0 and not b_k[k] == be_k[k]:
+			while rm_k >= np.ceil(self.case["task_type"][k][2]/RAM_UNIT) and rc_k > 0 and not b_k[k] == be_k[k]:
 				if b_k[k] > be_k[k]:
 					# set the w_ik to process +1
 					action[DEFAULT_SLICES+k] += 1
 					# and take the resources on the available obs
-					rm_k -= int(np.ceil(self.node._task_type_on_slices[k][2]/RAM_UNIT))
+					rm_k -= int(np.ceil(self.case["task_type"][k][2]/RAM_UNIT))
 					rc_k -= 1
 					be_k[k] += 1
 

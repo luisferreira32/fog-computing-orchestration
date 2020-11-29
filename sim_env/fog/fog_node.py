@@ -1,5 +1,10 @@
 #!/usr/bin/env python
+"""Provides a class and auxiliary functions to model a Fog computing node hardware.
 
+Fog_node class has the essential characteristics of a Fog node and auxiliary variables
+for the simulations.
+"""
+# >>>>> imports
 import numpy as np
 from collections import deque
 
@@ -11,8 +16,12 @@ from sim_env.configs import DEBUG
 from sim_env.fog import euclidean_distance, channel_gain, shannon_hartley, db_to_linear
 
 from utils.tools import uniform_rand_choice, uniform_rand_int
+# <<<<<
+# >>>>> meta-data
+__author__ = "Luis Ferreira @ IST"
 
-
+# <<<<<
+# >>>>> classes and functions
 def point_to_point_transmission_rate(n1, n2):
 	# calculates transmission rate given two nodes
 	d = euclidean_distance(n1.x, n1.y, n2.x, n2.y)
@@ -21,20 +30,20 @@ def point_to_point_transmission_rate(n1, n2):
 	n0_mw = db_to_linear(THERMAL_NOISE_DENSITY)
 	return shannon_hartley(g, p_mw, NODE_BANDWIDTH, n0_mw)
 
-def create_random_node(index=0, slices_characteristics=BASE_SLICE_CHARS):
+def create_random_node(index=0):
 	# returns a node uniformly sampled within configurations, after the previous index
 	[x, y] = [uniform_rand_int(low=0, high=AREA[0]), uniform_rand_int(low=0, high=AREA[1])]
 	number_of_slices = DEFAULT_SLICES
 	cpu = uniform_rand_choice(CPU_CLOCKS)
 	ram = uniform_rand_choice(RAM_SIZES)
 	if DEBUG: print("[DEBUG] Node",index,"created at (x,y) = ",(x,y),"cpu =",cpu,"ram =",ram)
-	return Fog_node(index, x, y, cpu, ram, number_of_slices, slices_characteristics)
+	return Fog_node(index, x, y, cpu, ram, number_of_slices)
 
 
 class Fog_node():
 	""" A Fog node with limited resources
 	"""
-	def __init__(self, index, x, y, cpu_frequency, ram_size, number_of_slices, slice_characteristics=BASE_SLICE_CHARS):
+	def __init__(self, index, x, y, cpu_frequency, ram_size, number_of_slices):
 		super(Fog_node, self).__init__()
 		# Identifiers
 		self.index = index
@@ -56,9 +65,6 @@ class Fog_node():
 		self._dealt_tasks = 0
 		self._total_time_intervals = 0
 		self._service_rate = 0
-		# task slices constants
-		self._arrivals_on_slices = [ar for ar in slice_characteristics["arrivals"]]
-		self._task_type_on_slices = [tp for tp in slice_characteristics["task_type"]]
 		# com times within fog nodes
 		self._communication_rates = {}
 		self._distances = {}
@@ -154,3 +160,5 @@ class Fog_node():
 		self._avail_cpu_units = int(self.cpu_frequency/CPU_UNIT)
 		self._avail_ram_units = int(self.ram_size/RAM_UNIT)
 
+
+# <<<<<
