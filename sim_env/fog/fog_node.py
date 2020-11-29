@@ -18,9 +18,12 @@ from sim_env.configs import AREA, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT, THERMA
 from sim_env.configs import NODE_BANDWIDTH, TRANSMISSION_POWER, PACKET_SIZE
 from sim_env.configs import DEBUG
 from .calculators import euclidean_distance, channel_gain, shannon_hartley, db_to_linear
+from .task import Task
 
+# utils
 from utils.tools import uniform_rand_choice, uniform_rand_int
 from utils.custom_exceptions import InvalidValueError
+
 # <<<<<
 # >>>>> meta-data
 __author__ = "Luis Ferreira @ IST"
@@ -34,6 +37,8 @@ def point_to_point_transmission_rate(d, concurr):
 		d: float - distance between two nodes
 		concurr: int - number of tasks that will share the bandwidth
 	"""
+	if concurr <= 0:
+		raise InvalidValueError("transmission rate number of task has to be positive", "[0,+inf[")
 	g = channel_gain(d, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT)
 	p_mw = db_to_linear(TRANSMISSION_POWER)
 	n0_mw = db_to_linear(THERMAL_NOISE_DENSITY)
@@ -122,7 +127,7 @@ class Fog_node():
 	def __str__(self):
 		return self.name
 
-	# >>>>> buffers management methods
+	# >>>>> slice management methods
 	def slice_buffer_len(self, k):
 		"""Retrieves the lenght of a buffer		
 
@@ -153,8 +158,8 @@ class Fog_node():
 			task: Task - task to be added to buffer in slice k
 		"""
 
-		if k < 0 or k >= self.max_k:
-			raise InvalidValueError("Invalid slice number", "[0,"+str(self.max_k)+"[")
+		if k < 0 or k >= self.max_k or not isinstance(task, Task):
+			raise InvalidValueError("Invalid arguments for add_task_on_slice")
 		# returns the task if the slice buffer is full
 		if len(self.buffers[k]) == self.buffers[k].maxlen:
 		    return task
@@ -172,8 +177,8 @@ class Fog_node():
 			task: Task - task to be removed from buffer in slice k
 		"""
 
-		if k < 0 or k >= self.max_k:
-			raise InvalidValueError("Invalid slice number", "[0,"+str(self.max_k)+"[")
+		if k < 0 or k >= self.max_k or not isinstance(task, Task):
+			raise InvalidValueError("Invalid arguments for remove_task_of_slice")
 		# removes and returns a task if it is in the buffer
 		try:
 			self.buffers[k].remove(task)
@@ -269,7 +274,7 @@ class Fog_node():
 		"""Given a list sets the _distances dict between instances of Fog_nodes class with an euclidean distance
 		
 		Parameters:
-			nodes: List[Fog_nodes] - list of the neighbouring nodes of this node
+			nodes: List[Fog_nodes] - list of the neighbouring nodes of this node with DISTINCT indexes
 		"""
 
 		for n in nodes:
