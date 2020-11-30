@@ -2,10 +2,12 @@
 """Provides a class for the event of starting to process W tasks in a certain node and slice, if tasks do not meet time constraint it discards them."""
 
 # >>>>> imports
+from sim_env.fog import Fog_node
+from utils.custom_exceptions import InvalidValueError
+
 from .core import Event
 from .discard_task import Discard_task
 from .stop_processing import Stop_processing
-from utils.custom_exceptions import InvalidValueError
 
 # <<<<<
 # >>>>> meta-data
@@ -40,8 +42,8 @@ class Start_processing(Event):
 		self.k = k
 		self.w = w
 
-		if k >= node.max_k or k < 0:
-			raise InvalidValueError("Invalid slice number", "[0,"+str(node.max_k)+"[")
+		if k >= node.max_k or k < 0 or not isinstance(node, Fog_node):
+			raise InvalidValueError("Verify arguments of Start_processing creation")
 		
 	def execute(self, evq):
 		""" Executes a start processing event in which W tasks will attempt to be processed, and any time constraint exceeded will result on a discard.

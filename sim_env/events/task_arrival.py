@@ -2,8 +2,10 @@
 """Provides a class and auxiliary functions for the event responsible for making a task arrive at a certain node and slice"""
 
 # >>>>> imports
-from .core import Event
+from sim_env.fog import Task, Fog_node
 from utils.custom_exceptions import InvalidValueError
+
+from .core import Event
 
 # <<<<<
 # >>>>> meta-data
@@ -34,8 +36,8 @@ class Task_arrival(Event):
 		self.k = k
 		self.task = task
 		# cannot recieve wrong slice
-		if k >= node.max_k or k < 0:
-			raise InvalidValueError("Invalid slice number", "[0,"+str(node.max_k)+"[")
+		if k >= node.max_k or k < 0 or not isinstance(node, Fog_node) or not isinstance(task, Task):
+			raise InvalidValueError("Verify arguments of Task_arrival creation")
 		# cannot recieve future tasks
 		if time < task.task_time():
 			raise InvalidValueError("Cannot recieve a task from the future")

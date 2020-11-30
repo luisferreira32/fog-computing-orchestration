@@ -2,8 +2,10 @@
 """Provides a class for the event of stopping to process a task in a certain node and slice, if the task has finished the processing it's returned"""
 
 # >>>>> imports
-from .core import Event
+from sim_env.fog import Task, Fog_node
 from utils.custom_exceptions import InvalidValueError
+
+from .core import Event
 
 # <<<<<
 # >>>>> meta-data
@@ -34,8 +36,8 @@ class Stop_processing(Event):
 		self.k = k
 		self.task = task
 
-		if k >= node.max_k or k < 0:
-			raise InvalidValueError("Invalid slice number", "[0,"+str(node.max_k)+"[")
+		if k >= node.max_k or k < 0 or not isinstance(node, Fog_node) or not isinstance(task, Task):
+			raise InvalidValueError("Verify arguments of Stop_processing creation")
 
 	def execute(self, evq):
 		""" Executes a stop processing event on slice k of the node, stopping the task and returning it if completed.

@@ -73,7 +73,7 @@ class Nearest_Priority_Queue(object):
 		self.node = node
 		self.case = case
 		# make slice priority on nodes
-		delay_constraints = [k[0] for k in node._task_type_on_slices]
+		delay_constraints = [k[0] for k in case["task_type"]]
 		self.priorities = np.argsort(delay_constraints)
 
 	def __str__(self):

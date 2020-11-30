@@ -2,6 +2,8 @@
 """Provides a class for the event of offloading a task to another node within a logical slice"""
 
 # >>>>> imports
+from sim_env.fog import Fog_node
+from utils.custom_exceptions import InvalidValueError
 from .core import Event
 from .task_arrival import Task_arrival
 
@@ -36,6 +38,9 @@ class Offload_task(Event):
 		self.k = k
 		self.destination = destination
 		self.arrival_time = arrival_time
+
+		if k >= node.max_k or k < 0 or not isinstance(node, Fog_node) or not isinstance(destination, Fog_node):
+			raise InvalidValueError("Verify arguments of Discard_task creation")
 
 	def execute(self, evq):
 		""" Executes the offloading event, not offloading if node is transmitting or there are no valid tasks to offload.

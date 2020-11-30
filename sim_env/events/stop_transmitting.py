@@ -2,6 +2,9 @@
 """ Provides an event to set up the fog nodes transmitting flags """
 
 # >>>>> imports
+from sim_env.fog import Fog_node
+from utils.custom_exceptions import InvalidValueError
+
 from .core import Event
 
 # <<<<<
@@ -26,6 +29,9 @@ class Stop_transmitting(Event):
 
 		super(Stop_transmitting, self).__init__(time, "Stop_transmitting")
 		self.node = node
+		
+		if not isinstance(node, Fog_node):
+			raise InvalidValueError("Verify arguments of Stop_transmitting creation")
 
 	def execute(self,evq):
 		""" Executes the flag change."""

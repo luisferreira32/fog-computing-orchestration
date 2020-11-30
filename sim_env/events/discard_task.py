@@ -2,6 +2,9 @@
 """Provides a class for the event of discarding a task due to a time constraint being exceeded"""
 
 # >>>>> imports
+from sim_env.fog import Task, Fog_node
+from utils.custom_exceptions import InvalidValueError
+
 from .core import Event
 
 # <<<<<
@@ -32,6 +35,9 @@ class Discard_task(Event):
 		self.k = k
 		self.task = task
 
+		if k >= node.max_k or k < 0 or not isinstance(node, Fog_node) or not isinstance(task, Task):
+			raise InvalidValueError("Verify arguments of Discard_task creation")
+
 	def execute(self, evq):
 		""" Executes the discarding event, restoring allocated resources back to the node. If the task was already not in the node the execute returns None.
 
@@ -39,6 +45,6 @@ class Discard_task(Event):
 			evq: Event_queue - the event queue from which this event was called and to which it can add events
 		"""
 		
-		return self.node.remove_task_of_slice(self.k, self.task).
+		return self.node.remove_task_of_slice(self.k, self.task)
 
 # <<<<<
