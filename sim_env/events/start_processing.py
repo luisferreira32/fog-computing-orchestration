@@ -5,7 +5,6 @@
 import numpy as np
 
 from sim_env.fog import Fog_node
-from sim_env.configs import TIME_STEP
 from utils.custom_exceptions import InvalidValueError
 
 from .core import Event
@@ -59,12 +58,10 @@ class Start_processing(Event):
 		# discard and set finish processing when decisions are made
 		for task in tasks_under_processing:
 			task_finish = self.time+task.task_remaining_processing_time()
-			task_interruption = self.time+TIME_STEP
-			if task.exceeded_constraint(min(task_finish, task_interruption)):
+			if task.exceeded_constraint(task_finish):
 				evq.add_event(Discard_task(max(task.constraint_time(), self.time), self.node, self.k, task))
 			else:
-				# only process one timestep at a time
-				evq.add_event(Stop_processing(min(task_finish, task_interruption), self.node, self.k, task))
+				evq.add_event(Stop_processing(task_finish, self.node, self.k, task))
 		for task in discarded:
 			evq.add_event(Discard_task(max(task.constraint_time(), self.time), self.node, self.k, task))
 							
