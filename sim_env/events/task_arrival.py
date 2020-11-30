@@ -36,7 +36,7 @@ class Task_arrival(Event):
 		self.k = k
 		self.task = task
 		# cannot recieve wrong slice
-		if k >= node.max_k or k < 0 or not isinstance(node, Fog_node) or not isinstance(task, Task):
+		if not isinstance(node, Fog_node) or k >= node.max_k or k < 0 or not isinstance(task, Task):
 			raise InvalidValueError("Verify arguments of Task_arrival creation")
 		# cannot recieve future tasks
 		if time < task.task_time():

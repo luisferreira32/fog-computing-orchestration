@@ -39,7 +39,7 @@ class Offload_task(Event):
 		self.destination = destination
 		self.arrival_time = arrival_time
 
-		if k >= node.max_k or k < 0 or not isinstance(node, Fog_node) or not isinstance(destination, Fog_node):
+		if not isinstance(node, Fog_node) or k >= node.max_k or k < 0 or not isinstance(destination, Fog_node) or time > arrival_time:
 			raise InvalidValueError("Verify arguments of Discard_task creation")
 
 	def execute(self, evq):

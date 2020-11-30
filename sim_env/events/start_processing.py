@@ -42,7 +42,7 @@ class Start_processing(Event):
 		self.k = k
 		self.w = w
 
-		if k >= node.max_k or k < 0 or not isinstance(node, Fog_node):
+		if not isinstance(node, Fog_node) or k >= node.max_k or k < 0 or w <= 0:
 			raise InvalidValueError("Verify arguments of Start_processing creation")
 		
 	def execute(self, evq):
@@ -56,7 +56,7 @@ class Start_processing(Event):
 		# discard and set finish processing when decisions are made
 		for task in tasks_under_processing:
 			finish = self.time+task.task_remaining_processing_time()
-			if task.exceeded_contraint(finish):
+			if task.exceeded_constraint(finish):
 				evq.add_event(Discard_task(max(task.constraint_time(), self.time), self.node, self.k, task))
 			else:
 				evq.add_event(Stop_processing(finish, self.node, self.k, task))

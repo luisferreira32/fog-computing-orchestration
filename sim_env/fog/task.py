@@ -176,7 +176,7 @@ class Task(object):
 
 		return self._timestamp+0.001*self.delay_constraint
 
-	def exceeded_contraint(self, current_time):
+	def exceeded_constraint(self, current_time):
 		"""Returns if it has exceeded the time constraint """
 
 		return self.constraint_time() < current_time

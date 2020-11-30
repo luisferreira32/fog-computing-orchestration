@@ -231,7 +231,7 @@ class Fog_node():
 			# only process if has cores, memory and an action request W for it
 			if not task.is_processing() and w > 0 and self._avail_cpu_units > 0 and self._avail_ram_units >= np.ceil(task.ram_demand/RAM_UNIT):
 				# if processor tries to load them and they exceeded constraint, move on
-				if task.exceeded_contraint(time):
+				if task.exceeded_constraint(time):
 					discarded.append(task)
 					continue
 				# one cpu unit per task and the ram demand they require

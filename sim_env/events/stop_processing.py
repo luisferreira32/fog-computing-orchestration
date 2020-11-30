@@ -36,7 +36,7 @@ class Stop_processing(Event):
 		self.k = k
 		self.task = task
 
-		if k >= node.max_k or k < 0 or not isinstance(node, Fog_node) or not isinstance(task, Task):
+		if not isinstance(node, Fog_node) or k >= node.max_k or k < 0 or not isinstance(task, Task):
 			raise InvalidValueError("Verify arguments of Stop_processing creation")
 
 	def execute(self, evq):
