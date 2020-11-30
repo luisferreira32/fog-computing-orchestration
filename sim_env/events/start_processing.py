@@ -2,7 +2,7 @@
 
 from .core import Event
 from .discard_task import Discard_task
-from .task_finished import Task_finished
+from .stop_processing import Stop_processing
 
 from sim_env.fog import task_processing_time
 
@@ -23,7 +23,7 @@ class Start_processing(Event):
 			if task.exceeded_contraint(finish):
 				evq.add_event(Discard_task(max(task.constraint_time(), self.time), self.node, self.k, task))
 			else:
-				evq.add_event(Task_finished(finish, self.node, self.k, task))
+				evq.add_event(Stop_processing(finish, self.node, self.k, task))
 		for task in discarded:
 			evq.add_event(Discard_task(max(task.constraint_time(), self.time), self.node, self.k, task))
 							

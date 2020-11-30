@@ -66,7 +66,8 @@ class Task(object):
 		_memory_units: int - the number of memory units from the fog node attributed to this task
 		_cpu_units: int - the number of cpu units from the fog node attributed to this task
 		_total_delay: float - the total delay from creation to completion
-		_expected_dalay: float - the total delay from creation to completion a task expects when the processing begins (ignoring time constraint)
+		_started_processing: float - the timestamp where it started processing last
+		_expected_delay: float - expected processing delay
 
 	"""
 	def __init__(self, timestamp, packet_size=PACKET_SIZE, delay_constraint=10, cpu_demand=400, ram_demand=400, task_type=None):
@@ -102,6 +103,8 @@ class Task(object):
 		self._memory_units = 0
 		self._cpu_units = 0
 		self._total_delay = -1
+		# keep track of delay
+		self._started_processing = -1
 		self._expected_delay = -1
 
 	def __str__(self):
@@ -115,46 +118,64 @@ class Task(object):
 		"""Returns if it is completed """
 		return False if self._total_delay == -1 else True
 
-	def start_processing(self, cpu_units, memory_units):
+	def start_processing(self, cpu_units, memory_units, start_time):
 		"""Sets up the variables indicating that it has started processing
 		
 		Parameters:
 			cpu_units: int - the number of cpu units from the fog node attributed to this task
 			memory_units: int - the number of memory units from the fog node attributed to this task
+			start_time: float - the starting time of the processing
 		"""
-		if cpu_units < 0 or memory_units < 0:
-			raise InvalidValueError("Needs units attributed to process")
+		if cpu_units < 0 or memory_units < 0 or start_time < self._timestamp:
+			raise InvalidValueError("Task start_processing arguments do not meet requirements")
 		self._processing = True
 		self._cpu_units = cpu_units
 		self._memory_units = memory_units
-		self._expected_delay = task_processing_time(self)
+		self._started_processing = start_time
+		if self._expected_delay == -1: # only set the expected delay the first time
+			self._expected_delay = task_processing_time(self)
 
-	def finish_processing(self, finish_time):
-		"""Sets up the variables indicating that it has finished processing
+	def stop_processing(self, finish_time):
+		"""Stops task processing and verifies if the task has completed its processing
 		
 		Parameters:
 			finish_time: float - the precise time when it finished processing in the fog node
 		"""
+
 		if finish_time < self._timestamp:
-			raise InvalidValueError("Task cannot finish before creation")
+			raise InvalidValueError("Task cannot stop before creation")
 		if self._processing:
 			self._processing = False
-			self._total_delay = finish_time-self._timestamp
+			# if it finished the whole processing
+			if round(finish_time-self._started_processing,10) == round(self._expected_delay, 10):
+				self._total_delay = finish_time-self._timestamp
+			# else just keep track of new expected delay
+			else:
+				self._expected_delay -= finish_time-self._started_processing
+
+	def task_remaining_processing_time(self):
+		"""Returns the reamining processing time """
+
+		return self._expected_delay
 
 	def task_delay(self):
 		"""Returns the total delay """
+
 		return self._total_delay
 
 	def task_time(self):
 		"""Returns the task creation timestamp """
+
 		return self._timestamp
 
 	def constraint_time(self):
 		"""Returns the task limit completion time"""
+
 		return self._timestamp+0.001*self.delay_constraint
 
 	def exceeded_contraint(self, current_time):
 		"""Returns if it has exceeded the time constraint """
+
 		return self.constraint_time() < current_time
 
 

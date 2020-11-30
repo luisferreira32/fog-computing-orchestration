@@ -225,7 +225,7 @@ class Fog_node():
 				self._avail_cpu_units -= n_cpu_units
 				self._avail_ram_units -= n_memory_units
 				# then start the processing
-				task.start_processing(n_cpu_units, n_memory_units)
+				task.start_processing(n_cpu_units, n_memory_units, time)
 				under_processing.append(task)
 				# reduce the number that we will still allocate
 				w -= 1
