@@ -1,12 +1,36 @@
 #!/usr/bin/env python
+"""Provides a class for the event of offloading a task to another node within a logical slice"""
 
+# >>>>> imports
 from .core import Event
 from .task_arrival import Task_arrival
 
+# <<<<<
+# >>>>> meta-data
+__author__ = "Luis Ferreira @ IST"
+
+# <<<<<
+# >>>>> class
 class Offload_task(Event):
-	""" Offloads the task that just arrived to a destination node
+	""" Offloads the task that just arrived from a client.
+	
+	Attributes:
+		node: Fog_node - the fog node in which the task is arriving
+		k: int - the slice in which the task is arriving
+		destination: Fog_node - the node to which the task is going to be offloaded
+		arrival_time: float - the time it takes to offload from node to destination
 	"""
+
 	def __init__(self, time, node, k, destination, arrival_time):
+		"""
+		Parameters:
+			(super) time: float - the time of the event execution
+			node: Fog_node - the fog node in which the task is arriving
+			k: int - the slice in which the task is arriving
+			destination: Fog_node - the node to which the task is going to be offloaded
+			arrival_time: float - the time it takes to offload from node to destination
+		"""
+
 		super(Offload_task, self).__init__(time, "Offload_task")
 		self.node = node
 		self.k = k
@@ -14,6 +38,12 @@ class Offload_task(Event):
 		self.arrival_time = arrival_time
 
 	def execute(self, evq):
+		""" Executes the offloading event, not offloading if node is transmitting or there are no valid tasks to offload.
+
+		Parameters:
+			evq: Event_queue - the event queue from which this event was called and to which it can add events
+		"""
+
 		# can't send if it's busy sending
 		if self.node.is_transmitting(): return None
 		# then pop the last task we got

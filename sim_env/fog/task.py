@@ -146,9 +146,12 @@ class Task(object):
 			raise InvalidValueError("Task cannot stop before creation")
 		if self._processing:
 			self._processing = False
+			self._cpu_units = 0
+			self._memory_units = 0
 			# if it finished the whole processing
 			if round(finish_time-self._started_processing,10) == round(self._expected_delay, 10):
 				self._total_delay = finish_time-self._timestamp
+				self._expected_delay = 0
 			# else just keep track of new expected delay
 			else:
 				self._expected_delay -= finish_time-self._started_processing

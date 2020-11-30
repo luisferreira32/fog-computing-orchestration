@@ -165,7 +165,7 @@ class Fog_node():
 		    return task
 		self.buffers[k].append(task)
 		return None
-    
+
 	def remove_task_of_slice(self, k, task):
 		"""Try to remove a task from the buffer.
 		
@@ -193,6 +193,22 @@ class Fog_node():
 			return None
 		return task
 
+	def stop_processing_in_slice(self, k, task, time):
+		"""Try to stop processing a task in the slice k at a time.
+
+		Parameters:
+			k: int - the slice index
+			task: Task - the task to stop processing
+			time: float - current simulation time
+		"""
+		if k < 0 or k >= self.max_k or not isinstance(task, Task):
+			raise InvalidValueError("Invalid arguments for remove_task_of_slice")
+		# only if the task is there
+		if task in self.buffers[k]:
+			self._avail_ram_units += task._memory_units
+			self._avail_cpu_units += task._cpu_units
+			task.stop_processing(time)
+    
 	def start_processing_in_slice(self, k, w, time):
 		"""Try to start processing w task, if any task has already exceeded time limit, discard it.
 

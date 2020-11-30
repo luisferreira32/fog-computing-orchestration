@@ -10,26 +10,27 @@ __author__ = "Luis Ferreira @ IST"
 
 # <<<<<
 # >>>>> class
-class Start_transmitting(Event):
-	""" Start_transmitting is an event that sets the transmission flag up
+class Stop_transmitting(Event):
+	""" Stop_transmitting is an event that sets the transmission flag down
 
 	Attributes:
 		node: Fog_node - the fog node which is transmitting
 	"""
+
 	def __init__(self, time, node):
 		"""
 		Parameters:
 			(super) time: float - the time in which the event will run
 			node: Fog_node - the fog node which is transmitting
 		"""
-		
-		super(Start_transmitting, self).__init__(time, "Start_transmitting")
+
+		super(Stop_transmitting, self).__init__(time, "Stop_transmitting")
 		self.node = node
 
 	def execute(self,evq):
 		""" Executes the flag change."""
 
-		self.node.start_transmitting()
+		self.node.finished_transmitting()
 		return None
 
 # <<<<<

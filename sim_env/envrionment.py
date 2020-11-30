@@ -12,7 +12,7 @@ import numpy as np
 from sim_env.fog import create_random_node, point_to_point_transmission_rate
 from sim_env.fog import task_communication_time
 from sim_env.events import Event_queue, is_arrival_on_slice
-from sim_env.events import Finished_transmitting, Set_arrivals, Offload_task, Start_transmitting, Start_processing
+from sim_env.events import Stop_transmitting, Set_arrivals, Offload_task, Start_transmitting, Start_processing
 from sim_env.configs import TIME_STEP, SIM_TIME, RANDOM_SEED, OVERLOAD_WEIGHT
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
 from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS
@@ -163,9 +163,9 @@ class Fog_env(gym.Env):
 			if fks[k] != n.index and fks[k] != 0:
 				arrive_time += task_communication_time(PACKET_SIZE, point_to_point_transmission_rate(n._distances[fks[k]],concurr))
 				self.evq.add_event(Offload_task(self.clock, n, k, self.nodes[fks[k]-1], arrive_time))
-		if concurr > 0:
+		if concurr > 0 and not n.is_transmitting(): # it will only offload if it was not transmitting... so:
 			self.evq.add_event(Start_transmitting(self.clock, n))
-			self.evq.add_event(Finished_transmitting(arrive_time, n))
+			self.evq.add_event(Stop_transmitting(arrive_time, n))
 
 	def _agent_reward_fun(self, n, obs, action):
 		# calculate the reward for the agent (node) n

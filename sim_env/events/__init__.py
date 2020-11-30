@@ -8,5 +8,5 @@ from sim_env.events.start_processing import Start_processing
 from sim_env.events.stop_processing import Stop_processing
 
 from sim_env.events.offload_task import Offload_task
-from sim_env.events.finished_transmitting import Finished_transmitting
+from sim_env.events.stop_transmitting import Stop_transmitting
 from sim_env.events.start_transmitting import Start_transmitting
