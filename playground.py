@@ -20,7 +20,7 @@ from utils.tools import dictionary_append, write_all_to_csvs, random_seed_primes
 from utils.display import plt_bar, plt_error_bar, plt_box_plot, info_gather_init
 from sim_env.envrionment import Fog_env
 from algorithms.basic import create_basic_agents
-from algorithms.runners import run_algorithm_on_envrionment
+from algorithms.runners import run_algorithm_on_envrionment, run_basic_algorithm_on_envrionment
 from algorithms.deep_tools.frames import Conv1d_Frame, Rnn_Frame, Conv1d_Rnn_Frame
 
 # --- the main playground ---
@@ -60,17 +60,16 @@ for case in cases:
 			start_time = time.time()
 			# generate the env
 			env = Fog_env(case, seed)
-			# and the basic agents
+			# run either a basic algorithm or a RL algorithm
 			if alg.basic:
 				agents = create_basic_agents(env, alg, case)
+				compiled_info = run_basic_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
 			else:
-				agents = fetch_trained_agents(env, alg, case)
-			if not agents:
-				break
+				agents = fetch_trained_agents(env, alg, case) # will give an error if there are no trained agents
+				compiled_info = run_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
 			# run the algorithm to collect info
-			compiled_info = run_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
 			# just to know
-			current+=1; print("[LOG] simulations ran ["+str(current)+"/"+total+"] in",round(time.time()-start_time,2),"seconds [total:",round(time.time()-o_start_time,2),"s]")
+			current+=1; print("[LOG] simulations ran ["+str(current)+"/"+total+"] in",round(time.time()-o_start_time,2),"seconds")
 			# for further use
 			delays_df = dictionary_append(delays_df, case["case"]+alg.short_str(), compiled_info["average_delay"])
 			success_rate_df = dictionary_append(success_rate_df, case["case"]+alg.short_str(), compiled_info["success_rate"])

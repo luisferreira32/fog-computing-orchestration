@@ -2,7 +2,8 @@
 
 import numpy as np
 
-from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, RAM_UNIT
+from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, RAM_UNIT, TIME_STEP
+from sim_env.events import Start_processing, Stop_processing
 
 def create_basic_agents(env, alg, case):
 	agents = [alg(n, case) for n in env.nodes]
@@ -25,10 +26,11 @@ class Nearest_Round_Robin(object):
 	def short_str(cls):
 		return "nRR"
 
-	def __call__(self, obs):
+	def __call__(self, obs, evq, clock):
 		# node action struct: [f_i0, ..., f_ik, w_i0, ..., w_ik]
 		# default no offloads and no processing
-		action = np.zeros(DEFAULT_SLICES*2, dtype=np.uint8)
+		wks = np.zeros(DEFAULT_SLICES, dtype=np.uint8)
+		fks = np.zeros(DEFAULT_SLICES, dtype=np.uint8)
 
 		# for every node make an decision
 		[a_k, b_k, be_k, rc_k, rm_k] = np.split(obs, [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
@@ -36,8 +38,8 @@ class Nearest_Round_Robin(object):
 		# to process based on availabe memory, cpu, and RR priority
 		while b_k[self.process] > be_k[self.process] and rm_k >= np.ceil(self.case["task_type"][self.process][2]/RAM_UNIT) and rc_k > 0:
 			# set the processing, w_ik
-			action[DEFAULT_SLICES+self.process] += 1
-			action[self.process] = self.node.index
+			wks[self.process] += 1
+			fks[self.process] = self.node.index
 			# and take the resources on the available obs
 			rm_k -= int(np.ceil(self.case["task_type"][self.process][2]/RAM_UNIT))
 			rc_k -= 1
@@ -46,6 +48,20 @@ class Nearest_Round_Robin(object):
 		self.process +=1
 		if self.process == DEFAULT_SLICES:
 			self.process = 0
+
+		# let's set up the processing --- TRICK TO KEEP ENV GENERAL BUT TWEAK EVENTS HERE
+		for k in range(DEFAULT_SLICES):
+			# start processing if there is any request
+			if wks[k] != 0:
+				# start all processing in this layer
+				evq.add_event(Start_processing(clock, self.node, k, wks[k]))
+				print(self.node.name, k,"->",wks[k])
+				# and stop all processing in this layer next time step
+				for task in self.node.buffers[k]:
+					evq.add_event(Stop_processing(clock+TIME_STEP, self.node, k, task))
+
+		# clear up the action bar for processing!
+		wks = np.zeros(DEFAULT_SLICES, dtype=np.uint8)
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		for k in range(self.node.max_k):
@@ -56,10 +72,10 @@ class Nearest_Round_Robin(object):
 					if d < min_d:
 						min_n = n
 						min_d = d
-				action[k] =min_n
+				fks[k] =min_n
 
 		# and return the action
-		return action
+		return np.append(fks, wks)
 
 
 
@@ -82,10 +98,11 @@ class Nearest_Priority_Queue(object):
 	def short_str(cls):
 		return "nPQ"
 
-	def __call__(self, obs):
+	def __call__(self, obs, evq, clock):
 		# action struct: [f_00, ..., f_0k, w_00, ..., w_0k, ..., f_i0, ..., f_ik, w_i0, ..., w_ik]
 		# default no offloads and no processing
-		action = np.zeros(DEFAULT_SLICES*2, dtype=np.uint8)
+		wks = np.zeros(DEFAULT_SLICES, dtype=np.uint8)
+		fks = np.zeros(DEFAULT_SLICES, dtype=np.uint8)
 
 		# for every node make an decision
 		[a_k, b_k, be_k, rc_k, rm_k] = np.split(obs, [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
@@ -96,13 +113,12 @@ class Nearest_Priority_Queue(object):
 			while rm_k >= np.ceil(self.case["task_type"][k][2]/RAM_UNIT) and rc_k > 0 and not b_k[k] == be_k[k]:
 				if b_k[k] > be_k[k]:
 					# set the w_ik to process +1
-					action[DEFAULT_SLICES+k] += 1
-					action[k] = self.node.index
+					wks[k] += 1
+					fks[k] = self.node.index
 					# and take the resources on the available obs
 					rm_k -= int(np.ceil(self.case["task_type"][k][2]/RAM_UNIT))
 					rc_k -= 1
 					be_k[k] += 1
-
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		for k,b in enumerate(b_k):
@@ -113,7 +129,7 @@ class Nearest_Priority_Queue(object):
 					if d < min_d:
 						min_n = n
 						min_d = d
-				action[k] =min_n
+				fks[k] =min_n
 
 		# and return the action
-		return action
+		return np.append(fks, wks)
