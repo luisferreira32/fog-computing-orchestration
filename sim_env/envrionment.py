@@ -177,11 +177,11 @@ class Fog_env(gym.Env):
 			# if it's offloaded adds communication time to delay
 			if fks[k] != n.index and fks[k] != 0:
 				Dt_ik = PACKET_SIZE / (point_to_point_transmission_rate(n._distances[fks[k]],concurr))
-				D_ik += Dt_ik
+				D_ik += Dt_ik*1000 # converto to milliseconds
 			# calculate the Queue delay: b_ik/service_rate_i
-			D_ik += obs[n.max_k+k]/n._service_rate
+			D_ik += obs[n.max_k+k]/n._service_rate # service rate per millisecond
 			# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
-			D_ik +=  PACKET_SIZE*self.case["task_type"][k][1] / (CPU_UNIT*1e9) # TODO@luis: solve this bug
+			D_ik +=  1000* PACKET_SIZE*self.case["task_type"][k][1] / (CPU_UNIT*1e9) # convert it to milliseconds
 			# finally, check if slice delay constraint is met
 			if D_ik >= self.case["task_type"][k][0]:
 				coeficient = -1
