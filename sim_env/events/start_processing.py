@@ -2,7 +2,10 @@
 """Provides a class for the event of starting to process W tasks in a certain node and slice, if tasks do not meet time constraint it discards them."""
 
 # >>>>> imports
+import numpy as np
+
 from sim_env.fog import Fog_node
+from sim_env.configs import TIME_STEP
 from utils.custom_exceptions import InvalidValueError
 
 from .core import Event
@@ -55,11 +58,13 @@ class Start_processing(Event):
 		tasks_under_processing, discarded = self.node.start_processing_in_slice(self.k, self.w, self.time)
 		# discard and set finish processing when decisions are made
 		for task in tasks_under_processing:
-			finish = self.time+task.task_remaining_processing_time()
-			if task.exceeded_constraint(finish):
+			task_finish = self.time+task.task_remaining_processing_time()
+			task_interruption = self.time+TIME_STEP
+			if task.exceeded_constraint(min(task_finish, task_interruption)):
 				evq.add_event(Discard_task(max(task.constraint_time(), self.time), self.node, self.k, task))
 			else:
-				evq.add_event(Stop_processing(finish, self.node, self.k, task))
+				# only process one timestep at a time
+				evq.add_event(Stop_processing(min(task_finish, task_interruption), self.node, self.k, task))
 		for task in discarded:
 			evq.add_event(Discard_task(max(task.constraint_time(), self.time), self.node, self.k, task))
 							

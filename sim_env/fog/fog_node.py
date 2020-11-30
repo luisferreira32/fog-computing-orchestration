@@ -182,7 +182,7 @@ class Fog_node():
 		# removes and returns a task if it is in the buffer
 		try:
 			self.buffers[k].remove(task)
-			if task.is_completed() or task.is_processing():
+			if task.is_processing():
 				self._being_processed[k] -= 1
 			if task.is_completed():
 				self._dealt_tasks += 1
@@ -204,7 +204,8 @@ class Fog_node():
 		if k < 0 or k >= self.max_k or not isinstance(task, Task):
 			raise InvalidValueError("Invalid arguments for remove_task_of_slice")
 		# only if the task is there
-		if task in self.buffers[k]:
+		if task in self.buffers[k] and task.is_processing():
+			self._being_processed[k] -= 1
 			self._avail_ram_units += task._memory_units
 			self._avail_cpu_units += task._cpu_units
 			task.stop_processing(time)

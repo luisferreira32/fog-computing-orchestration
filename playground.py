@@ -46,6 +46,7 @@ if train:
 	for agent in agents:
 		agent.save_models(my_path)
 	sys.exit()
+	
 # ---- algorithms runnning for every case - GRAPHICAL RESULTS ----
 
 print("[LOG] Running",len(algs),"algorithms for",len(cases),"cases with",len(random_seeds),"different seeds")

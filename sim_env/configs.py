@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""This file contains all constants necessary to run the simulations with the
-specified settings of the Master Thesis presented @ IST
-"""
+"""This file contains all constants necessary to run the simulations with the specified settings of the Master Thesis presented @ IST"""
 
 # GLOBAL FOG VARIABLES
 TIME_STEP = 0.001 # seconds
@@ -43,7 +41,7 @@ PATH_LOSS_CONSTANT = 0.001
 THERMAL_NOISE_DENSITY = -174 # dBm/Hz
 
 # TASK CONSTANTS
-PACKET_SIZE = 7000 # bits = 5 kBits (7, 10?)
+PACKET_SIZE = 5000 # bits = 5 kBits (7, 10?)
 
 # ---- simulation cases ---- 
 # Case 1
