@@ -111,11 +111,6 @@ class Nearest_Priority_Queue(object):
 		[a_k, b_k, be_k, rc_k, rm_k] = np.split(obs, [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
 		
 		# begining with the higher to the lower priorities (slice k)
-		#k = self.priorities[0]
-		#for i in self.priorities:
-		#	if b_k[i] > be_k[i]:
-		#		k = i;
-		#		break
 		for k in self.priorities:
 			# to process based on availabe memory and there is still tasks to process
 			while rm_k >= np.ceil(self.case["task_type"][k][2]/RAM_UNIT) and rc_k > 0 and b_k[k] > be_k[k]:
@@ -125,9 +120,13 @@ class Nearest_Priority_Queue(object):
 				rm_k -= int(np.ceil(self.case["task_type"][k][2]/RAM_UNIT))
 				rc_k -= 1
 				be_k[k] += 1
+			# one layer at the time! => since it only processes if all higher priority queues are empty
+			#if wks[k] != 0:
+			#	break
 
+		#print(wks, a_k, b_k, be_k, rc_k, rm_k, "priorities",self.priorities)
 		# let's set up the processing --- TRICK TO KEEP ENV GENERAL BUT TWEAK EVENTS HERE
-		for k in range(DEFAULT_SLICES):
+		for k in self.priorities:
 			# start processing if there is any request
 			if wks[k] != 0:
 				# start all processing in this layer

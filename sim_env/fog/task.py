@@ -149,7 +149,7 @@ class Task(object):
 			self._cpu_units = 0
 			self._memory_units = 0
 			# if it finished the whole processing
-			if round(finish_time-self._started_processing,10) == round(self._expected_delay, 10):
+			if round(finish_time-self._started_processing,5) == round(self._expected_delay, 5):
 				self._total_delay = finish_time-self._timestamp
 				self._expected_delay = 0
 			# else just keep track of new expected delay
