@@ -80,7 +80,7 @@ def write_all_to_csvs(delay_df, success_df, overflow_df):
 			wr.writerows([["overflow_rate",o] for o in o_n])
 
 # hard coded for this work too
-def read_all_from_csvs(path_to_files=windows_path):
+def read_all_from_csvs(path_to_files=windows_path, cases=["n1","n2","n3","h1","h2","h3"]):
 	# create necessary dicts
 	delay_df = {}
 	success_df = {}
@@ -88,6 +88,9 @@ def read_all_from_csvs(path_to_files=windows_path):
 
 	# check all things in the results directory
 	for name in os.listdir(path_to_files):
+		# check if it's one of the cases
+		if not any([case in name for case in cases]):
+			continue
 		if name.endswith(".csv"):
 			key = name[:-4] # without the csv
 			with open(path_to_files+name) as f:
