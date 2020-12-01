@@ -3,7 +3,7 @@
 
 # GLOBAL FOG VARIABLES
 TIME_STEP = 0.001 # seconds
-TOTAL_TIME_STEPS = 1000 # ensured stable results in baselines after 3000
+TOTAL_TIME_STEPS = 1000
 SIM_TIME = TOTAL_TIME_STEPS*TIME_STEP
 DEBUG = False
 
@@ -22,9 +22,9 @@ TRANSMISSION_POWER = 20 # dBm
 # resources
 DEFAULT_SLICES = 3
 MAX_QUEUE = 10
-CPU_CLOCKS = [5, 6, 7, 8, 9, 10] # GHz = [5, 6, 7, 8, 9, 10] units
+CPU_CLOCKS = [5e9, 6e9, 7e9, 8e9, 9e9, 10e9] # [5, 6, 7, 8, 9, 10] GHz
 RAM_SIZES = [2400, 4000, 8000] # MB = [6, 10, 20] units
-CPU_UNIT = 1 # GHz
+CPU_UNIT = 1e9 # 1 GHz
 RAM_UNIT = 400 # MB
 
 # slice characteristics 

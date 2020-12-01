@@ -127,8 +127,9 @@ def train_actor_critic(initial_state: tf.Tensor, agents: List[tf.keras.Model],
 		returns = get_expected_returns(rw, gamma)
 
 		# Convert training data to appropriate TF tensor shapes
-		action_probs, values, returns = [tf.expand_dims(x, 1) for x in [action_probs, values, returns]] 
+		action_probs, values, returns = [tf.expand_dims(x, 1) for x in [action_probs, values, returns]]
 		print(action_probs.shape, values.shape, returns.shape)
+		# transpose -> expand_dims -> repeat
 		
 		# Calculating loss values to update our network
 		loss = compute_combined_loss(action_probs, values, returns)

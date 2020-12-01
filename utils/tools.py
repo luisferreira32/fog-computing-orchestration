@@ -18,6 +18,9 @@ def uniform_rand_float(m=1):
 def uniform_rand_int(low=0, high=1):
 	return np_tools_random.randint(low=low, high=high)
 
+def uniform_rand_array(size=1):
+	return np_tools_random.random(size)
+
 def uniform_rand_choice(l):
 	return np_tools_random.choice(l)
 

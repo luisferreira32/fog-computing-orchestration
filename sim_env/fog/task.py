@@ -34,7 +34,7 @@ def task_processing_time(t, cpu_units=1):
 	# task has cpu_demand cycles/bit
 	total_cycles = t.cpu_demand*t.packet_size
 	# processing units are in 1GHz each
-	total_time = total_cycles/(cpu_units*CPU_UNIT*(1e9))
+	total_time = total_cycles/(cpu_units*CPU_UNIT)
 	return total_time
 
 def task_communication_time(packet_size_, bit_rate):

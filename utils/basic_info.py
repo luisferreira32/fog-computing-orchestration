@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 
+import sys
+import os
+if __name__ == '__main__':
+	sys.path.append(os.getcwd())
+
 import numpy as np
 from sim_env.configs import CPU_CLOCKS, RAM_SIZES
 from sim_env.configs import BASE_SLICE_CHARS, TIME_STEP, PACKET_SIZE, RAM_UNIT, CPU_UNIT
+from sim_env.fog import task_communication_time, point_to_point_transmission_rate
 
 def average_delays(case=BASE_SLICE_CHARS, time_step=TIME_STEP):
 	# constants
@@ -21,6 +27,13 @@ def average_delays(case=BASE_SLICE_CHARS, time_step=TIME_STEP):
 	print("Resulting in an expected average delay of", avg_processing*total_arrivals/len(case["arrivals"]), "ms assuming each task can be processed whenever it arrives")
 	print("A node has at least", CPU_CLOCKS[0]/CPU_UNIT,"cpu units and", RAM_SIZES[0]/RAM_UNIT,"ram units")
 	print("---")
+	print("Further more for 1m, 10m, 20m, 40m, 100m, one concurrent task takes:")
+	print(round(1000*task_communication_time(PACKET_SIZE, point_to_point_transmission_rate(1,1)),2), "ms")
+	print(round(1000*task_communication_time(PACKET_SIZE, point_to_point_transmission_rate(10,1)),2), "ms")
+	print(round(1000*task_communication_time(PACKET_SIZE, point_to_point_transmission_rate(20,1)),2), "ms")
+	print(round(1000*task_communication_time(PACKET_SIZE, point_to_point_transmission_rate(40,1)),2), "ms")
+	print(round(1000*task_communication_time(PACKET_SIZE, point_to_point_transmission_rate(100,1)),2), "ms")
+	print("---")
 	print("In each buffer,")
 	for tp,ar in zip(case["task_type"], case["arrivals"]):
 		print("-")
@@ -29,3 +42,5 @@ def average_delays(case=BASE_SLICE_CHARS, time_step=TIME_STEP):
 		print(round(1000*tp[1]*PACKET_SIZE/(CPU_UNIT*1e9),2),"ms, to process a task")
 		print(round(tp[2]/(RAM_UNIT),2),"ram units, to have a task in the buffer")
 
+if __name__ == '__main__':
+	average_delays()

@@ -1,5 +1,13 @@
 #!/usr/bin/env python
+""" In this file a subclass of a openAI gym envrionment is created to simulate a Fog envrionemnt.
 
+The gym envrionment works in timesteps, recieving an action within the defined action space and returning
+an observation of the envrionment in which the actor will base its decision on. The Fog envrionment itself
+is modelled by the classes described in sim_env.fog, each step runs events within the timestep, based on
+the events described in sim_env.events. This way this Fog envrionment runs as a Discrete Event Simulator.
+"""
+
+# >>>>> imports
 # external openAI imports
 import gym
 from gym import spaces
@@ -20,12 +28,36 @@ from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS
 # for reproductibility
 from utils.tools import set_tools_seed
 
+# <<<<<
+# >>>>> meta-data
+__author__ = "Luis Ferreira @ IST"
+
+# <<<<<
+# >>>>> envrionment class
 class Fog_env(gym.Env):
-	""" Fog_env looks to replicate a FC envrionment, configured in sim_env.configs
-	it is a custom environment that follows gym interface"""
+	""" Fog_env looks to replicate a FC envrionment, configured in sim_env.configs it is a custom environment that follows gym interface
+
+	Attributes:
+		(super) np_random: RandomState - used for reproductibility within the envrionment random executions
+		nodes: List[Fog_node] - a list of fog nodes that physically exist in the envrionment
+		case: dict - the case that defines slices characteristics and arrival rates
+		evq: Event_queue - the event queue of the Discrete Event simulator
+		clock: float - keep track of the simulated time
+
+		saved_step_info: dict - for render purposes saves last step
+		action_space: spaces.MultiDiscrete - the action space limits (N agents/nodes x M actions)
+		observation_space: spaces.MultiDiscrete - the observation space limit (N agents/nodes)
+	"""
+
 	metadata = {'render.modes': ['human']}
 
 	def __init__(self, case=BASE_SLICE_CHARS, rd_seed=RANDOM_SEED):
+		"""
+		Parameters:
+			case: dict - the case that defines slices characteristics and arrival rates
+			rd_seed: int - the seed that this envrionment will use for all pseudo-randoms
+		"""
+
 		super(Fog_env, self).__init__()
 		# Set up seeds for reproductibility
 		self.seed(rd_seed)
@@ -63,6 +95,17 @@ class Fog_env(gym.Env):
 		self.evq.add_event(Set_arrivals(0, TIME_STEP, self.nodes, self.case))
 
 	def step(self, action_n):
+		""" Method that provices a step in time, given an action_n, decided by the N agents/nodes, and returns an observaiton.
+
+		Parameters:
+			action_n: np.array in action_space - the action decided by each of the nodes to give in this timestep
+		Returns:
+			obs_n: np.array in observation_space - the observation after the time step ocurred
+			reward_n: float - the total reward of the timestep (sum of all agents rewards for their actions)
+			done: bool - indicates weather or not this envrionment is out of events to simulate, i.e. ended the simulation time
+			info_n: dict - a compiling of information for display
+		"""
+
 		# to make sure you give actions in the FORMATED action space
 		action_n = self._cap_action_n(action_n)
 		assert self.action_space.contains(action_n)
@@ -157,7 +200,7 @@ class Fog_env(gym.Env):
 		arrive_time = self.clock
 		for k in range(DEFAULT_SLICES):
 			# start processing if there is any request
-			if wks[k] != 0 and fks[k] == n.index:
+			if wks[k] != 0:
 				self.evq.add_event(Start_processing(self.clock, n, k, wks[k]))
 			# and if you are given a destination, add the offload event
 			if fks[k] != n.index and fks[k] != 0:
@@ -181,7 +224,7 @@ class Fog_env(gym.Env):
 			# calculate the Queue delay: b_ik/service_rate_i
 			D_ik += obs[n.max_k+k]/n._service_rate # service rate per millisecond
 			# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
-			D_ik +=  1000* PACKET_SIZE*self.case["task_type"][k][1] / (CPU_UNIT*1e9) # convert it to milliseconds
+			D_ik +=  1000* PACKET_SIZE*self.case["task_type"][k][1] / (CPU_UNIT) # convert it to milliseconds
 			# finally, check if slice delay constraint is met
 			if D_ik >= self.case["task_type"][k][0]:
 				coeficient = -1
@@ -238,3 +281,4 @@ class Fog_env(gym.Env):
 	def is_done(self):
 		return self.clock >= SIM_TIME
 
+# <<<<<

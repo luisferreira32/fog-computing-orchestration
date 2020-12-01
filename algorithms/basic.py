@@ -4,6 +4,7 @@ import numpy as np
 
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, RAM_UNIT, TIME_STEP
 from sim_env.events import Start_processing, Stop_processing
+from utils.tools import uniform_rand_array
 
 def create_basic_agents(env, alg, case):
 	agents = [alg(n, case) for n in env.nodes]
@@ -39,7 +40,6 @@ class Nearest_Round_Robin(object):
 		while b_k[self.process] > be_k[self.process] and rm_k >= np.ceil(self.case["task_type"][self.process][2]/RAM_UNIT) and rc_k > 0:
 			# set the processing, w_ik
 			wks[self.process] += 1
-			fks[self.process] = self.node.index
 			# and take the resources on the available obs
 			rm_k -= int(np.ceil(self.case["task_type"][self.process][2]/RAM_UNIT))
 			rc_k -= 1
@@ -55,7 +55,6 @@ class Nearest_Round_Robin(object):
 			if wks[k] != 0:
 				# start all processing in this layer
 				evq.add_event(Start_processing(clock, self.node, k, wks[k]))
-				print(self.node.name, k,"->",wks[k])
 				# and stop all processing in this layer next time step
 				for task in self.node.buffers[k]:
 					evq.add_event(Stop_processing(clock+TIME_STEP, self.node, k, task))
@@ -65,6 +64,8 @@ class Nearest_Round_Robin(object):
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		for k in range(self.node.max_k):
+			if a_k[k] == 1:
+				fks[k] = self.node.index
 			if b_k[k] >= 0.8*MAX_QUEUE and a_k[k] == 1:
 				# set the f_ik to the nearest node
 				min_d = 10000; min_n = 0
@@ -90,7 +91,9 @@ class Nearest_Priority_Queue(object):
 		self.case = case
 		# make slice priority on nodes
 		delay_constraints = [k[0] for k in case["task_type"]]
-		self.priorities = np.argsort(delay_constraints)
+		# to make priorities shuffeled at equal values
+		aux_random = uniform_rand_array(len(delay_constraints))
+		self.priorities = np.lexsort((aux_random, delay_constraints))
 
 	def __str__(self):
 		return "Nearest Priority Queue"
@@ -108,20 +111,38 @@ class Nearest_Priority_Queue(object):
 		[a_k, b_k, be_k, rc_k, rm_k] = np.split(obs, [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
 		
 		# begining with the higher to the lower priorities (slice k)
+		#k = self.priorities[0]
+		#for i in self.priorities:
+		#	if b_k[i] > be_k[i]:
+		#		k = i;
+		#		break
 		for k in self.priorities:
 			# to process based on availabe memory and there is still tasks to process
-			while rm_k >= np.ceil(self.case["task_type"][k][2]/RAM_UNIT) and rc_k > 0 and not b_k[k] == be_k[k]:
-				if b_k[k] > be_k[k]:
-					# set the w_ik to process +1
-					wks[k] += 1
-					fks[k] = self.node.index
-					# and take the resources on the available obs
-					rm_k -= int(np.ceil(self.case["task_type"][k][2]/RAM_UNIT))
-					rc_k -= 1
-					be_k[k] += 1
+			while rm_k >= np.ceil(self.case["task_type"][k][2]/RAM_UNIT) and rc_k > 0 and b_k[k] > be_k[k]:
+				# set the w_ik to process +1
+				wks[k] += 1
+				# and take the resources on the available obs
+				rm_k -= int(np.ceil(self.case["task_type"][k][2]/RAM_UNIT))
+				rc_k -= 1
+				be_k[k] += 1
+
+		# let's set up the processing --- TRICK TO KEEP ENV GENERAL BUT TWEAK EVENTS HERE
+		for k in range(DEFAULT_SLICES):
+			# start processing if there is any request
+			if wks[k] != 0:
+				# start all processing in this layer
+				evq.add_event(Start_processing(clock, self.node, k, wks[k]))
+				# and stop all processing in this layer next time step - so if new higher priority arrivals come, work on them
+				for task in self.node.buffers[k]:
+					evq.add_event(Stop_processing(clock+TIME_STEP, self.node, k, task))
+
+		# clear up the action bar for processing!
+		wks = np.zeros(DEFAULT_SLICES, dtype=np.uint8)
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		for k,b in enumerate(b_k):
+			if a_k[k] == 1:
+				fks[k] = self.node.index
 			if b_k[k] >= 0.8*MAX_QUEUE and a_k[k] == 1:
 				# set the f_ik to the nearest node
 				min_d = 10000; min_n = 0
