@@ -9,4 +9,5 @@ results/*
 sim_env/test/*
 utils/test/*
 algorithms/saved_models/*
+basic_info.py
 test.py
