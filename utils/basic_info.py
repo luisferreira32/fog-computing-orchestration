@@ -17,7 +17,7 @@ def average_delays(case=BASE_SLICE_CHARS, time_step=TIME_STEP):
 	cpu = [tp[1] for tp in case["task_type"]]
 	ram = [tp[2] for tp in case["task_type"]]
 	avg_constraint = round(np.mean(constraints), 2)
-	avg_processing = round(1000*np.mean(cpu)*PACKET_SIZE/(CPU_UNIT*1e9),2)
+	avg_processing = round(1000*np.mean(cpu)*PACKET_SIZE/(CPU_UNIT),2)
 	avg_mem = round(np.mean(ram)/RAM_UNIT,2)
 
 	# prints
@@ -39,7 +39,7 @@ def average_delays(case=BASE_SLICE_CHARS, time_step=TIME_STEP):
 		print("-")
 		print(ar*10, "tasks arrive each", 1000*time_step*10, "ms")
 		print(tp[0], "ms, is the time constraint")
-		print(round(1000*tp[1]*PACKET_SIZE/(CPU_UNIT*1e9),2),"ms, to process a task")
+		print(round(1000*tp[1]*PACKET_SIZE/(CPU_UNIT),2),"ms, to process a task")
 		print(round(tp[2]/(RAM_UNIT),2),"ram units, to have a task in the buffer")
 
 if __name__ == '__main__':

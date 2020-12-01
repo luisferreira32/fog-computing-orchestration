@@ -27,13 +27,6 @@ RAM_SIZES = [2400, 4000, 8000] # MB = [6, 10, 20] units
 CPU_UNIT = 1e9 # 1 GHz
 RAM_UNIT = 400 # MB
 
-# slice characteristics 
-BASE_SLICE_CHARS = {
-	"case": "n1",
-	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 400, 400], [10, 600, 400], [10, 200, 1200]]
-}
-
 # ENV CONSTANTS
 AREA = [100, 100] # m x m
 PATH_LOSS_EXPONENT = 4
@@ -44,34 +37,42 @@ THERMAL_NOISE_DENSITY = -174 # dBm/Hz
 PACKET_SIZE = 5000 # bits = 5 kBits (7, 10?)
 
 # ---- simulation cases ---- 
+
+cpi = 2
+# slice characteristics 
+BASE_SLICE_CHARS = {
+	"case": "n1",
+	"arrivals" : [0.6, 0.6, 0.6],
+	"task_type" : [[10, 400*cpi, 400], [10, 600*cpi, 400], [10, 200*cpi, 1200]]
+}
 # Case 1
 NORMAL_CASE_1 = BASE_SLICE_CHARS
 HEAVY_CASE_1 ={
 	"case": "h1",
 	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[10, 400, 400], [10, 600, 400], [10, 200, 1200]]
+	"task_type" : [[10, 400*cpi, 400], [10, 600*cpi, 400], [10, 200*cpi, 1200]]
 }
 # Case 2
 NORMAL_CASE_2 = {
 	"case": "n2",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 400, 400], [50, 400, 400], [100, 400, 400]]
+	"task_type" : [[10, 400*cpi, 400], [50, 400*cpi, 400], [100, 400*cpi, 400]]
 }
 HEAVY_CASE_2 = {
 	"case": "h2",
 	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[10, 400, 400], [50, 400, 400], [100, 400, 400]]
+	"task_type" : [[10, 400*cpi, 400], [50, 400*cpi, 400], [100, 400*cpi, 400]]
 }
 # Case 3
 NORMAL_CASE_3 = {
 	"case": "n3",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 400, 400], [50, 600, 400], [50, 400, 400]]
+	"task_type" : [[10, 400*cpi, 400], [50, 600*cpi, 400], [50, 400*cpi, 400]]
 }
 HEAVY_CASE_3 = {
 	"case": "h3",
 	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[10, 400, 400], [50, 600, 400], [50, 400, 400]]
+	"task_type" : [[10, 400*cpi, 400], [50, 600*cpi, 400], [50, 400*cpi, 400]]
 }
 # cases compilations
 ALL_CASES = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3, HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
