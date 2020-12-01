@@ -118,9 +118,9 @@ class Fog_node():
 		self._avail_ram_units = int(ram_size/RAM_UNIT)
 		self.max_k = number_of_slices
 		self.buffers = [deque(maxlen=MAX_QUEUE) for _ in range(number_of_slices)]
-		self._dealt_tasks = 0
+		self._dealt_tasks = np.zeros(number_of_slices, dtype=np.uint64)
 		self._total_time_intervals = 0
-		self._service_rate = 0
+		self._service_rate = np.zeros(number_of_slices, dtype=np.float32)
 		self._being_processed = np.zeros(number_of_slices, dtype=np.uint8)
 		self._transmitting = False
 
@@ -184,8 +184,8 @@ class Fog_node():
 			self.buffers[k].remove(task)
 			if task.is_processing():
 				self._being_processed[k] -= 1
-			if task.is_completed():
-				self._dealt_tasks += 1
+			# adds to the number of tasks leaving the buffer
+			self._dealt_tasks[k] += 1
 			# values should be zero if it's not processing
 			self._avail_ram_units += task._memory_units
 			self._avail_cpu_units += task._cpu_units
@@ -267,7 +267,7 @@ class Fog_node():
 		if self.buffers[k][-1].is_processing(): return None
 		# and should only offload a task arriving in this timestep
 		if self.buffers[k][-1]._timestamp != time: return None
-		self._dealt_tasks += 1
+		self._dealt_tasks[k] += 1
 		return self.buffers[k].pop()
 
 	def finished_transmitting(self):
@@ -302,10 +302,11 @@ class Fog_node():
 		"""Updates the service rate of this node every new interval """
 
 		self._total_time_intervals += 1
-		self._service_rate = self._dealt_tasks / self._total_time_intervals
-		# to avoid zero divisions
-		if self._service_rate == 0:
-			self._service_rate = 1
+		for k in range(self.max_k):
+			self._service_rate[k] = self._dealt_tasks[k] / self._total_time_intervals
+			# to avoid zero divisions
+			if self._service_rate[k] == 0:
+				self._service_rate[k] = 1
 
 	def reset(self):
 		"""Resets the node state, clearing the buffers and restoring the resources """
