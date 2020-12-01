@@ -166,18 +166,31 @@ class Fog_env(gym.Env):
 
 
 	def reset(self):
-		# Reset the state of the environment to an initial state
+		""" Resets the state of the envrionment, reseting the Event_queue object and adding the first event trigger, the nodes and the clock """
+
+		# evq reset empties the queue and sets internal clock to zero
 		self.evq.reset()
 		self.evq.add_event(Set_arrivals(0, TIME_STEP, self.nodes, self.case))
 		for node in self.nodes:
-			node.reset()	
-		self.clock = 0
+			node.reset() # empty buffers
+		self.clock = 0 # and zero simulation clock
 		return self._get_state_obs()
 
 	def _get_state_obs(self):
+		""" Gets the whole state observation by obtaining POMDP for each agent """
+
 		return np.array([self._get_agent_observation(n) for n in self.nodes], dtype=np.uint8)
 
 	def _get_agent_observation(self, n):
+		""" Gets POMDP for each agent/node
+		
+		The POMDP is a vector depending on k slices with, a_k the flag to check if the task just arrived, b_k the buffer lenght on slice k, be_k the
+		number of tasks under processing in the slice k and r_c and r_m the resources available in the node.
+
+		Parameters:
+			n: Fog_node - a node of the nodes list in the envrionment
+		"""
+
 		# does a partial system observation
 		pobs = np.concatenate(([1 if len(n.buffers[k]) > 0 and self.clock == n.buffers[k][-1]._timestamp else 0 for k in range(n.max_k)],
 			[len(n.buffers[k]) for k in range(n.max_k)], [n.being_processed_on_slice(k) for k in range(n.max_k)],
@@ -185,6 +198,12 @@ class Fog_env(gym.Env):
 		return np.array(pobs, dtype=np.uint8)
 
 	def _cap_action_n(self, action_n):
+		""" Caps the action for a possible action to take. This way a model free algorithm will associte impossible actions with the capped version.
+
+		Parameters:
+			action_n: np.array - the action of the N agents/nodes to be taken in this timestep
+		"""
+
 		for n in range(len(action_n)):
 			for i in range(len(action_n[n])):
 				if action_n[n][i] >= self.action_space.nvec[n][i]:
@@ -192,6 +211,17 @@ class Fog_env(gym.Env):
 		return action_n
 
 	def _set_agent_action(self, n, action):
+		""" Sets an action from an agent/node n, translated in queueing events to the event queue.
+
+		The action from the agent/node is given for each slice by, f_k meaning where the arrived task at the slice will be processed, if it's the same
+		as the node index it'll be locally if it's different it'll be offloaded, and w_k meaning the number of tasks that this node will attempt to process
+		on that slice.
+
+		Parameters:
+			n: Fog_node - a node of the nodes list in the envrionment
+			action: np.arry - the action that was decided by the agent/node n
+		"""
+
 		# takes the action in the system, i.e. sets up the offloading events
 		# for node n: [f_0, ..., f_k, w_0, ..., w_k]
 		[fks, wks] = np.split(action, 2)
@@ -211,6 +241,14 @@ class Fog_env(gym.Env):
 			self.evq.add_event(Stop_transmitting(arrive_time, n))
 
 	def _agent_reward_fun(self, n, obs, action):
+		""" Calculates the reward for an agent given his own observation and an action
+
+		Parameters:
+			n: Fog_node - a node of the nodes list in the envrionment
+			obs: np.arry - the POMPD of the agent/node n
+			action: np.arry - the action that was decided by the agent/node n
+		"""
+
 		# calculate the reward for the agent (node) n
 		node_reward = 0
 		[fks, wks] = np.split(action, 2)
@@ -249,10 +287,13 @@ class Fog_env(gym.Env):
 		return node_reward/n.max_k
 
 	def render(self, mode='human', close=False):
+		""" Renders the last step taken given a saved_step_info with the generic observation and the actions taken plus the current state (result) """
+
 		# Render the environment to the screen
 		if self.saved_step_info is None: return
 		nodes_obs = self.saved_step_info[0]
 		nodes_actions = self.saved_step_info[1]
+		curr_obs = self._get_state_obs()
 		print("------",round(self.clock*1000,2),"ms ------")
 		for i in range(N_NODES):
 			print("--- ",self.nodes[i]," ---")
@@ -260,9 +301,11 @@ class Fog_env(gym.Env):
 			print(" obs[ a:", a,"b:", b, "be:", be, "rc:",rc, "rm:",rm,"]")
 			[f, w] = np.split(nodes_actions[i], 2)
 			print("act[ f:",f,"w:",w,"]")
-			print("-- current state: --")
-			for k,buf in enumerate(self.nodes[i].buffers):
-				print("slice",k,"buffer",[round(t._timestamp,4) for t in buf])
+			[a, b, be, rc, rm] = np.split(curr_obs[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
+			print(" obs[ a:", a,"b:", b, "be:", be, "rc:",rc, "rm:",rm,"]")
+			#print("-- current state: --")
+			#for k,buf in enumerate(self.nodes[i].buffers):
+			#	print("slice",k,"buffer",[round(t._timestamp,4) for t in buf])
 		for ev in self.evq.queue():
 			if ev.classtype != "Task_arrival" and ev.classtype != "Task_finished":
 				print(ev.classtype+"["+str(round(ev.time*1000,2))+"ms]", end='-->')
@@ -271,6 +314,8 @@ class Fog_env(gym.Env):
 		pass
 
 	def seed(self, seed=None):
+		""" Seeds the envrionment setting a random state, the tools random state and returning the seed used """
+
 		# set all the necessary seeds for reproductibility
 		# one for the sim_env random requirements
 		self.np_random, seed = seeding.np_random(seed)
@@ -279,6 +324,8 @@ class Fog_env(gym.Env):
 		return [seed]
 
 	def is_done(self):
+		""" To verify if the envrionmnet is done """
+
 		return self.clock >= SIM_TIME
 
 # <<<<<
