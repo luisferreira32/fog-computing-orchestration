@@ -5,7 +5,7 @@
 # since we're implementing ppo with deep neural networks
 from algorithms.deep_tools.frames import Simple_Frame
 from algorithms.deep_tools.common import get_expected_returns
-from algorithms.runners import run_tragectory, set_training_env
+from algorithms.trainners import run_tragectory, set_training_env
 
 # some necesary constants
 from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE, DEFAULT_ACTION_SPACE

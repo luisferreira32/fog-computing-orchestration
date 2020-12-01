@@ -20,7 +20,6 @@ from utils.display import plt_bar, plt_error_bar, plt_box_plot, info_gather_init
 from sim_env.environment import Fog_env
 from algorithms.basic import create_basic_agents
 from algorithms.runners import run_algorithm_on_envrionment, run_basic_algorithm_on_envrionment
-from algorithms.deep_tools.frames import Conv1d_Frame, Rnn_Frame, Conv1d_Rnn_Frame
 
 # --- the main playground ---
 
