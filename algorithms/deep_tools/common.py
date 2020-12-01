@@ -5,8 +5,6 @@ import numpy as np
 import copy
 import tensorflow as tf
 from typing import Tuple, List
-# env imports
-from sim_env.envrionment import Fog_env
 
 
 # to set the tf random seed for reproducibility

@@ -6,7 +6,6 @@ import sys
 import os
 import time
 from utils.input_handler import argument_check, fetch_trained_agents
-from utils.basic_info import average_delays
 
 # ---- command line input ----
 
@@ -18,7 +17,7 @@ if not algs or not cases:
 
 from utils.tools import dictionary_append, write_all_to_csvs, random_seed_primes
 from utils.display import plt_bar, plt_error_bar, plt_box_plot, info_gather_init
-from sim_env.envrionment import Fog_env
+from sim_env.environment import Fog_env
 from algorithms.basic import create_basic_agents
 from algorithms.runners import run_algorithm_on_envrionment, run_basic_algorithm_on_envrionment
 from algorithms.deep_tools.frames import Conv1d_Frame, Rnn_Frame, Conv1d_Rnn_Frame

@@ -5,7 +5,7 @@ from utils.tools import dictionary_append, append_to_file
 from utils.display import info_gather, info_logs
 
 # the envrionment
-from sim_env.envrionment import Fog_env
+from sim_env.environment import Fog_env
 from algorithms.deep_tools.common import  set_tf_seed
 
 # constants
