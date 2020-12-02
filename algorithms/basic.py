@@ -44,23 +44,10 @@ class Nearest_Round_Robin(object):
 			rm_k -= int(np.ceil(self.case["task_type"][self.process][2]/RAM_UNIT))
 			rc_k -= 1
 			be_k[self.process] += 1
-		# next time step we'll process a different slice
-		self.process +=1
-		if self.process == DEFAULT_SLICES:
-			self.process = 0
-
-		# let's set up the processing --- TRICK TO KEEP ENV GENERAL BUT TWEAK EVENTS HERE
-		for k in range(DEFAULT_SLICES):
-			# start processing if there is any request
-			if wks[k] != 0:
-				# start all processing in this layer
-				evq.add_event(Start_processing(clock, self.node, k, wks[k]))
-				# and stop all processing in this layer next time step
-				for task in self.node.buffers[k]:
-					evq.add_event(Stop_processing(clock+TIME_STEP, self.node, k, task))
-
-		# clear up the action bar for processing!
-		wks = np.zeros(DEFAULT_SLICES, dtype=np.uint8)
+			# next time step we'll process a different slice
+			self.process +=1
+			if self.process == DEFAULT_SLICES:
+				self.process = 0
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		for k in range(self.node.max_k):
@@ -120,23 +107,6 @@ class Nearest_Priority_Queue(object):
 				rm_k -= int(np.ceil(self.case["task_type"][k][2]/RAM_UNIT))
 				rc_k -= 1
 				be_k[k] += 1
-			# one layer at the time! => since it only processes if all higher priority queues are empty
-			#if wks[k] != 0:
-			#	break
-
-		#print(wks, a_k, b_k, be_k, rc_k, rm_k, "priorities",self.priorities)
-		# let's set up the processing --- TRICK TO KEEP ENV GENERAL BUT TWEAK EVENTS HERE
-		for k in self.priorities:
-			# start processing if there is any request
-			if wks[k] != 0:
-				# start all processing in this layer
-				evq.add_event(Start_processing(clock, self.node, k, wks[k]))
-				# and stop all processing in this layer next time step - so if new higher priority arrivals come, work on them
-				for task in self.node.buffers[k]:
-					evq.add_event(Stop_processing(clock+TIME_STEP, self.node, k, task))
-
-		# clear up the action bar for processing!
-		wks = np.zeros(DEFAULT_SLICES, dtype=np.uint8)
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		for k,b in enumerate(b_k):

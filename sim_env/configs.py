@@ -38,19 +38,19 @@ PACKET_SIZE = 5000 # bits = 5 kBits (7, 10?)
 
 # ---- simulation cases ---- 
 
-cpi = 2
+cpi = 1
 # slice characteristics 
 BASE_SLICE_CHARS = {
 	"case": "n1",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[50, 400*cpi, 400], [50, 600*cpi, 400], [50, 200*cpi, 1200]]
+	"task_type" : [[10, 400*cpi, 400], [10, 600*cpi, 400], [10, 200*cpi, 1200]]
 }
 # Case 1
 NORMAL_CASE_1 = BASE_SLICE_CHARS
 HEAVY_CASE_1 ={
 	"case": "h1",
 	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[50, 400*cpi, 400], [50, 600*cpi, 400], [50, 200*cpi, 1200]]
+	"task_type" : [[10, 400*cpi, 400], [10, 600*cpi, 400], [10, 200*cpi, 1200]]
 }
 # Case 2
 NORMAL_CASE_2 = {
