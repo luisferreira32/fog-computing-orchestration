@@ -12,7 +12,6 @@ from algorithms.deep_tools.common import  set_tf_seed
 
 # constants
 from algorithms.configs import ALGORITHM_SEED
-from sim_env.configs import SIM_TIME, N_NODES, DEFAULT_SLICES
 
 
 # --- training related running ---
@@ -53,9 +52,10 @@ def run_tragectory(initial_state: tf.Tensor, agents: List[tf.keras.Model], max_s
 
 	# then collect the data
 	for t in tf.range(max_steps):
-		# needed vars
-		action = []; value = [];
-		action_probs_v = []; v = 0
+		# needed vars to stack agents on each timestep
+		action_t = tf.TensorArray(dtype=tf.int32, size=len(agents))
+		action_probs_t =  tf.TensorArray(dtype=tf.float32, size=len(agents))
+		values_t = tf.TensorArray(dtype=tf.float32, size=len(agents))
 
 		# Run every agent
 		for i, agent in enumerate(agents):
@@ -63,34 +63,35 @@ def run_tragectory(initial_state: tf.Tensor, agents: List[tf.keras.Model], max_s
 			state_i = tf.expand_dims(state[i], 0)
 
 			# Run the model and to get action probabilities and critic value
-			retv = agent.model(state_i)
-			if len(retv) == 2:
-				action_logits_t, v = retv
-			else:
-				action_logits_t = retv
+			action_logits_t_i, value = agent.model(state_i)
 
 			# Get the action and probability distributions for data
-			action_i = []; action_probs_t = []
+			action_t_i = tf.TensorArray(dtype=tf.int32, size=len(action_logits_t_i))
+			action_probs_t_i =  tf.TensorArray(dtype=tf.float32, size=len(action_logits_t_i))
 			# Since it's multi-discrete, for every discrete set of actions:
-			for action_logits_t_k in action_logits_t:
+			for k, action_logits_t_i_k in enumerate(action_logits_t_i):
 				# Sample next action from the action probability distribution
-				action_i_k = tf.random.categorical(action_logits_t_k,1)[0,0]
-				action_i.append(action_i_k)
-				action_probs_t_k = tf.nn.softmax(action_logits_t_k)
-				action_probs_t.append(action_probs_t_k[0, action_i_k])
+				action_t_i_k = tf.random.categorical(action_logits_t_i_k,1, dtype=tf.int32)[0,0]
+				action_t_i = action_t_i.write(k, action_t_i_k)
+				action_probs_t_i_k = tf.nn.softmax(action_logits_t_i_k)
+				action_probs_t_i = action_probs_t_i.write(k, action_probs_t_i_k[0, action_t_i_k])
 
 			# And append to the actual action that is gonna run
-			action.append(action_i)
-			value.append(v)
-			action_probs_v.append(action_probs_t)
-		# Store critic values
+			action_t = action_t.write(i, action_t_i.stack())
+			action_probs_t = action_probs_t.write(i, action_probs_t_i.stack())
+			values_t = values_t.write(i, value)
+
+		# stack this timestep
+		action_t = action_t.stack()
+		action_probs_t = action_probs_t.stack()
+		values_t = values_t.stack()
+		# And store timestep values (actors log probabilities of actions chosen and critics values)
+		action_probs = action_probs.write(t, action_probs_t)
 		values = values.write(t, tf.squeeze(value))
-		# Store log probability of the action chosen
-		action_probs = action_probs.write(t, action_probs_v)
 
 
 		# Apply action to the environment to get next state and reward
-		state, reward, done = tf_env_step(action)
+		state, reward, done = tf_env_step(action_t)
 		state.set_shape(initial_state_shape)
 
 		# Store reward
