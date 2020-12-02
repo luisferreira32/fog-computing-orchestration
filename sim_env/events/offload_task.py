@@ -2,10 +2,11 @@
 """Provides a class for the event of offloading a task to another node within a logical slice"""
 
 # >>>>> imports
-from sim_env.fog import Fog_node
+from sim_env.fog import Fog_node, task_communication_time, point_to_point_transmission_rate
 from utils.custom_exceptions import InvalidValueError
 from .core import Event
 from .task_arrival import Task_arrival
+from .start_transmitting import Start_transmitting
 
 # <<<<<
 # >>>>> meta-data
@@ -20,26 +21,26 @@ class Offload_task(Event):
 		node: Fog_node - the fog node in which the task is arriving
 		k: int - the slice in which the task is arriving
 		destination: Fog_node - the node to which the task is going to be offloaded
-		arrival_time: float - the time it takes to offload from node to destination
+		concurr: int - number of concurrent offloads happening in this node
 	"""
 
-	def __init__(self, time, node, k, destination, arrival_time):
+	def __init__(self, time, node, k, destination, concurr):
 		"""
 		Parameters:
 			(super) time: float - the time of the event execution
 			node: Fog_node - the fog node in which the task is arriving
 			k: int - the slice in which the task is arriving
 			destination: Fog_node - the node to which the task is going to be offloaded
-			arrival_time: float - the time it takes to offload from node to destination
+			concurr: int - number of concurrent offloads happening in this node
 		"""
 
 		super(Offload_task, self).__init__(time, "Offload_task")
 		self.node = node
 		self.k = k
 		self.destination = destination
-		self.arrival_time = arrival_time
+		self.concurr = concurr
 
-		if not isinstance(node, Fog_node) or k >= node.max_k or k < 0 or not isinstance(destination, Fog_node) or time > arrival_time:
+		if not isinstance(node, Fog_node) or k >= node.max_k or k < 0 or not isinstance(destination, Fog_node) or concurr < 1:
 			raise InvalidValueError("Verify arguments of Discard_task creation")
 
 	def execute(self, evq):
@@ -50,13 +51,18 @@ class Offload_task(Event):
 		"""
 
 		# can't send if it's busy sending
-		if self.node.is_transmitting(): return None
+		if not self.node.available_bandwidth():
+			return None
 		# then pop the last task we got
 		t = self.node.pop_task_to_send(self.k, self.time)
 		# if it's an invalid choice return without sending out the task
-		if t == None: return None
+		if t == None:
+			return None
 		# else plan the landing
-		evq.add_event(Task_arrival(self.arrival_time, self.destination, self.k, t))
+		bw = int(self.node.available_bandwidth()/self.concurr)
+		arrival_time = self.time+ task_communication_time(t.packet_size, point_to_point_transmission_rate(self.node._distances[self.destination.index], bw))
+		evq.add_event(Task_arrival(arrival_time, self.destination, self.k, t))
+		evq.add_event(Start_transmitting(self.time, self.node, arrival_time, bw))
 		return None
 
 

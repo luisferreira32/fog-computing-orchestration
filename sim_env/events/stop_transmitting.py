@@ -18,17 +18,20 @@ class Stop_transmitting(Event):
 
 	Attributes:
 		node: Fog_node - the fog node which is transmitting
+		bw: int - the bandwidth used for this transmission
 	"""
 
-	def __init__(self, time, node):
+	def __init__(self, time, node, bw):
 		"""
 		Parameters:
 			(super) time: float - the time in which the event will run
 			node: Fog_node - the fog node which is transmitting
+			bw: int - the bandwidth used for this transmission
 		"""
 
 		super(Stop_transmitting, self).__init__(time, "Stop_transmitting")
 		self.node = node
+		self.bw = bw
 		
 		if not isinstance(node, Fog_node):
 			raise InvalidValueError("Verify arguments of Stop_transmitting creation")
@@ -36,7 +39,7 @@ class Stop_transmitting(Event):
 	def execute(self,evq):
 		""" Executes the flag change."""
 
-		self.node.finished_transmitting()
+		self.node.finished_transmitting(self.bw)
 		return None
 
 # <<<<<

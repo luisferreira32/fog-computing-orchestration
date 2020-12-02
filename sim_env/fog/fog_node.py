@@ -30,19 +30,19 @@ __author__ = "Luis Ferreira @ IST"
 
 # <<<<<
 # >>>>> classes and functions
-def point_to_point_transmission_rate(d, concurr):
+def point_to_point_transmission_rate(d, bw=NODE_BANDWIDTH):
 	""" Calculates the transmission rate over a noisy channel between two nodes
 
 	Parameters:
 		d: float - distance between two nodes
 		concurr: int - number of tasks that will share the bandwidth
 	"""
-	if concurr <= 0:
-		raise InvalidValueError("transmission rate number of task has to be positive", "[0,+inf[")
+	if bw <= 0:
+		raise InvalidValueError("Available bandwidth has to be positive", "[0,+inf[")
 	g = channel_gain(d, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT)
 	p_mw = db_to_linear(TRANSMISSION_POWER)
 	n0_mw = db_to_linear(THERMAL_NOISE_DENSITY)
-	return shannon_hartley(g, p_mw, NODE_BANDWIDTH/concurr, n0_mw)
+	return shannon_hartley(g, p_mw, bw, n0_mw)
 
 def create_random_node(index=0):
 	""" Creates an instance of the Fog_node class, based on the configurations in sim_env.configs
@@ -72,6 +72,7 @@ class Fog_node():
 		x: float - placement alongside the X-axis
 		y: float - placement alongside the Y-axis
 		_distances: disc{key: float} - distances between a group of Fog nodes instances
+		_bandwidth: int - bandwidth attributed to a node in Hz
 
 		cpu_frequency: int - cpu frequency in GHz
 		ram_size: int - the size of the RAM in MB
@@ -112,6 +113,7 @@ class Fog_node():
 		self.x = x
 		self.y = y
 		self._distances = {}
+		self._bandwidth = NODE_BANDWIDTH
 		self.cpu_frequency = cpu_frequency
 		self.ram_size = ram_size
 		self._avail_cpu_units = cpu_frequency/CPU_UNIT
@@ -122,7 +124,6 @@ class Fog_node():
 		self._total_time_intervals = 0
 		self._service_rate = np.zeros(number_of_slices, dtype=np.float32)
 		self._being_processed = np.zeros(number_of_slices, dtype=np.uint8)
-		self._transmitting = False
 
 	def __str__(self):
 		return self.name
@@ -270,20 +271,24 @@ class Fog_node():
 		self._dealt_tasks[k] += 1
 		return self.buffers[k].pop()
 
-	def finished_transmitting(self):
-		"""Set transmitting flag to False"""
+	def finished_transmitting(self, bw):
+		"""Re-gains the bandwidth that was used for a transmission to the pool"""
 
-		self._transmitting = False
+		if bw < 0:
+			raise InvalidValueError("Bw cannot be negative")
+		self._bandwidth += bw
 
-	def start_transmitting(self):
-		"""Set transmitting flag to True"""
+	def start_transmitting(self, bw):
+		"""Uses some part of the bandwidth for a transmission"""
 
-		self._transmitting = True
+		if self._bandwidth < bw or bw < 0:
+			raise InvalidValueError("Can't transmit in more bandwidth than the available")
+		self._bandwidth -= bw
 
-	def is_transmitting(self):
-		"""Verify if the node is in the middle of a transmission"""
+	def available_bandwidth(self):
+		"""Returns the node available bandwidth """
 
-		return self._transmitting
+		return self._bandwidth
 
 	# <<<<<
 	# >>>>> aux methods
