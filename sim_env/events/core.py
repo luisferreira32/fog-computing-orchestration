@@ -15,7 +15,6 @@ from collections import deque
 from abc import ABC, abstractmethod
 
 # our imports
-from sim_env.configs import SIM_TIME
 from utils.custom_exceptions import InvalidValueError, InvalidStateError
 
 # <<<<<
@@ -83,9 +82,7 @@ class Event_queue(object):
 
 		if not isinstance(e, Event):
 			return
-		# only process events within sim time
-		if e.time > SIM_TIME:
-			return
+		# don't process past events
 		if e.time < self.current_time:
 			raise InvalidStateError("Tried to insert an event on the past")
 		# if there's no events just add it
