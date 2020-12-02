@@ -42,7 +42,10 @@ class Fog_env(gym.Env):
 		nodes: List[Fog_node] - a list of fog nodes that physically exist in the envrionment
 		case: dict - the case that defines slices characteristics and arrival rates
 		evq: Event_queue - the event queue of the Discrete Event simulator
+		
 		clock: float - keep track of the simulated time
+		max_time: float - the maximum clock value
+		time_step: float - clock increment one ach step
 
 		saved_step_info: dict - for render purposes saves last step
 		action_space: spaces.MultiDiscrete - the action space limits (N agents/nodes x M actions)
@@ -51,7 +54,7 @@ class Fog_env(gym.Env):
 
 	metadata = {'render.modes': ['human']}
 
-	def __init__(self, case=BASE_SLICE_CHARS, rd_seed=RANDOM_SEED):
+	def __init__(self, case=BASE_SLICE_CHARS, rd_seed=RANDOM_SEED, max_time=SIM_TIME, time_step=TIME_STEP):
 		"""
 		Parameters:
 			case: dict - the case that defines slices characteristics and arrival rates
@@ -69,7 +72,11 @@ class Fog_env(gym.Env):
 		for n in self.nodes:
 			n.set_distances(self.nodes)
 		self.evq = Event_queue()
+
 		self.clock = 0
+		self.max_time = max_time
+		self.time_step = time_step
+
 		self.saved_step_info = None
 
 		# define the action space with I nodes and K slices each
@@ -92,7 +99,7 @@ class Fog_env(gym.Env):
 		self.observation_space = spaces.MultiDiscrete(state_possibilities)
 
 		# and the first event that will trigger subsequent arrivals
-		self.evq.add_event(Set_arrivals(0, TIME_STEP, self.nodes, self.case))
+		self.evq.add_event(Set_arrivals(0, time_step, self.nodes, self.case))
 
 	def step(self, action_n):
 		""" Method that provices a step in time, given an action_n, decided by the N agents/nodes, and returns an observaiton.
@@ -137,8 +144,8 @@ class Fog_env(gym.Env):
 			self._set_agent_action(self.nodes[i], action_n[i]) 
 
 		# increase the clock a timestep
-		self.clock += TIME_STEP
-		done = self.clock >= SIM_TIME
+		self.clock += self.time_step
+		done = self.clock >= self.max_time
 		# rollout the events until new timestep
 		while self.evq.has_events() and self.evq.first_time() <= self.clock:
 			ev = self.evq.pop_event()
@@ -170,7 +177,7 @@ class Fog_env(gym.Env):
 
 		# evq reset empties the queue and sets internal clock to zero
 		self.evq.reset()
-		self.evq.add_event(Set_arrivals(0, TIME_STEP, self.nodes, self.case))
+		self.evq.add_event(Set_arrivals(0, self.time_step, self.nodes, self.case))
 		for node in self.nodes:
 			node.reset() # empty buffers
 		self.clock = 0 # and zero simulation clock
@@ -309,7 +316,7 @@ class Fog_env(gym.Env):
 		for ev in self.evq.queue():
 			if ev.classtype != "Task_arrival" and ev.classtype != "Task_finished":
 				print(ev.classtype+"["+str(round(ev.time*1000,2))+"ms]", end='-->')
-		print(round(1000*(self.clock+TIME_STEP)),"ms")
+		print(round(1000*(self.clock+self.time_step)),"ms")
 		input("\nEnter to continue...")
 		pass
 
@@ -326,6 +333,6 @@ class Fog_env(gym.Env):
 	def is_done(self):
 		""" To verify if the envrionmnet is done """
 
-		return self.clock >= SIM_TIME
+		return self.clock >= self.max_time
 
 # <<<<<
