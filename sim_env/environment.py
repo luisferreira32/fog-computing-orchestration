@@ -244,8 +244,7 @@ class Fog_env(gym.Env):
 				arrive_time += task_communication_time(PACKET_SIZE, point_to_point_transmission_rate(n._distances[fks[k]],concurr))
 				self.evq.add_event(Offload_task(self.clock, n, k, self.nodes[fks[k]-1], arrive_time))
 		if concurr > 0 and not n.is_transmitting(): # it will only offload if it was not transmitting... so:
-			self.evq.add_event(Start_transmitting(self.clock, n))
-			self.evq.add_event(Stop_transmitting(arrive_time, n))
+			self.evq.add_event(Start_transmitting(self.clock, n, arrive_time))
 
 	def _agent_reward_fun(self, n, obs, action):
 		""" Calculates the reward for an agent given his own observation and an action

@@ -3,6 +3,7 @@
 
 # >>>>> imports
 from .core import Event
+from .stop_transmitting import Stop_transmitting
 
 # <<<<<
 # >>>>> meta-data
@@ -16,7 +17,7 @@ class Start_transmitting(Event):
 	Attributes:
 		node: Fog_node - the fog node which is transmitting
 	"""
-	def __init__(self, time, node):
+	def __init__(self, time, node, arrival_time):
 		"""
 		Parameters:
 			(super) time: float - the time in which the event will run
@@ -25,11 +26,13 @@ class Start_transmitting(Event):
 		
 		super(Start_transmitting, self).__init__(time, "Start_transmitting")
 		self.node = node
+		self.arrival_time = arrival_time
 
 	def execute(self,evq):
 		""" Executes the flag change."""
 
 		self.node.start_transmitting()
+		evq.add_event(Stop_transmitting(self.arrival_time, self.node))
 		return None
 
 # <<<<<
