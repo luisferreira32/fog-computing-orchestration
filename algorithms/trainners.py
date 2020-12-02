@@ -81,13 +81,11 @@ def run_tragectory(initial_state: tf.Tensor, agents: List[tf.keras.Model], max_s
 			action_probs_t = action_probs_t.write(i, action_probs_t_i.stack())
 			values_t = values_t.write(i, value)
 
-		# stack this timestep
+		# stack agents action this timestep
 		action_t = action_t.stack()
-		action_probs_t = action_probs_t.stack()
-		values_t = values_t.stack()
-		# And store timestep values (actors log probabilities of actions chosen and critics values)
-		action_probs = action_probs.write(t, action_probs_t)
-		values = values.write(t, tf.squeeze(value))
+		# Stack and store timestep values (actors log probabilities of actions chosen and critics values)
+		action_probs = action_probs.write(t, action_probs_t.stack())
+		values = values.write(t, tf.squeeze(values_t.stack()))
 
 
 		# Apply action to the environment to get next state and reward
