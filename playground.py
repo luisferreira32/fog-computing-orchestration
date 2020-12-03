@@ -5,7 +5,7 @@
 import sys
 import os
 import time
-from utils.input_handler import argument_check, fetch_trained_agents
+from utils.input_handler import argument_check
 
 # ---- command line input ----
 
@@ -31,20 +31,6 @@ if not random_seeds: random_seeds = [2]
 models_linux_path = os.getcwd() + "/algorithms/saved_models/"
 models_windows_path = os.getcwd() + "\\algorithms\\saved_models\\"
 
-# ---- training ONE algorithm for ONE case ----
-if train:
-	alg = algs[0]
-	case = cases[0]
-	n_episodes = 100
-	env = Fog_env(case, 2)
-	print("[LOG] Training",alg.short_str(),"in case",case["case"],"for",n_episodes,"episodes")
-	agents = [alg(n.index) for n in env.nodes]
-	agents = alg.train_agents_on_env(agents, env, n_episodes)
-	my_path = models_windows_path+alg.short_str()+case["case"]+"\\"
-	for agent in agents:
-		agent.save_models(my_path)
-	sys.exit()
-	
 # ---- algorithms runnning for every case - GRAPHICAL RESULTS ----
 
 print("[LOG] Running",len(algs),"algorithms for",len(cases),"cases with",len(random_seeds),"different seeds")
@@ -63,8 +49,7 @@ for case in cases:
 				agents = create_basic_agents(env, alg, case)
 				compiled_info = run_basic_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
 			else:
-				agents = fetch_trained_agents(env, alg, case) # will give an error if there are no trained agents
-				compiled_info = run_rl_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
+				compiled_info = run_rl_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug, train)
 			# run the algorithm to collect info
 			# just to know
 			current+=1; print("[LOG] simulations ran ["+str(current)+"/"+total+"] in",round(time.time()-o_start_time,2),"seconds")
