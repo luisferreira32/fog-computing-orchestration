@@ -28,10 +28,13 @@ class A2C_Agent(object):
 		# actual agent - the NN
 		self.model = model_frame(action_space)		
 		# meta-data
-		self.name = str(n)
+		self.name = "node_"+str(n)+"_agent"
 		self.action_space = action_space
 		self.learning_rate = DEFAULT_LEARNING_RATE
 		self.gamma = 0.99
+
+	def __str__(self):
+		return self.name
 
 
 	def __call__(self, obs, batches=1):
@@ -48,27 +51,20 @@ class A2C_Agent(object):
 			action_i_k = tf.random.categorical(action_logits_t_k,1)[0,0]
 			action_i.append(action_i_k)
 		# return the action for this agent
-		return self.cap_to_action_space(action_i)
+		return action_i
 
 	def model(self, obs):
 		return self.model(obs)
 
 	def save_models(self, path):
 		arch_path = path + str(self.input_model) + "/"
-		self.input_model.save(arch_path+"input"+self.name)
-		self.output_model.save(arch_path+"output"+self.name)
+		self.input_model.save(arch_path+self.name+"_input")
+		self.output_model.save(arch_path+self.name+"_output")
 	def load_models(self, path):
 		arch_path = path + str(self.input_model) + "/"
-		self.input_model = tf.keras.models.load_model(arch_path+"input"+self.name, compile=False)
-		self.output_model = tf.keras.models.load_model(arch_path+"output"+self.name, compile=False)
+		self.input_model = tf.keras.models.load_model(arch_path+self.name+"_input", compile=False)
+		self.output_model = tf.keras.models.load_model(arch_path+self.name+"_output", compile=False)
 		
-	def set_action_space(self, action_space):
-		self.action_space = action_space
-	def cap_to_action_space(self, action_i):
-		for i in range(len(self.action_space)):
-			if action_i[i] >= self.action_space[i]:
-				action_i[i] = self.action_space[i]-1
-		return action_i
 
 	@staticmethod
 	def short_str():
