@@ -15,8 +15,8 @@ import tensorflow as tf
 
 
 # the class itself
-class A2C_PPO_Agent(object):
-	"""A2C_PPO_Agent
+class PPO_Agent(object):
+	"""PPO_Agent
 	"""
 	basic = False
 	def __init__(self, n, ppo_eps=DEFAULT_PPO_EPS):

@@ -9,6 +9,7 @@ from algorithms.configs import ALGORITHM_SEED
 # algorithms
 from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
 from algorithms.a2c import A2C_Agent
+from algorithms.ppo import PPO_Agent
 
 def argument_check(argv):
 	# running variables
@@ -29,6 +30,7 @@ def argument_check(argv):
 		print("   rr : Nearest Round Robin basline algorithm")
 		print("   pq : Nearest Priority Queue basline algorithm")
 		print("   a2c : Advantage Actor Critic RL algorithm")
+		print("   ppo : Proximal Policy Optimization RL algorithm")
 		print("--cases= [-C=] : by default runs case 1 with normal traffic")
 		print("   all : runs case 1, 2 and 3, with normal and heavy traffic")
 		print("   normal : runs case 1, 2 and 3, with normal traffic")
@@ -51,6 +53,8 @@ def argument_check(argv):
 				algs.append(Nearest_Round_Robin)
 			if "a2c" in s:
 				algs.append(A2C_Agent)
+			if "ppo" in s:
+				algs.append(PPO_Agent)
 		if "--cases=" in s or "-C=" in s:
 			cases = []
 			if "all" in s:
