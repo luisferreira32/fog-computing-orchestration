@@ -18,6 +18,7 @@ RANDOM_SEED_LIST = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 
 N_NODES = 5
 # transmission
 NODE_BANDWIDTH = 1e6 # Hz
+NODE_BANDWIDTH_UNIT = 1e4 # Hz , i.e., 100 concurrent transmissions is the maximum
 TRANSMISSION_POWER = 20 # dBm
 # resources
 DEFAULT_SLICES = 3

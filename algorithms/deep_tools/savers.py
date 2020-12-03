@@ -18,7 +18,7 @@ def load_agent_models(agent):
 		return agent # without trained model fetched
 	return agent # with trained model
 	
-def fetch_agents(env, alg):
+def fetch_agents(alg, env):
 	# creates the agents
 	agents = [alg(n.index, env.action_space.nvec[i]) for i,n in enumerate(env.nodes)]
 	# if there are trainned agents fetch them, otherwise, they'll be untrained

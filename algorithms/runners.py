@@ -19,7 +19,7 @@ def run_basic_algorithm_on_envrionment(agents, env, case, compiled_info=None, de
 	obs_n = env.reset()
 	done = False;
 	while not done:
-		action_n = np.array([agent(obs) for agent,obs in zip(agents, obs_n)], dtype=np.uint8)
+		action_n = np.array([agent.act(obs) for agent,obs in zip(agents, obs_n)], dtype=np.uint8)
 		obs_n, rw_n, done, info_n = env.step(action_n)
 		if debug: env.render()
 		# -- info gathering
@@ -32,16 +32,21 @@ def run_basic_algorithm_on_envrionment(agents, env, case, compiled_info=None, de
 	return compiled_info
 
 
-def run_rl_algorithm_on_envrionment(algorithm, env, case, compiled_info=None, debug=False, train=False):
+def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=False, train=False):
 	# runner for rl algorithms
 	set_tf_seed(ALGORITHM_SEED)
+	agents = fetch_agents(alg, env)
 
-	# todo, place training here given a training flag, else fetch
+	# train them if requested
+	if train:
+		agents = train_agents_on_env(agents, env)
+
+	# and run as usual
 	start_time = time.time()
 	obs_n = env.reset()
 	done = False;
 	while not done:
-		action_n = np.array([agent(obs) for agent,obs in zip(agents, obs_n)], dtype=np.uint8)
+		action_n = np.array([agent.act(obs) for agent,obs in zip(agents, obs_n)], dtype=np.uint8)
 		obs_n, rw_n, done, info_n = env.step(action_n)
 		if debug: env.render()
 		# -- info gathering

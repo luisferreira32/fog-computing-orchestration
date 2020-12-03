@@ -22,7 +22,7 @@ from sim_env.events import Event_queue, is_arrival_on_slice
 from sim_env.events import Stop_transmitting, Set_arrivals, Offload_task, Start_transmitting, Start_processing
 from sim_env.configs import TIME_STEP, SIM_TIME, RANDOM_SEED, OVERLOAD_WEIGHT
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
-from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS
+from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS, NODE_BANDWIDTH_UNIT
 
 # for reproductibility
 from utils.tools import set_tools_seed
@@ -258,8 +258,10 @@ class Fog_env(gym.Env):
 			D_ik = 0; Dt_ik = 0
 			# if it's offloaded adds communication time to delay
 			if fks[k] != n.index and fks[k] != 0:
-				Dt_ik = PACKET_SIZE / (point_to_point_transmission_rate(n._distances[fks[k]],concurr))
-				D_ik += Dt_ik*1000 # converto to milliseconds
+				bw = int(n.available_bandwidth()/concurr)
+				if bw >= NODE_BANDWIDTH_UNIT: # just make sure it is actually going to offload
+					Dt_ik = PACKET_SIZE / (point_to_point_transmission_rate(n._distances[fks[k]],concurr))
+					D_ik += Dt_ik*1000 # converto to milliseconds
 			# calculate the Queue delay: b_ik/service_rate_i
 			D_ik += obs[n.max_k+k]/n._service_rate[k] # service rate per millisecond
 			# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)

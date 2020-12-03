@@ -3,6 +3,7 @@
 
 # >>>>> imports
 from sim_env.fog import Fog_node, task_communication_time, point_to_point_transmission_rate
+from sim_env.configs import NODE_BANDWIDTH_UNIT
 from utils.custom_exceptions import InvalidValueError
 from .core import Event
 from .task_arrival import Task_arrival
@@ -50,8 +51,9 @@ class Offload_task(Event):
 			evq: Event_queue - the event queue from which this event was called and to which it can add events
 		"""
 
-		# can't send if it's busy sending
-		if not self.node.available_bandwidth():
+		# can't send if it's busy sending - and doesn't have a unit available for all transmissions
+		bw = int(self.node.available_bandwidth()/self.concurr)
+		if bw < NODE_BANDWIDTH_UNIT:
 			return None
 		# then pop the last task we got
 		t = self.node.pop_task_to_send(self.k, self.time)
@@ -59,7 +61,6 @@ class Offload_task(Event):
 		if t == None:
 			return None
 		# else plan the landing
-		bw = int(self.node.available_bandwidth()/self.concurr)
 		arrival_time = self.time+ task_communication_time(t.packet_size, point_to_point_transmission_rate(self.node._distances[self.destination.index], bw))
 		evq.add_event(Task_arrival(arrival_time, self.destination, self.k, t))
 		evq.add_event(Start_transmitting(self.time, self.node, arrival_time, bw))

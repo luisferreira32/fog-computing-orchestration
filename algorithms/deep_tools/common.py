@@ -58,3 +58,11 @@ def get_expected_returns(rewards: tf.Tensor, gamma: float, standardize: bool = T
 
 	# expected returns
 	return returns
+
+# huber loss function
+huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
+
+
+def combined_loss(y_true: List[tf.Tensor], y_pred: List[tf.Tensor]) -> tf.Tensor:
+	# y_ have the actor action_log_probs and critic value
+	return actor_loss + critic_loss

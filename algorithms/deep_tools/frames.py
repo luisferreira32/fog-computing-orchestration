@@ -35,6 +35,7 @@ class Simple_Frame(tf.keras.Model):
 		for output_size in output_sizes:
 			self.output_layers.append(layers.Dense(output_size))
 		self.output_value = layers.Dense(1)
+		self.number_of_outputs = output_size + 1
 		
 	def __str__(self):
 		return "sf"
@@ -74,6 +75,7 @@ class Conv1d_Frame(tf.keras.Model):
 		for output_size in output_sizes:
 			self.output_layers.append(layers.Dense(output_size))
 		self.output_value = layers.Dense(1)
+		self.number_of_outputs = output_size + 1
 
 	def __str__(self):
 		return "cf"
@@ -108,6 +110,7 @@ class Rnn_Frame(tf.keras.Model):
 		for output_size in output_sizes:
 			self.output_layers.append(layers.Dense(output_size))
 		self.output_value = layers.Dense(1)
+		self.number_of_outputs = output_size + 1
 	
 	def __str__(self):
 		return "rf"
@@ -143,6 +146,7 @@ class Conv1d_Rnn_Frame(tf.keras.Model):
 		for output_size in output_sizes:
 			self.output_layers.append(layers.Dense(output_size))
 		self.output_value = layers.Dense(1)
+		self.number_of_outputs = output_size + 1
 
 	def __str__(self):
 		return "crf"

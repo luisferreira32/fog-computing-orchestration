@@ -19,8 +19,25 @@ class PPO_Agent(object):
 	"""PPO_Agent
 	"""
 	basic = False
-	def __init__(self, n, ppo_eps=DEFAULT_PPO_EPS):
-		pass
+	def __init__(self, n, action_space=DEFAULT_ACTION_SPACE, model_frame=Simple_Frame, ppo_eps=DEFAULT_PPO_EPS):
+		super(A2C_Agent, self).__init__()
+		# actual agent - the NN
+		print(action_space)
+		self.model = model_frame(action_space)		
+		# meta-data
+		self.name = "node_"+str(n)+"_ppo_agent"
+		self.action_space = action_space
+		self.learning_rate = DEFAULT_LEARNING_RATE
+		self.gamma = 0.99
+		
+		self.ppo_eps = ppo_eps
+
+	def __str__(self):
+		return self.name
+
+	@staticmethod
+	def short_str():
+		return "ppo"
 
 	def act(self, obs, batches=1):
 		# wrapp in batches
