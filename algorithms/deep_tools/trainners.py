@@ -5,16 +5,18 @@ import numpy as np
 import tensorflow as tf
 import tqdm
 from typing import Any, List, Sequence, Tuple
-import os
-
-# the envrionment
-from algorithms.deep_tools.common import  set_tf_seed
 
 # constants
 from algorithms.configs import ALGORITHM_SEED
 
 
-# --- training related running ---
+# --- the generic training function ---
+
+def train_agents_on_env():
+	pass
+
+
+# --- training in one trajectory ---
 
 def set_training_env(env):
 	global training_env

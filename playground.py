@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# THIS FILE IS NOT DOCUMENTED - USED AS A MAIN.PY ~ BUT JUST FOR BASIC EXAMPELS, IF YOU WANT TO RUN MORE THINGS MODIFY IT
+
 # ---- JUST ESSENTIAL IMPORTS ----
 
 import sys
@@ -49,7 +51,7 @@ for case in cases:
 				agents = create_basic_agents(env, alg, case)
 				compiled_info = run_basic_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
 			else:
-				compiled_info = run_rl_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug, train)
+				compiled_info = run_rl_algorithm_on_envrionment(alg, env, case, info_gather_init(), debug, train)
 			# run the algorithm to collect info
 			# just to know
 			current+=1; print("[LOG] simulations ran ["+str(current)+"/"+total+"] in",round(time.time()-o_start_time,2),"seconds")

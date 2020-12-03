@@ -22,11 +22,19 @@ class A2C_PPO_Agent(object):
 	def __init__(self, n, ppo_eps=DEFAULT_PPO_EPS):
 		pass
 
-
-	def __call__(self, obs, batches=1):
-		pass
-
-	def model(self, obs):
-		pass
+	def act(self, obs, batches=1):
+		# wrapp in batches
+		if batches == 1:
+			obs = tf.expand_dims(obs, 0)
+		# call its model
+		action_logits_t,_ = self.model(obs)
+		# Since it's multi-discrete, for every discrete set of actions:
+		action_i = []
+		for action_logits_t_k in action_logits_t:
+			# Sample next action from the action probability distribution
+			action_i_k = tf.random.categorical(action_logits_t_k,1)[0,0]
+			action_i.append(action_i_k)
+		# return the action for this agent
+		return action_i
 
 

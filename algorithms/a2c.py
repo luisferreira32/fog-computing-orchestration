@@ -5,7 +5,6 @@
 # since we're implementing ppo with deep neural networks
 from algorithms.deep_tools.frames import Simple_Frame
 from algorithms.deep_tools.common import get_expected_returns
-from algorithms.trainners import run_tragectory, set_training_env
 
 # some necesary constants
 from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE, DEFAULT_ACTION_SPACE
@@ -26,6 +25,7 @@ class A2C_Agent(object):
 	def __init__(self, n, action_space=DEFAULT_ACTION_SPACE, model_frame=Simple_Frame):
 		super(A2C_Agent, self).__init__()
 		# actual agent - the NN
+		print(action_space)
 		self.model = model_frame(action_space)		
 		# meta-data
 		self.name = "node_"+str(n)+"_agent"
@@ -40,15 +40,14 @@ class A2C_Agent(object):
 	def short_str():
 		return "a2c"
 
-	def __call__(self, obs, batches=1):
+	def act(self, obs, batches=1):
 		# wrapp in batches
 		if batches == 1:
 			obs = tf.expand_dims(obs, 0)
 		# call its model
 		action_logits_t,_ = self.model(obs)
-		# and decipher the action
-		action_i = []
 		# Since it's multi-discrete, for every discrete set of actions:
+		action_i = []
 		for action_logits_t_k in action_logits_t:
 			# Sample next action from the action probability distribution
 			action_i_k = tf.random.categorical(action_logits_t_k,1)[0,0]
@@ -56,17 +55,6 @@ class A2C_Agent(object):
 		# return the action for this agent
 		return action_i
 
-	def model(self, obs):
-		return self.model(obs)
-
-	def save_models(self, path):
-		arch_path = path + str(self.input_model) + "/"
-		self.input_model.save(arch_path+self.name+"_input")
-		self.output_model.save(arch_path+self.name+"_output")
-	def load_models(self, path):
-		arch_path = path + str(self.input_model) + "/"
-		self.input_model = tf.keras.models.load_model(arch_path+self.name+"_input", compile=False)
-		self.output_model = tf.keras.models.load_model(arch_path+self.name+"_output", compile=False)
 		
 
 # optimizer to apply the gradient change

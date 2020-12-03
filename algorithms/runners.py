@@ -6,6 +6,12 @@ import numpy as np
 # for information gathering
 from utils.tools import dictionary_append, append_to_file
 from utils.display import info_gather, info_logs
+# the envrionment
+from algorithms.deep_tools.common import  set_tf_seed
+from algorithms.deep_tools.trainners import train_agents_on_env
+from algorithms.deep_tools.savers import fetch_agents
+from algorithms.configs import ALGORITHM_SEED
+
 
 def run_basic_algorithm_on_envrionment(agents, env, case, compiled_info=None, debug=False):
 	# runner for simple baseline algorithms
@@ -26,8 +32,9 @@ def run_basic_algorithm_on_envrionment(agents, env, case, compiled_info=None, de
 	return compiled_info
 
 
-def run_rl_algorithm_on_envrionment(agents, env, case, compiled_info=None, debug=False):
-	# runner for trained algorithms
+def run_rl_algorithm_on_envrionment(algorithm, env, case, compiled_info=None, debug=False, train=False):
+	# runner for rl algorithms
+	set_tf_seed(ALGORITHM_SEED)
 
 	# todo, place training here given a training flag, else fetch
 	start_time = time.time()
