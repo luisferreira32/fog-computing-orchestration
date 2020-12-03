@@ -8,13 +8,12 @@ from utils.tools import dictionary_append, append_to_file
 from utils.display import info_gather, info_logs
 
 def run_basic_algorithm_on_envrionment(agents, env, case, compiled_info=None, debug=False):
-	# runner for simple baseline algorithms - they tweak inside the events => very model based of them!
+	# runner for simple baseline algorithms
 	start_time = time.time()
 	obs_n = env.reset()
 	done = False;
 	while not done:
-		# for process they configure the actual EVQ!!!  => very model based of them! (but js)
-		action_n = np.array([agent(obs, env.evq, env.clock) for agent,obs in zip(agents, obs_n)], dtype=np.uint8)
+		action_n = np.array([agent(obs) for agent,obs in zip(agents, obs_n)], dtype=np.uint8)
 		obs_n, rw_n, done, info_n = env.step(action_n)
 		if debug: env.render()
 		# -- info gathering
@@ -27,8 +26,10 @@ def run_basic_algorithm_on_envrionment(agents, env, case, compiled_info=None, de
 	return compiled_info
 
 
-def run_algorithm_on_envrionment(agents, env, case, compiled_info=None, debug=False):
+def run_rl_algorithm_on_envrionment(agents, env, case, compiled_info=None, debug=False):
 	# runner for trained algorithms
+
+	# todo, place training here given a training flag, else fetch
 	start_time = time.time()
 	obs_n = env.reset()
 	done = False;

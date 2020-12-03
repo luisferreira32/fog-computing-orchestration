@@ -19,7 +19,7 @@ from utils.tools import dictionary_append, write_all_to_csvs, random_seed_primes
 from utils.display import plt_bar, plt_error_bar, plt_box_plot, info_gather_init
 from sim_env.environment import Fog_env
 from algorithms.basic import create_basic_agents
-from algorithms.runners import run_algorithm_on_envrionment, run_basic_algorithm_on_envrionment
+from algorithms.runners import run_rl_algorithm_on_envrionment, run_basic_algorithm_on_envrionment
 
 # --- the main playground ---
 
@@ -64,7 +64,7 @@ for case in cases:
 				compiled_info = run_basic_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
 			else:
 				agents = fetch_trained_agents(env, alg, case) # will give an error if there are no trained agents
-				compiled_info = run_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
+				compiled_info = run_rl_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
 			# run the algorithm to collect info
 			# just to know
 			current+=1; print("[LOG] simulations ran ["+str(current)+"/"+total+"] in",round(time.time()-o_start_time,2),"seconds")

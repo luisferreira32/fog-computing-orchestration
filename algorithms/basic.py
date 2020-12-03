@@ -11,8 +11,7 @@ def create_basic_agents(env, alg, case):
 	return agents
 
 class Nearest_Round_Robin(object):
-	"""Nearest_Round_Robin this algorithm allows every slice that has tasks in the queue to take turns in processing on a
-	shared resource in a periodically repeated order. Offloading when the queue is 0.8 full to the nearest node
+	"""Nearest_Round_Robin
 	"""
 	basic = True
 	def __init__(self, node, case):
@@ -27,7 +26,7 @@ class Nearest_Round_Robin(object):
 	def short_str(cls):
 		return "nRR"
 
-	def __call__(self, obs, evq, clock):
+	def __call__(self, obs):
 		# node action struct: [f_i0, ..., f_ik, w_i0, ..., w_ik]
 		# default no offloads and no processing
 		wks = np.zeros(DEFAULT_SLICES, dtype=np.uint8)
@@ -68,9 +67,7 @@ class Nearest_Round_Robin(object):
 
 
 class Nearest_Priority_Queue(object):
-	"""Nearest_Priority_Queue this algorithm handles the scheduling of the tasks following a priority-based model.
-	Tasks are scheduled to be processed from the head of a given queue only if all queues of higher priority are
-	empty, which is determined by a delay constraint. Offloading when the queue is 0.8 full to the nearest node.
+	"""Nearest_Priority_Queue
 	"""
 	basic = True
 	def __init__(self, node, case):
@@ -88,7 +85,7 @@ class Nearest_Priority_Queue(object):
 	def short_str(cls):
 		return "nPQ"
 
-	def __call__(self, obs, evq, clock):
+	def __call__(self, obs):
 		# action struct: [f_00, ..., f_0k, w_00, ..., w_0k, ..., f_i0, ..., f_ik, w_i0, ..., w_ik]
 		# default no offloads and no processing
 		wks = np.zeros(DEFAULT_SLICES, dtype=np.uint8)
