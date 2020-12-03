@@ -28,7 +28,9 @@ python playground.py --algorithm=a2c --cases=n1 --train
 DISCLAIMER: each of this libraries is not mine, the authors are as stated in the links below, and they were only used in this work for academic purposes.  
 
 To run this simulations it is necessary to have Tensorflow 2.x installed and its dependencies, recommended to create a venv in the same folder as the source code:
-[Official TF2 installation guide](https://www.tensorflow.org/install/pip#virtual-environment-install) (link accessed 08/2020)  
+[Official TF2 installation guide](https://www.tensorflow.org/install/pip#virtual-environment-install)
+
+[//]: # ([Tensorflow probability] https://www.tensorflow.org/probability is also one of the packages used.)
   
 [Pytest](https://docs.pytest.org/en/stable/getting-started.html) was a tool used for debugging and testing the scripts.  
   
