@@ -14,6 +14,7 @@ def load_agent_models(agent):
 	try:
 		agent.model = tf.keras.models.load_model(arch_path+agent.name, compile=False)
 	except Exception as e:
+		print("[ERROR LOG] It was not able to load the specified agent model from ./algorithsm/saved_models/")
 		return agent # without trained model fetched
 	return agent # with trained model
 	
