@@ -37,3 +37,13 @@ To run this simulations it is necessary to have Tensorflow 2.x installed and its
 [Matplotlib](https://matplotlib.org/) was used for graphical results.
 
 
+---
+## List of possible improvements
+### on the environment package sim_env...
+- Re-model channel gain with friis equation;
+- Add node ABC class;
+- Implement Cloud node, subclass of node;  
+
+### on the orchestrator algorithms...
+- ...
+
