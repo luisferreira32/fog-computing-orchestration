@@ -15,7 +15,7 @@ def argument_check(argv):
 	# running variables
 	debug = False; train = False
 	algs = []; cases = []
-	max_seed = 100
+	max_seed = 10
 
 	# argument check
 	if len(argv) < 2:
@@ -37,7 +37,7 @@ def argument_check(argv):
 		print("   heavy : runs case 1, 2 and 3, with heavy traffic")
 		print("   n1 : runs case X =[1, 2 or 3] with normal traffic")
 		print("   h1 : runs case X =[1, 2 or 3] with heavy traffic")
-		print("--seedmax= : by default 100, maximum value for a prime number seed")
+		print("--seedmax= : by default 10, maximum value for a prime number seed")
 		print("--debug : will render every step")
 		return [debug, algs, cases, max_seed, train]
 

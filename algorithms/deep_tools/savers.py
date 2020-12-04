@@ -5,14 +5,14 @@ import tensorflow as tf
 
 saved_models_path = os.getcwd()+"/algorithms/saved_models/"
 
-def save_agent_models(agent):
-	arch_path = saved_models_path + str(agent.model) + "/"
-	agent.model.save(arch_path+agent.name)
+def save_agent_models(agent, rd_seed):
+	complete_path = saved_models_path + str(agent.model) + "_rd" + str(rd_seed) + "_"+ agent.name
+	agent.model.save(complete_path)
 
-def load_agent_models(agent):
-	arch_path = saved_models_path + str(agent.model) + "/"
+def load_agent_models(agent, rd_seed):
+	complete_path = saved_models_path + str(agent.model) + "_rd" + str(rd_seed) + "_"+ agent.name
 	try:
-		agent.model = tf.keras.models.load_model(arch_path+agent.name, compile=False)
+		agent.model = tf.keras.models.load_model(complete_path, compile=False)
 	except Exception as e:
 		print("[ERROR LOG] It was not able to load the specified agent model from ./algorithsm/saved_models/")
 		return agent # without trained model fetched
@@ -23,5 +23,5 @@ def fetch_agents(alg, env):
 	agents = [alg(n.index, env.action_space.nvec[i]) for i,n in enumerate(env.nodes)]
 	# if there are trainned agents fetch them, otherwise, they'll be untrained
 	for agent in agents:
-		agent = load_agent_models(agent)
+		agent = load_agent_models(agent, env.rd_seed)
 	return agents

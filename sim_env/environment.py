@@ -62,6 +62,7 @@ class Fog_env(gym.Env):
 
 		super(Fog_env, self).__init__()
 		# Set up seeds for reproductibility
+		self.rd_seed = rd_seed
 		self.seed(rd_seed)
 
 		# envrionment variables
