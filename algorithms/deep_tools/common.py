@@ -103,7 +103,6 @@ def critic_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
 
 opt = tf.keras.optimizers.Adam(learning_rate=DEFAULT_LEARNING_RATE)
 
-@tf.function
 def batch_train_step(model, x_batch_train, y_batch_train, c_loss, a_loss, optimizer):
 	with tf.GradientTape() as tape:
 		y_pred = model(x_batch_train, training=True)
@@ -111,7 +110,7 @@ def batch_train_step(model, x_batch_train, y_batch_train, c_loss, a_loss, optimi
 		value_loss =  a_loss(y_batch_train["output_1"], y_pred[0]) + a_loss(y_batch_train["output_2"], y_pred[1])+ a_loss(y_batch_train["output_3"], y_pred[2]) + a_loss(y_batch_train["output_4"], y_pred[3]) + a_loss(y_batch_train["output_5"], y_pred[4]) + a_loss(y_batch_train["output_6"], y_pred[5]) + c_loss(y_batch_train["output_7"], y_pred[6])
 
 	grads = tape.gradient(value_loss, model.trainable_weights)
-	opt.apply_gradients(zip(grads, model.trainable_weights))
+	optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
 def custom_actor_critic_fit(model, x_train, y_train, batch_size, epochs, c_loss=critic_loss, a_loss=actor_loss, optimizer=opt):
 	# hardcoded - but its possible to make it flexible with an iteration over the second dimension of y_train
