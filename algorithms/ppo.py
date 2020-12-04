@@ -3,10 +3,10 @@
 # advantages of PPO are found in a discrete actions and multi-process style; offers fast convergence
 
 # since we're implementing ppo with deep neural networks
-from algorithms.deep_tools.frames import Simple_Frame, Actor_Critic_Output_Frame
+from algorithms.deep_tools.frames import Simple_Frame
 
 # some necesary constants
-from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE, DEFAULT_PPO_EPS
+from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE, DEFAULT_PPO_EPS, DEFAULT_ACTION_SPACE
 from sim_env.configs import N_NODES
 
 # and mathematical help

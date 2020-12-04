@@ -34,7 +34,7 @@ def tf_env_step(action: tf.Tensor) -> List[tf.Tensor]:
 		[tf.uint8, tf.float32, tf.int32])
 
 def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.Tensor]:
-	"""Runs a single tragectory to collect training data."""
+	"""Runs a single tragectory to collect training data for each agent."""
 
 	action_probs = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
 	states = tf.TensorArray(dtype=tf.uint8, size=0, dynamic_size=True)
@@ -63,7 +63,9 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 			state_t = state_t.write(i, state_t_i)
 
 			# Run the model and to get action probabilities and critic value
-			action_logits_t_i, value = agent.model(state_t_i)
+			model_output = agent.model(state_t_i)
+			value = model_output[-1]
+			action_logits_t_i = model_output[:-1]
 
 			# Get the action and probability distributions for data
 			action_t_i = tf.TensorArray(dtype=tf.int32, size=len(action_logits_t_i))
@@ -101,19 +103,30 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 		if tf.cast(done, tf.bool):
 			break
 
-	# Stack them for every agent and set struct: shape=[agents, time_steps, [particular shape]]
-	action_shape = [len(agents), max_steps, len(action_logits_t_i)] # 6 distinct actions
-	action_probs = tf.reshape(action_probs.stack(), action_shape)
-	actions = tf.reshape(actions.stack(), action_shape)
-	state_shape = [len(agents), max_steps, initial_state_shape[-1]] # 11 state values
-	states = tf.reshape(states.stack(), state_shape)
-	value_shape = [len(agents), max_steps] # just 1 critic value
-	values = tf.reshape(values.stack(), value_shape)
-	# both here are common for every agent
+	# Stack them for every time step
+	action_probs = action_probs.stack()
+	actions =actions.stack()
+	states = states.stack()
+	values = values.stack()
+	# and re make them for struct [agent, time_steps, [default_size]]
+	action_probs_ret_val =  tf.TensorArray(dtype=tf.float32, size=len(agents))
+	actions_ret_val = tf.TensorArray(dtype=tf.int32, size=len(agents))
+	states_ret_val = tf.TensorArray(dtype=tf.uint8, size=len(agents))
+	values_ret_val = tf.TensorArray(dtype=tf.float32, size=len(agents))
+	for i in tf.range(len(agents)):
+		action_probs_ret_val = action_probs_ret_val.write(i, action_probs[:,i])
+		actions_ret_val = actions_ret_val.write(i, actions[:,i])
+		states_ret_val = states_ret_val.write(i, states[:,i])
+		values_ret_val = values_ret_val.write(i, values[:,i])
+	action_probs_ret_val = action_probs_ret_val.stack()
+	actions_ret_val = actions_ret_val.stack()
+	states_ret_val = states_ret_val.stack()
+	values_ret_val = values_ret_val.stack()
+	# here both are common for every agent
 	rewards = rewards.stack()
 	dones = dones.stack()
 
-	return states, action_probs, actions, values, rewards, dones
+	return states_ret_val, action_probs_ret_val, actions_ret_val, values_ret_val, rewards, dones
 
 # --- the generic training function for an A2C architecture ---
 
@@ -124,7 +137,7 @@ def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS,
 		assert episode_max_lenght/batch_size > 1
 	except Exception as e:
 		raise InvalidValueError("Batch size has to be smaller and able to divide an episode length")
-		
+
 	# Run the model for total_iterations
 	with tqdm.trange(total_iterations) as t:
 		for iteration in t:

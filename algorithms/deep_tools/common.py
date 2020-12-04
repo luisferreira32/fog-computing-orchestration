@@ -78,16 +78,18 @@ def get_expected_returns(rewards: tf.Tensor, gamma: float, standardize: bool = T
 huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 
 
-def combined_loss(y_true: List[tf.Tensor], y_pred: List[tf.Tensor]) -> tf.Tensor:
-	# y_ have the actor action_probs and critic value
-	(advantages_t, expected_returns) = y_true
-	(action_probs_t, value) = y_pred
+def actor_loss(y_true: List[tf.Tensor], y_pred: List[tf.Tensor]) -> tf.Tensor:
+	advantages_t = y_true
+	action_probs_t = y_pred
 
 	# actor: negative log likelihood, sum on batches
 	action_log_probs_t = tf.math.log(action_probs_t)
 	actor_loss = -tf.math.reduce_sum(action_log_probs_t*advantages_t) 
+	return actor_loss
 
+def critic_loss(y_true: List[tf.Tensor], y_pred: List[tf.Tensor]) -> tf.Tensor:
+	expected_returns = y_true
+	values = y_pred
 	# critic: huber loss, sum on batches
 	critic_loss = huber_loss(values, expected_returns)
-
-	return actor_loss + critic_loss
+	return critic_loss

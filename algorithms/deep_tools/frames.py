@@ -50,8 +50,9 @@ class Simple_Frame(tf.keras.Model):
 			x = hidden_layer(x)
 		x = self.dense_1(x)
 		grinded = self.dense_2(x)
-		return [[output_layer(grinded) for output_layer in self.output_layers],
-			self.output_value(grinded)]
+		output = [output_layer(grinded) for output_layer in self.output_layers]
+		output.append(self.output_value(grinded))
+		return output
 
 # CNN feature extraction then dense layers
 class Conv1d_Frame(tf.keras.Model):
