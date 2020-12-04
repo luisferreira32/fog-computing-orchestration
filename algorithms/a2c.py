@@ -10,7 +10,7 @@ from algorithms.deep_tools.frames import Simple_Frame
 from algorithms.deep_tools.common import general_advantage_estimator, actor_loss, critic_loss
 
 # some necesary constants
-from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE, DEFAULT_ACTION_SPACE
+from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE, DEFAULT_ACTION_SPACE, DEFAULT_GAMMA
 from sim_env.configs import N_NODES, DEFAULT_SLICES, TOTAL_TIME_STEPS
 
 # optimizer to apply the gradient change
@@ -28,7 +28,7 @@ class A2C_Agent(object):
 		# meta-data
 		self.name = "node_"+str(n)+"_a2c_agent"
 		self.action_space = action_space
-		self.gamma = 0.99
+		self.gamma = DEFAULT_GAMMA
 
 	def __str__(self):
 		return self.name
@@ -65,6 +65,8 @@ class A2C_Agent(object):
 		# policy_targets[i][k][action] = advantage[i]
 		# inputs: rw, values, next values, gamma, lambda
 		advantage, value_target = general_advantage_estimator(rw[:-1], values[:-1], values[1:], self.gamma)
+
+		# set up the advantages as the policy targets
 		n = tf.shape(action_probs[:-1])[0]
 		policy_targets = []
 		for a, num_actions in enumerate(self.action_space):
@@ -76,9 +78,10 @@ class A2C_Agent(object):
 			policy_target = policy_target.stack()
 			policy_targets.append(policy_target)
 		y_true = policy_targets
+
+		# and voilá, the target values to which we're going to fit
 		y_true.append(value_target)
-		print([y.shape for y in y_true])
-		print([self.action_space])
+
 		# we actually can't use the last timestep since we're using TD methods
 		self.model.fit(states[:-1], y_true, batch_size=batch_size, epochs=epochs)
 
