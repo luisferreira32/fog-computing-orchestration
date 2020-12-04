@@ -131,7 +131,7 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 # --- the generic training function for an A2C architecture ---
 
 def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS, trajectory_lenght: int = DEFAULT_TRAJECTORY,
-	batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS):
+	batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS, saving: bool = True):
 	try:
 		assert trajectory_lenght > batch_size # B <= N*T (N=1, parallel agents on the same node)
 	except Exception as e:
@@ -152,6 +152,7 @@ def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS,
 			print(tf.reduce_sum(rw)) # episode reward
 
 	# save trained agents, then return them
-	for agent in agents:
-		save_agent_models(agent)
+	if saving:
+		for agent in agents:
+			save_agent_models(agent)
 	return agents
