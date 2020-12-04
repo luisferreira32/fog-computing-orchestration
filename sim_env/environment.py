@@ -83,7 +83,7 @@ class Fog_env(gym.Env):
 		# for each node there is an action [f_i0, ..., f_ik, w_i0, ..., w_ik]
 		# where values can be between 0 and I for f_ik, and 0 and N=limited by either memory or cpu for w_ik
 		action_possibilities = [np.append([N_NODES+1 for _ in range(n.max_k)],
-			[min(n._avail_cpu_units, n._avail_ram_units)+1 for _ in range(n.max_k)]) for n in self.nodes]
+			[min(n._avail_cpu_units, n._avail_ram_units/np.ceil(case["task_type"][2][k]/RAM_UNIT))+1 for k in range(n.max_k)]) for n in self.nodes]
 		action_possibilities = np.array(action_possibilities, dtype=np.uint8)
 		self.action_space = spaces.MultiDiscrete(action_possibilities)
 
