@@ -76,19 +76,21 @@ def get_expected_returns(rewards: tf.Tensor, gamma: float, standardize: bool = T
 
 # huber loss function
 huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
+cce = tf.keras.losses.CategoricalCrossentropy(reduction=tf.keras.losses.Reduction.SUM)
 
 
-def actor_loss(y_true: List[tf.Tensor], y_pred: List[tf.Tensor]) -> tf.Tensor:
-	advantages_t = y_true
+def actor_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+	#print(y_true.shape, y_pred.shape)
+	advantages_t = tf.stop_gradient(y_true) # the labels don't need a gradient
 	action_probs_t = y_pred
 
-	# actor: negative log likelihood, sum on batches
-	action_log_probs_t = tf.math.log(action_probs_t)
-	actor_loss = -tf.math.reduce_sum(action_log_probs_t*advantages_t) 
+	# actor: cross entropy with advantage as labels to scale
+	actor_loss = -cce(advantages_t, action_probs_t)
 	return actor_loss
 
-def critic_loss(y_true: List[tf.Tensor], y_pred: List[tf.Tensor]) -> tf.Tensor:
-	expected_returns = y_true
+def critic_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+	#print(y_true.shape, y_pred.shape)
+	expected_returns = tf.stop_gradient(y_true) # the labels don't need a gradient
 	values = y_pred
 	# critic: huber loss, sum on batches
 	critic_loss = huber_loss(values, expected_returns)

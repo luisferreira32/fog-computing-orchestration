@@ -46,8 +46,6 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 	initial_state_shape = initial_state.shape
 	state = initial_state
 
-	# run a couple times the env without collecting? TODO@luis
-
 	# then collect the data
 	for t in tf.range(max_steps):
 		# needed vars to stack agents on each timestep
