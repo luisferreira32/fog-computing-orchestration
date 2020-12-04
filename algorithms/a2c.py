@@ -19,14 +19,15 @@ class A2C_Agent(object):
 	"""A2C_Agent
 	"""
 	basic = False
-	def __init__(self, n, action_space=DEFAULT_ACTION_SPACE, model_frame=Simple_Frame):
+	def __init__(self, n, rd_seed, action_space=DEFAULT_ACTION_SPACE, model_frame=Simple_Frame):
 		super(A2C_Agent, self).__init__()
 		# actual agent - the NN
-		self.model = model_frame(action_space)		
+		self.model = model_frame(action_space)
 		# meta-data
-		self.name = "node_"+str(n)+"_a2c_agent"
+		self.name = str(self.model)+"_rd"+str(rd_seed)+"_node_"+str(n)+"_a2c_agent"
 		self.action_space = action_space
 		self.gamma = DEFAULT_GAMMA
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate=DEFAULT_LEARNING_RATE)
 
 	def __str__(self):
 		return self.name
@@ -77,5 +78,5 @@ class A2C_Agent(object):
 		y_true.append(value_target)
 
 		# we actually can't use the last timestep since we're using TD methods
-		custom_actor_critic_fit(self.model, states[:-1], y_true, batch_size=batch_size, epochs=epochs)
+		custom_actor_critic_fit(self.model, states[:-1], y_true, batch_size=batch_size, epochs=epochs, optimizer=self.optimizer)
 

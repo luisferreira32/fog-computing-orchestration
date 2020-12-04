@@ -5,12 +5,12 @@ import tensorflow as tf
 
 saved_models_path = os.getcwd()+"/algorithms/saved_models/"
 
-def save_agent_models(agent, rd_seed):
-	complete_path = saved_models_path + str(agent.model) + "_rd" + str(rd_seed) + "_"+ agent.name
+def save_agent_models(agent):
+	complete_path = saved_models_path + agent.name
 	agent.model.save(complete_path)
 
-def load_agent_models(agent, rd_seed):
-	complete_path = saved_models_path + str(agent.model) + "_rd" + str(rd_seed) + "_"+ agent.name
+def load_agent_models(agent):
+	complete_path = saved_models_path + agent.name
 	try:
 		agent.model = tf.keras.models.load_model(complete_path, compile=False)
 	except Exception as e:
@@ -20,8 +20,8 @@ def load_agent_models(agent, rd_seed):
 	
 def fetch_agents(alg, env):
 	# creates the agents
-	agents = [alg(n.index, env.action_space.nvec[i]) for i,n in enumerate(env.nodes)]
+	agents = [alg(n.index, env.rd_seed, env.action_space.nvec[i]) for i,n in enumerate(env.nodes)]
 	# if there are trainned agents fetch them, otherwise, they'll be untrained
 	for agent in agents:
-		agent = load_agent_models(agent, env.rd_seed)
+		agent = load_agent_models(agent)
 	return agents

@@ -101,8 +101,7 @@ def critic_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
 
 # --- since the keras.fit had a memory leak ---
 
-opt = tf.keras.optimizers.Adam(learning_rate=DEFAULT_LEARNING_RATE)
-
+@tf.function
 def batch_train_step(model, x_batch_train, y_batch_train, c_loss, a_loss, optimizer):
 	with tf.GradientTape() as tape:
 		y_pred = model(x_batch_train, training=True)
@@ -112,7 +111,7 @@ def batch_train_step(model, x_batch_train, y_batch_train, c_loss, a_loss, optimi
 	grads = tape.gradient(value_loss, model.trainable_weights)
 	optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
-def custom_actor_critic_fit(model, x_train, y_train, batch_size, epochs, c_loss=critic_loss, a_loss=actor_loss, optimizer=opt):
+def custom_actor_critic_fit(model, x_train, y_train, batch_size, epochs, optimizer, c_loss=critic_loss, a_loss=actor_loss):
 	# hardcoded - but its possible to make it flexible with an iteration over the second dimension of y_train
 	output_dict = {"output_1": y_train[0],"output_2": y_train[1],"output_3": y_train[2],"output_4": y_train[3],"output_5": y_train[4],"output_6": y_train[5],"output_7": y_train[6]}
 	train_dataset = tf.data.Dataset.from_tensor_slices((x_train, output_dict))

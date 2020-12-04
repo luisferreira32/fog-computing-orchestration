@@ -153,5 +153,5 @@ def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS,
 
 	# save trained agents, then return them
 	for agent in agents:
-		save_agent_models(agent, env.rd_seed)
+		save_agent_models(agent)
 	return agents
