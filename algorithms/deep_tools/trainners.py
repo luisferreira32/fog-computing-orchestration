@@ -8,7 +8,7 @@ from typing import Any, List, Sequence, Tuple
 
 # constants
 from sim_env.configs import TOTAL_TIME_STEPS
-from algorithms.configs import ALGORITHM_SEED, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS, DEFAULT_ITERATIONS
+from algorithms.configs import ALGORITHM_SEED, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS, DEFAULT_ITERATIONS, DEFAULT_TRAJECTORY
 from utils.custom_exceptions import InvalidValueError
 
 
@@ -128,7 +128,7 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 
 # --- the generic training function for an A2C architecture ---
 
-def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS, episode_max_lenght: int = TOTAL_TIME_STEPS,
+def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS, trajectory_lenght: int = DEFAULT_TRAJECTORY,
 	batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS):
 	try:
 		assert episode_max_lenght > batch_size
@@ -149,4 +149,8 @@ def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS,
 
 			t.set_description(f'Iteration {iteration}')
 			print(tf.reduce_sum(rw)) # episode reward
+
+	# save trained agents, then return them
+	for agent in agents:
+		save_agent_models(agent, env.rd_seed)
 	return agents
