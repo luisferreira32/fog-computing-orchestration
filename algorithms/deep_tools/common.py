@@ -101,7 +101,7 @@ def critic_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
 
 # --- since the keras.fit had a memory leak ---
 
-@tf.function
+#@tf.function
 def batch_train_step(model, x_batch_train, y_batch_train, c_loss, a_loss, optimizer):
 	with tf.GradientTape() as tape:
 		y_pred = model(x_batch_train, training=True)
