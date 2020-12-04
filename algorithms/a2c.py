@@ -7,14 +7,12 @@ import tensorflow as tf
 
 # since we're implementing ppo with deep neural networks
 from algorithms.deep_tools.frames import Simple_Frame
-from algorithms.deep_tools.common import general_advantage_estimator, actor_loss, critic_loss
+from algorithms.deep_tools.common import general_advantage_estimator, custom_actor_critic_fit
 
 # some necesary constants
 from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE, DEFAULT_ACTION_SPACE, DEFAULT_GAMMA
 from sim_env.configs import N_NODES, DEFAULT_SLICES, TOTAL_TIME_STEPS
 
-# optimizer to apply the gradient change
-opt = tf.keras.optimizers.Adam(learning_rate=DEFAULT_LEARNING_RATE)
 
 # the class itself
 class A2C_Agent(object):
@@ -54,10 +52,6 @@ class A2C_Agent(object):
 		return action_i
 
 	def train(self, states, action_probs, actions, values, rw, dones, batch_size, epochs):
-		# compile with chosen loss (there are N outputs but will have a combined loss calculation!) and optimizer
-		losses = [actor_loss for _ in range(len(self.action_space))]
-		losses.append(critic_loss)
-		self.model.compile(optimizer=opt, loss=losses)
 
 		# for each time step set up policy_targets (N sized action space), and value_target (1 critic)
 		# the critic target is something like expected_returns
@@ -83,5 +77,5 @@ class A2C_Agent(object):
 		y_true.append(value_target)
 
 		# we actually can't use the last timestep since we're using TD methods
-		self.model.fit(states[:-1], y_true, batch_size=batch_size, epochs=epochs)
+		custom_actor_critic_fit(self.model, states[:-1], y_true, batch_size=batch_size, epochs=epochs)
 

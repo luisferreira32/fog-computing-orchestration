@@ -8,7 +8,7 @@ from typing import Any, List, Sequence, Tuple
 
 # constants
 from sim_env.configs import TOTAL_TIME_STEPS
-from algorithms.configs import ALGORITHM_SEED, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS, DEFAULT_ITERATIONS, DEFAULT_TRAJECTORY
+from algorithms.configs import ALGORITHM_SEED, DEFAULT_ITERATIONS, DEFAULT_TRAJECTORY, DEFAULT_EPOCHS, DEFAULT_BATCH_SIZE
 from utils.custom_exceptions import InvalidValueError
 
 
@@ -131,17 +131,16 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS, trajectory_lenght: int = DEFAULT_TRAJECTORY,
 	batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS):
 	try:
-		assert episode_max_lenght > batch_size
-		assert episode_max_lenght/batch_size > 1
+		assert trajectory_lenght > batch_size # B <= N*T (N=1, parallel agents on the same node)
 	except Exception as e:
-		raise InvalidValueError("Batch size has to be smaller and able to divide an episode length")
+		raise InvalidValueError("Batch size has to be smaller and able to divide an trajectory length")
 
 	# Run the model for total_iterations
 	with tqdm.trange(total_iterations) as t:
 		for iteration in t:
 			# run an episode
 			initial_state = set_training_env(env)
-			states, action_probs, actions, values, rw, dones = run_tragectory(initial_state, agents, episode_max_lenght)
+			states, action_probs, actions, values, rw, dones = run_tragectory(initial_state, agents, trajectory_lenght)
 			# and apply training steps for each agent
 			for i, agent in enumerate(agents):
 				# shared reward!

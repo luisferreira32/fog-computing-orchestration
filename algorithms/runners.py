@@ -2,6 +2,7 @@
 
 import time
 import numpy as np
+import tensorflow as tf
 
 # for information gathering
 from utils.tools import dictionary_append, append_to_file
@@ -38,8 +39,7 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 	agents = fetch_agents(alg, env)
 
 	# train them if requested
-	if train:
-		agents = train_agents_on_env(agents, env)
+	if train: agents = train_agents_on_env(agents, env)
 
 	# and run as usual
 	start_time = time.time()
@@ -56,4 +56,6 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 	# -- info logs
 	if compiled_info is not None: info_logs(str(agents[0])+str(case), round(time.time()-start_time,2), compiled_info)
 	# --
+	# to clear all the models, since they're already saved after trainning
+	tf.keras.backend.clear_session()
 	return compiled_info

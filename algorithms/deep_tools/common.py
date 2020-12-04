@@ -6,6 +6,9 @@ import copy
 import tensorflow as tf
 from typing import Tuple, List
 
+# and constants imports
+from algorithms.configs import DEFAULT_TRAJECTORY, DEFAULT_LEARNING_RATE
+
 
 # to set the tf random seed for reproducibility
 def set_tf_seed(seed=1):
@@ -74,14 +77,14 @@ def get_expected_returns(rewards: tf.Tensor, gamma: float, standardize: bool = T
 	# expected returns
 	return returns
 
-# huber loss function
+# keras loss functions
 huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 cce = tf.keras.losses.CategoricalCrossentropy(reduction=tf.keras.losses.Reduction.SUM)
 
 
 def actor_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
 	#print(y_true.shape, y_pred.shape)
-	advantages_t = tf.stop_gradient(y_true) # the labels don't need a gradient
+	advantages_t = y_true
 	action_probs_t = y_pred
 
 	# actor: cross entropy with advantage as labels to scale
@@ -90,8 +93,33 @@ def actor_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
 
 def critic_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
 	#print(y_true.shape, y_pred.shape)
-	expected_returns = tf.stop_gradient(y_true) # the labels don't need a gradient
+	expected_returns = y_true
 	values = y_pred
 	# critic: huber loss, sum on batches
 	critic_loss = huber_loss(values, expected_returns)
 	return critic_loss
+
+# --- since the keras.fit had a memory leak ---
+
+opt = tf.keras.optimizers.Adam(learning_rate=DEFAULT_LEARNING_RATE)
+
+@tf.function
+def batch_train_step(model, x_batch_train, y_batch_train, c_loss, a_loss, optimizer):
+	with tf.GradientTape() as tape:
+		y_pred = model(x_batch_train, training=True)
+		# once again, hard coded... but can be done in a non hardcoded way!!
+		value_loss =  a_loss(y_batch_train["output_1"], y_pred[0]) + a_loss(y_batch_train["output_2"], y_pred[1])+ a_loss(y_batch_train["output_3"], y_pred[2]) + a_loss(y_batch_train["output_4"], y_pred[3]) + a_loss(y_batch_train["output_5"], y_pred[4]) + a_loss(y_batch_train["output_6"], y_pred[5]) + c_loss(y_batch_train["output_7"], y_pred[6])
+
+	grads = tape.gradient(value_loss, model.trainable_weights)
+	opt.apply_gradients(zip(grads, model.trainable_weights))
+
+def custom_actor_critic_fit(model, x_train, y_train, batch_size, epochs, c_loss=critic_loss, a_loss=actor_loss, optimizer=opt):
+	# hardcoded - but its possible to make it flexible with an iteration over the second dimension of y_train
+	output_dict = {"output_1": y_train[0],"output_2": y_train[1],"output_3": y_train[2],"output_4": y_train[3],"output_5": y_train[4],"output_6": y_train[5],"output_7": y_train[6]}
+	train_dataset = tf.data.Dataset.from_tensor_slices((x_train, output_dict))
+	train_dataset = train_dataset.shuffle(buffer_size=DEFAULT_TRAJECTORY*2).batch(batch_size)
+
+	for epoch in tf.range(epochs):
+		for x_batch_train, y_batch_train in train_dataset:
+			batch_train_step(model, x_batch_train, y_batch_train, c_loss, a_loss, optimizer)
+			
