@@ -7,7 +7,7 @@ import tensorflow as tf
 
 # since we're implementing ppo with deep neural networks
 from algorithms.deep_tools.frames import Simple_Frame
-from algorithms.deep_tools.common import get_expected_returns, combined_loss
+from algorithms.deep_tools.common import general_advantage_estimator, combined_loss
 
 # some necesary constants
 from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE, DEFAULT_ACTION_SPACE
@@ -52,14 +52,29 @@ class A2C_Agent(object):
 		# return the action for this agent
 		return action_i
 
-	def train(self, states, action_probs, actions, values, rw, batch_size, epochs):
+	def train(self, states, action_probs, actions, values, rw, dones, batch_size, epochs):
 		# compile with chosen loss (there are N outputs but will have a combined loss calculation!) and optimizer
 		self.model.compile(optimizer=opt, loss=combined_loss)
 
 		# for each time step set up policy_targets (N sized action space), and value_target (1 critic)
 		# the critic target is something like expected_returns
 		# the actor target is the advantage on the action[] taken, else is zero: policy_targets = [zeros[time_steps, discrete_actions] for _ in outputlayers]
-		# ??swap combined_loss to just a sum of mse?/ cross_entropy?
+		# policy_targets[i][k][action] = advantage[i]
+		# inputs: rw, values, next values, gamma, lambda
+		advantage, value_target = general_advantage_estimator(rw[:-1], values[:-1], values[1:], self.gamma)
+		n = tf.shape(action_probs[:-1])[0]
+		policy_targets = []
+		print(self.action_space, actions)
+		for a, num_actions in enumerate(self.action_space):
+			policy_target = tf.TensorArray(dtype=tf.float32, size=n)
+			for t in tf.range(n):
+				advantage_target = tf.TensorArray(dtype=tf.float32, size=num_actions)
+				advantage_target = advantage_target.write(actions[t][a], advantage[t])
+				policy_target = policy_target.write(t, advantage_target.stack())
+			policy_target = policy_target.stack()
+			policy_targets.append(policy_target)
 
-		self.model.fit(states, [policy_targets, value_target], batch_size=batch_size, epochs=epochs)
+
+		# we actually can't use the last timestep since we're using TD methods
+		self.model.fit(states[:-1], [policy_targets, value_target], batch_size=batch_size, epochs=epochs)
 

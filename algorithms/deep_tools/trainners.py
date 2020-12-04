@@ -9,6 +9,7 @@ from typing import Any, List, Sequence, Tuple
 # constants
 from sim_env.configs import TOTAL_TIME_STEPS
 from algorithms.configs import ALGORITHM_SEED, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS, DEFAULT_ITERATIONS
+from utils.custom_exceptions import InvalidValueError
 
 
 def set_training_env(env):
@@ -100,11 +101,15 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 		if tf.cast(done, tf.bool):
 			break
 
-	# Stack them for every agent and set struct: shape=[time_steps, agents, [discrete_actions]]
-	action_probs = action_probs.stack()
-	actions = actions.stack()
-	states = states.stack()
-	values = values.stack()
+	# Stack them for every agent and set struct: shape=[agents, time_steps, [particular shape]]
+	action_shape = [len(agents), max_steps, len(action_logits_t_i)] # 6 distinct actions
+	action_probs = tf.reshape(action_probs.stack(), action_shape)
+	actions = tf.reshape(actions.stack(), action_shape)
+	state_shape = [len(agents), max_steps, initial_state_shape[-1]] # 11 state values
+	states = tf.reshape(states.stack(), state_shape)
+	value_shape = [len(agents), max_steps] # just 1 critic value
+	values = tf.reshape(values.stack(), value_shape)
+	# both here are common for every agent
 	rewards = rewards.stack()
 	dones = dones.stack()
 
@@ -114,7 +119,12 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 
 def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS, episode_max_lenght: int = TOTAL_TIME_STEPS,
 	batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS):
-
+	try:
+		assert episode_max_lenght > batch_size
+		assert episode_max_lenght/batch_size > 1
+	except Exception as e:
+		raise InvalidValueError("Batch size has to be smaller and able to divide an episode length")
+		
 	# Run the model for total_iterations
 	with tqdm.trange(total_iterations) as t:
 		for iteration in t:

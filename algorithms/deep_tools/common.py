@@ -14,25 +14,41 @@ def set_tf_seed(seed=1):
 # near 0 number
 eps = np.finfo(np.float32).eps.item()
 
-# General Advantage Estimator
-def get_gaes(rewards: tf.Tensor, values: tf.Tensor, next_values: tf.Tensor, lbd: float,
-	gamma: float, standardize: bool = True) -> Tuple[tf.Tensor, tf.Tensor]:
+# General Advantage Estimator ~ lbd = 1 is the TD error
+def general_advantage_estimator(rewards: tf.Tensor, values: tf.Tensor, next_values: tf.Tensor, gamma: float, lbd: float = 1.0,
+	standardize: bool = True) -> Tuple[tf.Tensor, tf.Tensor]:
 	"""Compute the general advantage estimation per timestep
 	"""
-	deltas = [r + gamma * nv - v for r, nv, v in zip(rewards, next_values, values)]
-	deltas = np.stack(deltas)
-	gaes = copy.deepcopy(deltas)
-	for t in reversed(range(len(deltas) - 1)):
-		gaes[t] = gaes[t] + gamma * lbd * gaes[t + 1]
+	n = tf.shape(rewards)[0]
+	gaes = tf.TensorArray(dtype=tf.float32, size=n)
+
+	# start from the end of each array
+	rewards = tf.cast(rewards[::-1], dtype=tf.float32)
+	values = tf.cast(values[::-1], dtype=tf.float32)
+	next_values = tf.cast(next_values[::-1], dtype=tf.float32)
+	delta_sum = tf.constant(0.0)
+	delta_sum_shape = delta_sum.shape
+
+	for i in tf.range(n):
+		rw = rewards[i]
+		v = values[i]
+		nv = next_values[i]
+		# A_t = delta_t + (gamma*lb) delta_t+1 + ... + (gamma*lb)^(T-t+1) delta_T-1
+		# delta_t = rw_t + gamma * V_t+1 - V_t
+		delta_sum = rw + gamma * nv - v + gamma * lbd * delta_sum
+		delta_sum.set_shape(delta_sum_shape)
+		gaes = gaes.write(i, delta_sum)
+	gaes = gaes.stack()[::-1]
 
 	returns = gaes + values
 	if standardize:
-		gaes = (gaes - gaes.mean()) / (gaes.std() + eps)
+		returns = ((returns - tf.math.reduce_mean(returns)) / (tf.math.reduce_std(returns) + eps))
+		gaes = ((gaes - tf.math.reduce_mean(gaes)) / (tf.math.reduce_std(gaes) + eps))
 
 	# advantage and expected returns Q(s,a)
-	return tf.convert_to_tensor(gaes), tf.convert_to_tensor(returns)
+	return gaes, returns
 
-# Or just the basic
+# the simple way of getting expected returns
 def get_expected_returns(rewards: tf.Tensor, gamma: float, standardize: bool = True) -> tf.Tensor:
 	"""Compute expected returns per timestep with just discounted sum
 	G_t = sum(from t'=t to T){ gamma^(t'-t) * r_t'}
@@ -41,8 +57,7 @@ def get_expected_returns(rewards: tf.Tensor, gamma: float, standardize: bool = T
 	n = tf.shape(rewards)[0]
 	returns = tf.TensorArray(dtype=tf.float32, size=n)
 
-	# Start from the end of `rewards` and accumulate reward sums
-	# into the `returns` array
+	# Start from the end of rewards and accumulate reward sums into the returns array
 	rewards = tf.cast(rewards[::-1], dtype=tf.float32)
 	discounted_sum = tf.constant(0.0)
 	discounted_sum_shape = discounted_sum.shape
@@ -64,5 +79,15 @@ huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 
 
 def combined_loss(y_true: List[tf.Tensor], y_pred: List[tf.Tensor]) -> tf.Tensor:
-	# y_ have the actor action_log_probs and critic value
+	# y_ have the actor action_probs and critic value
+	(advantages_t, expected_returns) = y_true
+	(action_probs_t, value) = y_pred
+
+	# actor: negative log likelihood, sum on batches
+	action_log_probs_t = tf.math.log(action_probs_t)
+	actor_loss = -tf.math.reduce_sum(action_log_probs_t*advantages_t) 
+
+	# critic: huber loss, sum on batches
+	critic_loss = huber_loss(values, expected_returns)
+
 	return actor_loss + critic_loss
