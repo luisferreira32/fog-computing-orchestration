@@ -18,7 +18,7 @@ def set_tf_seed(seed=1):
 eps = np.finfo(np.float32).eps.item()
 
 # General Advantage Estimator ~ lbd = 1 is the TD error
-def general_advantage_estimator(rewards: tf.Tensor, values: tf.Tensor, next_values: tf.Tensor, gamma: float, lbd: float = 1.0,
+def general_advantage_estimator(rewards: tf.Tensor, values: tf.Tensor, next_values: tf.Tensor, dones: tf.Tensor, gamma: float, lbd: float = 1.0,
 	standardize: bool = True) -> Tuple[tf.Tensor, tf.Tensor]:
 	"""Compute the general advantage estimation per timestep
 	"""
@@ -29,6 +29,7 @@ def general_advantage_estimator(rewards: tf.Tensor, values: tf.Tensor, next_valu
 	rewards = tf.cast(rewards[::-1], dtype=tf.float32)
 	values = tf.cast(values[::-1], dtype=tf.float32)
 	next_values = tf.cast(next_values[::-1], dtype=tf.float32)
+	dones = tf.cast(dones[::-1], dtype=tf.float32)
 	delta_sum = tf.constant(0.0)
 	delta_sum_shape = delta_sum.shape
 
@@ -36,9 +37,10 @@ def general_advantage_estimator(rewards: tf.Tensor, values: tf.Tensor, next_valu
 		rw = rewards[i]
 		v = values[i]
 		nv = next_values[i]
+		dn = dones[i]
 		# A_t = delta_t + (gamma*lb) delta_t+1 + ... + (gamma*lb)^(T-t+1) delta_T-1
 		# delta_t = rw_t + gamma * V_t+1 - V_t
-		delta_sum = rw + gamma * nv - v + gamma * lbd * delta_sum
+		delta_sum = rw + gamma * nv *(1-dn) - v + gamma * lbd * delta_sum
 		delta_sum.set_shape(delta_sum_shape)
 		gaes = gaes.write(i, delta_sum)
 	gaes = gaes.stack()[::-1]
@@ -88,42 +90,10 @@ huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 cce = tf.keras.losses.CategoricalCrossentropy(reduction=tf.keras.losses.Reduction.SUM)
 
 
-def actor_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
-	#print(y_true.shape, y_pred.shape)
-	advantages_t = y_true
-	action_probs_t = y_pred
+def combined_loss(action_probs: tf.Tensor, advantages: tf.Tensor, values: tf.Tensor) -> tf.Tensor:
 
 	# actor: cross entropy with advantage as labels to scale
-	actor_loss = -cce(advantages_t, action_probs_t)
-	return actor_loss
-
-def critic_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
-	#print(y_true.shape, y_pred.shape)
-	expected_returns = y_true
-	values = y_pred
-	# critic: huber loss, sum on batches
+	action_log_probs = tf.math.log(action_probs)
+	actor_loss = -tf.math.reduce_sum(action_log_probs * advantages_t)
 	critic_loss = huber_loss(values, expected_returns)
-	return critic_loss
-
-# --- since the keras.fit had a memory leak ---
-
-#@tf.function
-def batch_train_step(model, x_batch_train, y_batch_train, c_loss, a_loss, optimizer):
-	with tf.GradientTape() as tape:
-		y_pred = model(x_batch_train, training=True)
-		# once again, hard coded... but can be done in a non hardcoded way!!
-		value_loss =  a_loss(y_batch_train["output_1"], y_pred[0]) + a_loss(y_batch_train["output_2"], y_pred[1])+ a_loss(y_batch_train["output_3"], y_pred[2]) + a_loss(y_batch_train["output_4"], y_pred[3]) + a_loss(y_batch_train["output_5"], y_pred[4]) + a_loss(y_batch_train["output_6"], y_pred[5]) + c_loss(y_batch_train["output_7"], y_pred[6])
-
-	grads = tape.gradient(value_loss, model.trainable_weights)
-	optimizer.apply_gradients(zip(grads, model.trainable_weights))
-
-def custom_actor_critic_fit(model, x_train, y_train, batch_size, epochs, optimizer, c_loss=critic_loss, a_loss=actor_loss):
-	# hardcoded - but its possible to make it flexible with an iteration over the second dimension of y_train
-	output_dict = {"output_1": y_train[0],"output_2": y_train[1],"output_3": y_train[2],"output_4": y_train[3],"output_5": y_train[4],"output_6": y_train[5],"output_7": y_train[6]}
-	train_dataset = tf.data.Dataset.from_tensor_slices((x_train, output_dict))
-	train_dataset = train_dataset.shuffle(buffer_size=DEFAULT_TRAJECTORY*2).batch(batch_size)
-
-	for epoch in tf.range(epochs):
-		for x_batch_train, y_batch_train in train_dataset:
-			batch_train_step(model, x_batch_train, y_batch_train, c_loss, a_loss, optimizer)
-			
+	return actor_loss + critic_loss

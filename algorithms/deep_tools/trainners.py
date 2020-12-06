@@ -3,15 +3,15 @@
 # mathematic and tensor related
 import numpy as np
 import tensorflow as tf
-import tqdm
 from typing import Any, List, Sequence, Tuple
 
 from .savers import save_agent_models
-from .common import normalize_state
+from .common import normalize_state, combined_loss, general_advantage_estimator
 
 # constants
 from sim_env.configs import TIME_STEP, SIM_TIME
 from algorithms.configs import ALGORITHM_SEED, DEFAULT_ITERATIONS, DEFAULT_TRAJECTORY, DEFAULT_EPOCHS, DEFAULT_BATCH_SIZE
+from algorithms.configs import DEFAULT_GAMMA, DEFAULT_LEARNING_RATE
 from utils.custom_exceptions import InvalidValueError
 
 
@@ -132,6 +132,8 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 
 # --- the generic training function for an A2C architecture ---
 
+optimizer = tf.keras.optimizers.Adam(learning_rate=DEFAULT_LEARNING_RATE)
+
 def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS, trajectory_lenght: int = DEFAULT_TRAJECTORY,
 	batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS, saving: bool = True):
 	try:
@@ -143,22 +145,31 @@ def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS,
 	initial_state = set_training_env(env)
 	current_state = initial_state
 	# Run the model for total_iterations
-	with tqdm.trange(total_iterations) as t:
-		for iteration in t:
+	for iteration in range(total_iterations):
+
+		with tf.GradientTape(persistent=True) as tape:
 			# run the trajectory
 			states, action_probs, actions, values, rw, dones = run_tragectory(current_state, agents, trajectory_lenght)
-			# reset the env if needed
-			if training_env.clock + trajectory_lenght*TIME_STEP >= SIM_TIME:
-				training_env.reset()
-			current_state = training_env._get_state_obs()
+			
 
-			# and apply training steps for each agent
-			for i, agent in enumerate(agents):
-				# shared reward!
-				agent.train(states[i], action_probs[i], actions[i], values[i], rw, dones, batch_size, epochs)
-			print(current_state)
-			t.set_description(f'Iteration {iteration}')
-			print(tf.reduce_sum(rw)) # episode reward
+			advantages, target_values = general_advantage_estimator(rw[:-1], values[:-1], values[1:], dones[1:], DEFAULT_GAMMA)
+			loss = combined_loss(action_probs, tf.stack([advantages for _ in tf.range(tf.shape(action_probs)[0])]),
+				tf.stack([target_values for _ in tf.range(tf.shape(action_probs)[0])]))
+
+		# and apply training steps for each agent
+		for i, agent in enumerate(agents):
+			grads = tape.gradient(loss[i], agent.model.trainable_weights)
+			optimizer.apply_gradients(zip(grads, agent.model.trainable_weights))
+			
+		del tape
+		
+
+		# reset the env if needed
+		if training_env.clock + trajectory_lenght*TIME_STEP >= SIM_TIME:
+			training_env.reset()
+		current_state = training_env._get_state_obs()
+		# iteration print
+		print("Iterations",t," [iteration reward:", tf.reduce_sum(rw).numpy(), "]")
 
 	# save trained agents, then return them
 	if saving:
