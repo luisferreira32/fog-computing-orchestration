@@ -7,6 +7,7 @@ import tqdm
 from typing import Any, List, Sequence, Tuple
 
 from .savers import save_agent_models
+from .common import normalize_state
 
 # constants
 from sim_env.configs import TOTAL_TIME_STEPS
@@ -39,7 +40,7 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 	"""Runs a single tragectory to collect training data for each agent."""
 
 	action_probs = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
-	states = tf.TensorArray(dtype=tf.uint8, size=0, dynamic_size=True)
+	states = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
 	actions = tf.TensorArray(dtype=tf.int32, size=0, dynamic_size=True)
 	values = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
 	rewards = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
@@ -51,7 +52,7 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 	# then collect the data
 	for t in tf.range(max_steps):
 		# needed vars to stack agents on each timestep
-		state_t = tf.TensorArray(dtype=tf.uint8, size=len(agents))
+		state_t = tf.TensorArray(dtype=tf.float32, size=len(agents))
 		action_t = tf.TensorArray(dtype=tf.int32, size=len(agents))
 		action_probs_t =  tf.TensorArray(dtype=tf.float32, size=len(agents))
 		values_t = tf.TensorArray(dtype=tf.float32, size=len(agents))
@@ -59,7 +60,8 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 		# Run every agent
 		for i, agent in enumerate(agents):
 			# Convert state into a batched tensor (batch size = 1)
-			state_t_i = tf.expand_dims(state[i], 0)
+			state_t_i = normalize_state(state[i], agent.observation_space_max)
+			state_t_i = tf.expand_dims(state_t_i, 0)
 			state_t = state_t.write(i, state_t_i)
 
 			# Run the model and to get action probabilities and critic value
@@ -111,7 +113,7 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 	# and re make them for struct [agent, time_steps, [default_size]]
 	action_probs_ret_val =  tf.TensorArray(dtype=tf.float32, size=len(agents))
 	actions_ret_val = tf.TensorArray(dtype=tf.int32, size=len(agents))
-	states_ret_val = tf.TensorArray(dtype=tf.uint8, size=len(agents))
+	states_ret_val = tf.TensorArray(dtype=tf.float32, size=len(agents))
 	values_ret_val = tf.TensorArray(dtype=tf.float32, size=len(agents))
 	for i in tf.range(len(agents)):
 		action_probs_ret_val = action_probs_ret_val.write(i, action_probs[:,i])

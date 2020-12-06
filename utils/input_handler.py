@@ -9,7 +9,6 @@ from algorithms.configs import ALGORITHM_SEED
 # algorithms
 from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
 from algorithms.a2c import A2C_Agent
-from algorithms.ppo import PPO_Agent
 
 def argument_check(argv):
 	# running variables

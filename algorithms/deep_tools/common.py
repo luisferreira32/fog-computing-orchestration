@@ -77,6 +77,12 @@ def get_expected_returns(rewards: tf.Tensor, gamma: float, standardize: bool = T
 	# expected returns
 	return returns
 
+def normalize_state(state: tf.Tensor, max_values: tf.Tensor) -> tf.Tensor:
+	return tf.math.truediv(state, max_values)
+	
+
+# --- loss functions ---
+
 # keras loss functions
 huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 cce = tf.keras.losses.CategoricalCrossentropy(reduction=tf.keras.losses.Reduction.SUM)

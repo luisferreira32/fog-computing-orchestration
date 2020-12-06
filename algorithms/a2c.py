@@ -7,7 +7,7 @@ import tensorflow as tf
 
 # since we're implementing ppo with deep neural networks
 from algorithms.deep_tools.frames import Simple_Frame
-from algorithms.deep_tools.common import general_advantage_estimator, custom_actor_critic_fit
+from algorithms.deep_tools.common import general_advantage_estimator, custom_actor_critic_fit, normalize_state
 
 # some necesary constants
 from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE, DEFAULT_ACTION_SPACE, DEFAULT_GAMMA
@@ -25,8 +25,8 @@ class A2C_Agent(object):
 		self.model = model_frame(env.action_space.nvec[n-1])
 		# meta-data
 		self.name = env.case["case"]+"_rd"+str(env.rd_seed)+"_node_"+str(n)+"_a2c_agent_"+str(self.model)
-		self.action_space = env.action_space.nvec[n-1]
-		self.observation_space_max = env.observation_space.nvec[n-1]
+		self.action_space = tf.constant(env.action_space.nvec[n-1], dtype=tf.float32)
+		self.observation_space_max = tf.constant(env.observation_space.nvec[n-1], dtype=tf.uint8)
 		self.gamma = DEFAULT_GAMMA
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate=DEFAULT_LEARNING_RATE)
 
@@ -40,6 +40,7 @@ class A2C_Agent(object):
 	def act(self, obs, batches=1):
 		# wrapp in batches
 		if batches == 1:
+			obs = normalize_state(obs, self.observation_space_max)
 			obs = tf.expand_dims(obs, 0)
 		# call its model
 		model_output = self.model(obs)

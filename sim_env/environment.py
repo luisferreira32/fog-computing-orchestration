@@ -169,6 +169,7 @@ class Fog_env(gym.Env):
 		self.saved_step_info = [state_t, action_n]
 
 		# joint optimization -> reward sum
+		#assert self.observation_space.contains(obs_n)
 		return obs_n, sum(reward_n), done, info_n
 
 
