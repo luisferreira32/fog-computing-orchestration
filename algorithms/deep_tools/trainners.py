@@ -10,7 +10,7 @@ from .savers import save_agent_models
 from .common import normalize_state
 
 # constants
-from sim_env.configs import TOTAL_TIME_STEPS
+from sim_env.configs import TIME_STEP, SIM_TIME
 from algorithms.configs import ALGORITHM_SEED, DEFAULT_ITERATIONS, DEFAULT_TRAJECTORY, DEFAULT_EPOCHS, DEFAULT_BATCH_SIZE
 from utils.custom_exceptions import InvalidValueError
 
@@ -139,17 +139,24 @@ def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS,
 	except Exception as e:
 		raise InvalidValueError("Batch size has to be smaller and able to divide an trajectory length")
 
+	# set the training env
+	initial_state = set_training_env(env)
+	current_state = initial_state
 	# Run the model for total_iterations
 	with tqdm.trange(total_iterations) as t:
 		for iteration in t:
-			# run an episode
-			initial_state = set_training_env(env)
-			states, action_probs, actions, values, rw, dones = run_tragectory(initial_state, agents, trajectory_lenght)
+			# run the trajectory
+			states, action_probs, actions, values, rw, dones = run_tragectory(current_state, agents, trajectory_lenght)
+			# reset the env if needed
+			if training_env.clock + trajectory_lenght*TIME_STEP >= SIM_TIME:
+				training_env.reset()
+			current_state = training_env._get_state_obs()
+
 			# and apply training steps for each agent
 			for i, agent in enumerate(agents):
 				# shared reward!
 				agent.train(states[i], action_probs[i], actions[i], values[i], rw, dones, batch_size, epochs)
-
+			print(current_state)
 			t.set_description(f'Iteration {iteration}')
 			print(tf.reduce_sum(rw)) # episode reward
 
