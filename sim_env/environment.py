@@ -93,7 +93,7 @@ class Fog_env(gym.Env):
 		# ..., a_i0, ..., a_ik, b_i0, ..., b_ik, be_i0, ..., be_ik, rc_i, rm_i]
 		# state_lows has to be remade if nodes don't have same slices
 		state_possibilities = [np.concatenate(([2 for _ in range(n.max_k)],[MAX_QUEUE+1 for _ in range(n.max_k)],
-			[min(n._avail_cpu_units, n._avail_ram_units)+1 for _ in range(n.max_k)],
+			[min(n._avail_cpu_units,  n._avail_ram_units/np.ceil(case["task_type"][2][k]/RAM_UNIT))+1 for k in range(n.max_k)],
 			[n._avail_cpu_units+1], [n._avail_ram_units+1])) for n in self.nodes]
 		state_possibilities = np.array(state_possibilities, dtype=np.uint8)
 		self.observation_space = spaces.MultiDiscrete(state_possibilities)

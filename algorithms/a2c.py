@@ -19,13 +19,14 @@ class A2C_Agent(object):
 	"""A2C_Agent
 	"""
 	basic = False
-	def __init__(self, n, rd_seed, action_space=DEFAULT_ACTION_SPACE, model_frame=Simple_Frame):
+	def __init__(self, n, env, model_frame=Simple_Frame):
 		super(A2C_Agent, self).__init__()
 		# actual agent - the NN
-		self.model = model_frame(action_space)
+		self.model = model_frame(env.action_space.nvec[n-1])
 		# meta-data
-		self.name = str(self.model)+"_rd"+str(rd_seed)+"_node_"+str(n)+"_a2c_agent"
-		self.action_space = action_space
+		self.name = env.case["case"]+"_rd"+str(env.rd_seed)+"_node_"+str(n)+"_a2c_agent_"+str(self.model)
+		self.action_space = env.action_space.nvec[n-1]
+		self.observation_space_max = env.observation_space.nvec[n-1]
 		self.gamma = DEFAULT_GAMMA
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate=DEFAULT_LEARNING_RATE)
 

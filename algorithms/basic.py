@@ -22,8 +22,9 @@ class Nearest_Round_Robin(object):
 
 	def __str__(self):
 		return "Nearest Round Robin"
-	@classmethod
-	def short_str(cls):
+
+	@staticmethod
+	def short_str():
 		return "nRR"
 
 	def act(self, obs):
@@ -81,8 +82,9 @@ class Nearest_Priority_Queue(object):
 
 	def __str__(self):
 		return "Nearest Priority Queue"
-	@classmethod
-	def short_str(cls):
+		
+	@staticmethod
+	def short_str():
 		return "nPQ"
 
 	def act(self, obs):
