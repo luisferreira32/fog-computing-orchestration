@@ -89,11 +89,19 @@ def normalize_state(state: tf.Tensor, max_values: tf.Tensor) -> tf.Tensor:
 huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 cce = tf.keras.losses.CategoricalCrossentropy(reduction=tf.keras.losses.Reduction.SUM)
 
+def critic_loss(values: tf.Tensor, expected_returns: tf.Tensor) -> tf.Tensor:
+	loss = huber_loss(values, expected_returns)
+	return loss
 
-def combined_loss(action_probs: tf.Tensor, advantages: tf.Tensor, values: tf.Tensor) -> tf.Tensor:
-
-	# actor: cross entropy with advantage as labels to scale
+def actor_loss(action_probs: tf.Tensor, advantages: tf.Tensor) -> tf.Tensor:
 	action_log_probs = tf.math.log(action_probs)
-	actor_loss = -tf.math.reduce_sum(action_log_probs * advantages_t)
-	critic_loss = huber_loss(values, expected_returns)
-	return actor_loss + critic_loss
+	# sum log_probs on the multi discrete level (since it's a common advantage)
+	action_log_probs = tf.math.reduce_sum(action_log_probs, 2) # (a * b + c * b) = (a + c) * b
+	# reduce along the batches not the actors
+	loss = -tf.math.reduce_sum(action_log_probs * advantages, 1) 
+	return loss
+
+def combined_loss(action_probs: tf.Tensor, advantages: tf.Tensor, values: tf.Tensor, expected_returns: tf.Tensor) -> tf.Tensor:
+	a_loss = actor_loss(action_probs, advantages)
+	c_loss = tf.repeat(critic_loss(values, expected_returns), tf.shape(a_loss)[0])
+	return a_loss + c_loss

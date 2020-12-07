@@ -8,7 +8,7 @@ from sim_env.configs import HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3
 from algorithms.configs import ALGORITHM_SEED
 # algorithms
 from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
-from algorithms.a2c import A2C_Agent
+from algorithms.a2c import A2c_Orchestrator
 
 def argument_check(argv):
 	# running variables
@@ -51,9 +51,7 @@ def argument_check(argv):
 			if "rr" in s:
 				algs.append(Nearest_Round_Robin)
 			if "a2c" in s:
-				algs.append(A2C_Agent)
-			if "ppo" in s:
-				algs.append(PPO_Agent)
+				algs.append(A2c_Orchestrator)
 		if "--cases=" in s or "-C=" in s:
 			cases = []
 			if "all" in s:

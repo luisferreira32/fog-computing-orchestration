@@ -5,23 +5,26 @@ import tensorflow as tf
 
 saved_models_path = os.getcwd()+"/algorithms/saved_models/"
 
-def save_agent_models(agent):
-	complete_path = saved_models_path + agent.name
-	agent.model.save(complete_path)
+def save_orchestrator_models(orchestrator):
+	complete_path = saved_models_path + orchestrator.name
+	for model, name in zip(orchestrator.actors, orchestrator.actors_names):
+		model.save(complete_path+name)
+	orchestrator.critic.save(complete_path+"_critic")
 
-def load_agent_models(agent):
-	complete_path = saved_models_path + agent.name
+def load_orchestrator_models(orchestrator):
+	complete_path = saved_models_path + orchestrator.name
 	try:
-		agent.model = tf.keras.models.load_model(complete_path, compile=False)
+		for i, name in enumerate(orchestrator.actors_names):
+			orchestrator.actors[i] = tf.keras.models.load_model(complete_path+name, compile=False)
+		orchestrator.critic = tf.keras.models.load_model(complete_path+"_critic", compile=False)
 	except Exception as e:
-		print("[ERROR LOG] It was not able to load the specified agent model from ./algorithsm/saved_models/")
-		return agent # without trained model fetched
-	return agent # with trained model
+		print("[ERROR LOG] It was not able to load the specified orchestrator model from ./algorithms/saved_models/")
+		return orchestrator # without trained model fetched
+	return orchestrator # with trained model
 	
-def fetch_agents(alg, env):
+def fetch_orchestrator(alg, env):
 	# creates the agents
-	agents = [alg(n.index, env) for i,n in enumerate(env.nodes)]
+	orchestrator = alg(env)
 	# if there are trainned agents fetch them, otherwise, they'll be untrained
-	for agent in agents:
-		agent = load_agent_models(agent)
-	return agents
+	load_orchestrator_models(orchestrator)
+	return orchestrator

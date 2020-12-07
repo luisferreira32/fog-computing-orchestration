@@ -4,6 +4,7 @@
 
 # and external imports
 import tensorflow as tf
+import numpy as np
 
 # since we're implementing ppo with deep neural networks
 from algorithms.deep_tools.frames import Simple_Frame
@@ -15,18 +16,23 @@ from sim_env.configs import N_NODES, DEFAULT_SLICES, TOTAL_TIME_STEPS
 
 
 # the class itself
-class A2C_Agent(object):
-	"""A2C_Agent
+class A2c_Orchestrator(object):
+	"""A2c_Orchestrator
 	"""
 	basic = False
-	def __init__(self, n, env, model_frame=Simple_Frame):
-		super(A2C_Agent, self).__init__()
-		# actual agent - the NN
-		self.model = model_frame(env.action_space.nvec[n-1])
+	def __init__(self, env, actor_frame=Simple_Frame, critic_frame=Simple_Frame):
+		super(A2c_Orchestrator, self).__init__()
+		# common critic
+		self.critic = critic_frame([1])
+		# node actors
+		self.actors = [actor_frame(action_space_n) for action_space_n in env.action_space.nvec]
+		self.actors_names = ["_node"+str(n.index) for n in env.nodes]
+		self.num_actors = len(env.nodes)
+
 		# meta-data
-		self.name = env.case["case"]+"_rd"+str(env.rd_seed)+"_node_"+str(n)+"_a2c_agent_"+str(self.model)
-		self.action_space = tf.constant(env.action_space.nvec[n-1], dtype=tf.uint8)
-		self.observation_space_max = tf.constant(env.observation_space.nvec[n-1], dtype=tf.uint8)
+		self.name = env.case["case"]+"_rd"+str(env.rd_seed)+"_a2c_orchestrator_"+str(self.critic)
+		self.action_space = tf.constant(env.action_space.nvec, dtype=tf.uint8)
+		self.observation_space_max = tf.constant(env.observation_space.nvec, dtype=tf.uint8)
 
 	def __str__(self):
 		return self.name
@@ -35,19 +41,20 @@ class A2C_Agent(object):
 	def short_str():
 		return "a2c"
 
-	def act(self, obs, batches=1):
-		# wrapp in batches
-		if batches == 1:
-			obs = normalize_state(obs, self.observation_space_max)
+	def act(self, obs_n):
+		#obs_n = normalize_state(obs_n, self.observation_space_max)
+		# for each agent decide an action
+		action = []
+		for obs, actor in zip(obs_n, self.actors):
 			obs = tf.expand_dims(obs, 0)
-		# call its model
-		model_output = self.model(obs)
-		action_logits_t = model_output[:-1]
-		# Since it's multi-discrete, for every discrete set of actions:
-		action_i = []
-		for action_logits_t_k in action_logits_t:
-			# Sample next action from the action probability distribution
-			action_i_k = tf.random.categorical(action_logits_t_k,1)[0,0]
-			action_i.append(action_i_k)
-		# return the action for this agent
-		return action_i
+			# call its model
+			action_logits_t = actor(obs)
+			# Since it's multi-discrete, for every discrete set of actions:
+			action_i = []
+			for action_logits_t_k in action_logits_t:
+				# Sample next action from the action probability distribution
+				action_i_k = tf.random.categorical(action_logits_t_k,1)[0,0]
+				action_i.append(action_i_k.numpy())
+			# return the action for this agent
+			action.append(action_i)
+		return np.array(action)

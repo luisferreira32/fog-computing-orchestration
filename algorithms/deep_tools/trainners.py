@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 from typing import Any, List, Sequence, Tuple
 
-from .savers import save_agent_models
+from .savers import save_orchestrator_models
 from .common import normalize_state, combined_loss, general_advantage_estimator
 
 # constants
@@ -36,11 +36,11 @@ def tf_env_step(action: tf.Tensor) -> List[tf.Tensor]:
 	return tf.numpy_function(env_step, [action], 
 		[tf.uint8, tf.float32, tf.int32])
 
-def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.Tensor]:
+def run_tragectory(initial_state: tf.Tensor, orchestrator, max_steps: int) -> List[tf.Tensor]:
 	"""Runs a single tragectory to collect training data for each agent."""
 
 	action_probs = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
-	states = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
+	states = tf.TensorArray(dtype=tf.uint8, size=0, dynamic_size=True)
 	actions = tf.TensorArray(dtype=tf.int32, size=0, dynamic_size=True)
 	values = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
 	rewards = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
@@ -52,22 +52,25 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 	# then collect the data
 	for t in tf.range(max_steps):
 		# needed vars to stack agents on each timestep
-		state_t = tf.TensorArray(dtype=tf.float32, size=len(agents))
-		action_t = tf.TensorArray(dtype=tf.int32, size=len(agents))
-		action_probs_t =  tf.TensorArray(dtype=tf.float32, size=len(agents))
-		values_t = tf.TensorArray(dtype=tf.float32, size=len(agents))
+		state_t = tf.TensorArray(dtype=tf.uint8, size=orchestrator.num_actors)
+		action_t = tf.TensorArray(dtype=tf.int32, size=orchestrator.num_actors)
+		action_probs_t =  tf.TensorArray(dtype=tf.float32, size=orchestrator.num_actors)
+
+		# run state normalization [0, +Inf[ -> [0,1]
+		#state = normalize_state(state, orchestrator.observation_space_max)
+		# obtain common critic value
+		reshaped_state = tf.reshape(state, [tf.shape(state)[0]*tf.shape(state)[1]])
+		reshaped_state = tf.expand_dims(reshaped_state, 0) # batch size = 1
+		value = orchestrator.critic(reshaped_state)
+		values = values.write(t, tf.squeeze(value)) # squeeze it out of batches
 
 		# Run every agent
-		for i, agent in enumerate(agents):
-			# Convert state into a batched tensor (batch size = 1)
-			state_t_i = normalize_state(state[i], agent.observation_space_max)
-			state_t_i = tf.expand_dims(state_t_i, 0)
+		for i in tf.range(orchestrator.num_actors):
+			state_t_i = tf.expand_dims(state[i], 0) # batch size = 1
 			state_t = state_t.write(i, state_t_i)
 
 			# Run the model and to get action probabilities and critic value
-			model_output = agent.model(state_t_i)
-			value = model_output[-1]
-			action_logits_t_i = model_output[:-1]
+			action_logits_t_i = orchestrator.actors[i](state_t_i)
 
 			# Get the action and probability distributions for data
 			action_t_i = tf.TensorArray(dtype=tf.int32, size=len(action_logits_t_i))
@@ -83,13 +86,11 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 			# And append to the actual action that is gonna run
 			action_t = action_t.write(i, action_t_i.stack())
 			action_probs_t = action_probs_t.write(i, action_probs_t_i.stack())
-			values_t = values_t.write(i, value)
 
 		# stack agents state, action pair this timestep
 		action_t = action_t.stack()
-		# Stack and store timestep values (actors log probabilities of actions chosen and critics values)
+		# Stack and store timestep values
 		action_probs = action_probs.write(t, action_probs_t.stack())
-		values = values.write(t, tf.squeeze(values_t.stack()))
 		states = states.write(t, tf.squeeze(state_t.stack()))
 		actions = actions.write(t, action_t)
 
@@ -109,37 +110,27 @@ def run_tragectory(initial_state: tf.Tensor, agents, max_steps: int) -> List[tf.
 	action_probs = action_probs.stack()
 	actions =actions.stack()
 	states = states.stack()
-	values = values.stack()
 	# and re make them for struct [agent, time_steps, [default_size]]
-	action_probs_ret_val =  tf.TensorArray(dtype=tf.float32, size=len(agents))
-	actions_ret_val = tf.TensorArray(dtype=tf.int32, size=len(agents))
-	states_ret_val = tf.TensorArray(dtype=tf.float32, size=len(agents))
-	values_ret_val = tf.TensorArray(dtype=tf.float32, size=len(agents))
-	for i in tf.range(len(agents)):
-		action_probs_ret_val = action_probs_ret_val.write(i, action_probs[:,i])
+	actions_ret_val = tf.TensorArray(dtype=tf.int32, size=orchestrator.num_actors)
+	states_ret_val = tf.TensorArray(dtype=tf.uint8, size=orchestrator.num_actors)
+	for i in tf.range(orchestrator.num_actors):
 		actions_ret_val = actions_ret_val.write(i, actions[:,i])
 		states_ret_val = states_ret_val.write(i, states[:,i])
-		values_ret_val = values_ret_val.write(i, values[:,i])
-	action_probs_ret_val = action_probs_ret_val.stack()
 	actions_ret_val = actions_ret_val.stack()
 	states_ret_val = states_ret_val.stack()
-	values_ret_val = values_ret_val.stack()
-	# here both are common for every agent
+	# here all are common for every agent
 	rewards = rewards.stack()
+	values = values.stack()
 	dones = dones.stack()
 
-	return states_ret_val, action_probs_ret_val, actions_ret_val, values_ret_val, rewards, dones
+	return states_ret_val, actions_ret_val, values, rewards, dones
 
 # --- the generic training function for an A2C architecture ---
 
 optimizer = tf.keras.optimizers.Adam(learning_rate=DEFAULT_LEARNING_RATE)
 
-def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS, trajectory_lenght: int = DEFAULT_TRAJECTORY,
+def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT_ITERATIONS, trajectory_lenght: int = DEFAULT_TRAJECTORY,
 	batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS, saving: bool = True):
-	try:
-		assert trajectory_lenght > batch_size # B <= N*T (N=1, parallel agents on the same node)
-	except Exception as e:
-		raise InvalidValueError("Batch size has to be smaller and able to divide an trajectory length")
 
 	# set the training env
 	initial_state = set_training_env(env)
@@ -149,17 +140,16 @@ def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS,
 
 		with tf.GradientTape(persistent=True) as tape:
 			# run the trajectory
-			states, action_probs, actions, values, rw, dones = run_tragectory(current_state, agents, trajectory_lenght)
+			action_probs, values, rw, dones = run_tragectory(current_state, orchestrator, trajectory_lenght)
 			
 
 			advantages, target_values = general_advantage_estimator(rw[:-1], values[:-1], values[1:], dones[1:], DEFAULT_GAMMA)
-			loss = combined_loss(action_probs, tf.stack([advantages for _ in tf.range(tf.shape(action_probs)[0])]),
-				tf.stack([target_values for _ in tf.range(tf.shape(action_probs)[0])]))
+			loss = combined_loss(action_probs[:,:-1], advantages, values[:-1], target_values)
 
 		# and apply training steps for each agent
-		for i, agent in enumerate(agents):
-			grads = tape.gradient(loss[i], agent.model.trainable_weights)
-			optimizer.apply_gradients(zip(grads, agent.model.trainable_weights))
+		for i in tf.range(orchestrator.num_actors):
+			grads = tape.gradient(loss[i], orchestrator.actors[i].trainable_weights)
+			optimizer.apply_gradients(zip(grads, orchestrator.actors[i].trainable_weights))
 			
 		del tape
 		
@@ -171,8 +161,6 @@ def train_agents_on_env(agents, env, total_iterations: int = DEFAULT_ITERATIONS,
 		# iteration print
 		print("Iterations",t," [iteration reward:", tf.reduce_sum(rw).numpy(), "]")
 
-	# save trained agents, then return them
-	if saving:
-		for agent in agents:
-			save_agent_models(agent)
-	return agents
+	# save trained orchestrator, then return it
+	if saving: save_orchestrator_models(orchestrator)
+	return orchestrator
