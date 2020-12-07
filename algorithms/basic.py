@@ -37,7 +37,7 @@ class Nearest_Round_Robin(object):
 		[a_k, b_k, be_k, rc_k, rm_k] = np.split(obs, [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
 		
 		# to process based on availabe memory, cpu, and RR priority
-		while b_k[self.process] > be_k[self.process] and rm_k >= np.ceil(self.case["task_type"][self.process][2]/RAM_UNIT) and rc_k > 0:
+		while sum(b_k) > sum(be_k) and rm_k >= np.ceil(self.case["task_type"][self.process][2]/RAM_UNIT) and rc_k > 0:
 			# set the processing, w_ik
 			wks[self.process] += 1
 			# and take the resources on the available obs
