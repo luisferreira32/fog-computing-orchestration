@@ -6,7 +6,7 @@ import tensorflow as tf
 from typing import Any, List, Sequence, Tuple
 
 from .savers import save_orchestrator_models
-from .common import normalize_state, combined_loss, general_advantage_estimator
+from .common import combined_loss, general_advantage_estimator, critic_loss
 
 # constants
 from sim_env.configs import TIME_STEP, SIM_TIME
@@ -56,8 +56,6 @@ def run_tragectory(initial_state: tf.Tensor, orchestrator, max_steps: int) -> Li
 		action_t = tf.TensorArray(dtype=tf.int32, size=orchestrator.num_actors)
 		action_probs_t =  tf.TensorArray(dtype=tf.float32, size=orchestrator.num_actors)
 
-		# run state normalization [0, +Inf[ -> [0,1]
-		#state = normalize_state(state, orchestrator.observation_space_max)
 		# obtain common critic value
 		reshaped_state = tf.reshape(state, [tf.shape(state)[0]*tf.shape(state)[1]])
 		reshaped_state = tf.expand_dims(reshaped_state, 0) # batch size = 1
@@ -123,7 +121,7 @@ def run_tragectory(initial_state: tf.Tensor, orchestrator, max_steps: int) -> Li
 	values = values.stack()
 	dones = dones.stack()
 
-	return states_ret_val, actions_ret_val, values, rewards, dones
+	return states_ret_val, states, actions_ret_val, values, rewards, dones
 
 # --- the generic training function for an A2C architecture ---
 
@@ -137,29 +135,44 @@ def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT
 	current_state = initial_state
 	# Run the model for total_iterations
 	for iteration in range(total_iterations):
+		states_n, states, actions, values, rw, dones = run_tragectory(initial_state, orchestrator, trajectory_lenght)
+		advantages, target_values = general_advantage_estimator(rw[:-1], values[:-1], values[1:], dones[1:], 0.99)
 
-		with tf.GradientTape(persistent=True) as tape:
-			# run the trajectory
-			action_probs, values, rw, dones = run_tragectory(current_state, orchestrator, trajectory_lenght)
-			
-
-			advantages, target_values = general_advantage_estimator(rw[:-1], values[:-1], values[1:], dones[1:], DEFAULT_GAMMA)
-			loss = combined_loss(action_probs[:,:-1], advantages, values[:-1], target_values)
-
-		# and apply training steps for each agent
+		# train each actor
 		for i in tf.range(orchestrator.num_actors):
-			grads = tape.gradient(loss[i], orchestrator.actors[i].trainable_weights)
+			with tf.GradientTape() as tape:
+				# 
+				action_logits = orchestrator.actors[i](states_n[i])
+
+				# for every discrete action
+				action_probs = tf.TensorArray(dtype=tf.float32, size=6) # TODO@luis: 6 it's the discrete actions ~ soft code this later
+				for k in tf.range(6): # TODO@luis: 6 it's the discrete actions ~ soft code this later
+					action_probs_t = tf.TensorArray(dtype=tf.float32, size=trajectory_lenght)
+					for t in tf.range(trajectory_lenght):
+						action_probs_t = action_probs_t.write(t, tf.nn.softmax(action_logits[k][t])[actions[i,t,k]])
+					action_probs = action_probs.write(k, action_probs_t.stack())
+				action_probs = action_probs.stack()
+
+				loss = combined_loss(action_probs[:,:-1], advantages, values[:-1], target_values)
+			grads = tape.gradient(loss, orchestrator.actors[i].trainable_weights)
 			optimizer.apply_gradients(zip(grads, orchestrator.actors[i].trainable_weights))
 			
-		del tape
-		
+			del tape		
+
+		# and train the critic
+		with tf.GradientTape() as tape:
+			batch = tf.reshape(states, [tf.shape(states)[0], tf.shape(states)[1]*tf.shape(states)[2]])
+			values = orchestrator.critic(batch)[0]
+			loss = critic_loss(values[:-1,0], target_values)
+		grads = tape.gradient(loss, orchestrator.critic.trainable_weights)
+		optimizer.apply_gradients(zip(grads, orchestrator.critic.trainable_weights))
 
 		# reset the env if needed
 		if training_env.clock + trajectory_lenght*TIME_STEP >= SIM_TIME:
 			training_env.reset()
 		current_state = training_env._get_state_obs()
 		# iteration print
-		print("Iterations",t," [iteration reward:", tf.reduce_sum(rw).numpy(), "]")
+		print("Iterations",iteration," [iteration reward:", tf.reduce_sum(rw).numpy(), "]")
 
 	# save trained orchestrator, then return it
 	if saving: save_orchestrator_models(orchestrator)
