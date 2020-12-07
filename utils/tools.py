@@ -33,7 +33,7 @@ def dictionary_append(d, key, info):
 	if key in d:
 		d[key] = np.append(d[key],info)
 	else:
-		d[key] = info
+		d[key] = [info]
 	return d
 
 # --- I/O related tools ---
