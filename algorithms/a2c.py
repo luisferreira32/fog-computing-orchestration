@@ -8,7 +8,7 @@ import numpy as np
 
 # since we're implementing ppo with deep neural networks
 from algorithms.deep_tools.frames import Simple_Frame
-from algorithms.deep_tools.common import general_advantage_estimator, normalize_state
+from algorithms.deep_tools.common import general_advantage_estimator, normalize_state, map_int_vect_to_int, map_int_to_int_vect
 
 # some necesary constants
 from algorithms.configs import ALGORITHM_SEED, DEFAULT_LEARNING_RATE, DEFAULT_ACTION_SPACE
@@ -24,15 +24,15 @@ class A2c_Orchestrator(object):
 		super(A2c_Orchestrator, self).__init__()
 		# common critic
 		self.critic = critic_frame([1])
-		# node actors
-		self.actors = [actor_frame(action_space_n) for action_space_n in env.action_space.nvec]
+		# node actors ~ each actor has two action spaces: for scheduling and for offloading
+		self.actors = [actor_frame([map_int_vect_to_int(action_space_n[:3])+1, map_int_vect_to_int(action_space_n[3:])+1]) for action_space_n in env.action_space.nvec]
 		self.actors_names = ["_node"+str(n.index) for n in env.nodes]
 		self.num_actors = len(env.nodes)
 
 		# meta-data
 		self.name = env.case["case"]+"_rd"+str(env.rd_seed)+"_a2c_orchestrator_"+str(self.critic)
-		self.action_space = tf.constant(env.action_space.nvec, dtype=tf.uint8)
-		self.observation_space_max = tf.constant(env.observation_space.nvec, dtype=tf.uint8)
+		self.action_spaces = env.action_space.nvec
+		self.observation_spaces = env.observation_space.nvec
 
 	def __str__(self):
 		return self.name
@@ -42,19 +42,16 @@ class A2c_Orchestrator(object):
 		return "a2c"
 
 	def act(self, obs_n):
-		#obs_n = normalize_state(obs_n, self.observation_space_max)
+		#obs_n = normalize_state(obs_n, self.observation_spaces)
 		# for each agent decide an action
 		action = []
-		for obs, actor in zip(obs_n, self.actors):
+		for obs, actor, action_space in zip(obs_n, self.actors, self.action_spaces):
 			obs = tf.expand_dims(obs, 0)
 			# call its model
 			action_logits_t = actor(obs)
 			# Since it's multi-discrete, for every discrete set of actions:
 			action_i = []
-			for action_logits_t_k in action_logits_t:
-				# Sample next action from the action probability distribution
-				action_i_k = tf.random.categorical(action_logits_t_k,1)[0,0]
-				action_i.append(action_i_k.numpy())
-			# return the action for this agent
+			action_i.extend(map_int_to_int_vect(action_space[:3], tf.random.categorical(action_logits_t[0],1)[0,0].numpy()))
+			action_i.extend(map_int_to_int_vect(action_space[3:], tf.random.categorical(action_logits_t[1],1)[0,0].numpy()))
 			action.append(action_i)
 		return np.array(action)

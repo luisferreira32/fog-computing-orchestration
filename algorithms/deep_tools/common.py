@@ -104,3 +104,22 @@ def combined_loss(action_probs: tf.Tensor, advantages: tf.Tensor, values: tf.Ten
 	a_loss = actor_loss(action_probs, advantages)
 	c_loss = critic_loss(values, expected_returns)
 	return a_loss + c_loss
+
+
+# >>>>> To map the action and observation spaces to a single integer if necessary
+def map_int_vect_to_int(maxes, vect = None):
+	if vect is None:
+		vect = [m-1 for m in maxes]
+	retval = 0
+	for v, m in zip(vect, maxes):
+		assert v < m
+		retval = retval*m + v
+	return retval
+
+def map_int_to_int_vect(maxes, num):
+	vect = []; retval = num;
+	for m in maxes[::-1]:
+		vect.insert(0,retval%m)
+		retval = int(retval/m)
+	return vect
+# <<<<<

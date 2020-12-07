@@ -7,6 +7,7 @@ from typing import Any, List, Sequence, Tuple
 
 from .savers import save_orchestrator_models
 from .common import combined_loss, general_advantage_estimator, critic_loss, actor_loss
+from .common import map_int_vect_to_int, map_int_to_int_vect
 
 # constants
 from sim_env.configs import TIME_STEP, SIM_TIME
@@ -54,6 +55,7 @@ def run_tragectory(initial_state: tf.Tensor, orchestrator, max_steps: int) -> Li
 		# needed vars to stack agents on each timestep
 		state_t = tf.TensorArray(dtype=tf.uint8, size=orchestrator.num_actors)
 		action_t = tf.TensorArray(dtype=tf.int32, size=orchestrator.num_actors)
+		running_action = tf.TensorArray(dtype=tf.int32, size=orchestrator.num_actors)
 		action_probs_t =  tf.TensorArray(dtype=tf.float32, size=orchestrator.num_actors)
 
 		# obtain common critic value
@@ -70,22 +72,23 @@ def run_tragectory(initial_state: tf.Tensor, orchestrator, max_steps: int) -> Li
 			# Run the model and to get action probabilities and critic value
 			action_logits_t_i = orchestrator.actors[i](state_t_i)
 
-			# Get the action and probability distributions for data
-			action_t_i = tf.TensorArray(dtype=tf.int32, size=len(action_logits_t_i))
-			action_probs_t_i =  tf.TensorArray(dtype=tf.float32, size=len(action_logits_t_i))
-			# Since it's multi-discrete, for every discrete set of actions:
-			for k, action_logits_t_i_k in enumerate(action_logits_t_i):
-				# Sample next action from the action probability distribution
-				action_t_i_k = tf.random.categorical(action_logits_t_i_k,1, dtype=tf.int32)[0,0]
-				action_t_i = action_t_i.write(k, action_t_i_k)
-				action_probs_t_i_k = tf.nn.softmax(action_logits_t_i_k)
-				action_probs_t_i = action_probs_t_i.write(k, action_probs_t_i_k[0, action_t_i_k])
+			# Get the action and probability distributions for data ~ offloading and scheduling
+			off_action = tf.random.categorical(action_logits_t_i[0],1, dtype=tf.int32)[0,0]
+			sch_action = tf.random.categorical(action_logits_t_i[1],1, dtype=tf.int32)[0,0]
+			action_t_i =  tf.concat((off_action, sch_action), 0)
+			off_prob = tf.nn.softmax(action_logits_t_i[0])[0, off_action]
+			sch_prob = tf.nn.softmax(action_logits_t_i[1])[0, sch_action]
+			action_probs_t_i = tf.concat((off_prob, sch_prob), 0)
+			off_action = map_int_to_int_vect(orchestrator.action_spaces[i][:3], off_action.numpy())
+			sch_action = map_int_to_int_vect(orchestrator.action_spaces[i][3:], sch_action.numpy())
 
 			# And append to the actual action that is gonna run
-			action_t = action_t.write(i, action_t_i.stack())
-			action_probs_t = action_probs_t.write(i, action_probs_t_i.stack())
+			running_action = running_action.write(i, tf.concat((off_action, sch_action), 0))
+			action_t = action_t.write(i, action_t_i)
+			action_probs_t = action_probs_t.write(i, action_probs_t_i)
 
 		# stack agents state, action pair this timestep
+		running_action = running_action.stack()
 		action_t = action_t.stack()
 		# Stack and store timestep values
 		action_probs = action_probs.write(t, action_probs_t.stack())
@@ -94,7 +97,7 @@ def run_tragectory(initial_state: tf.Tensor, orchestrator, max_steps: int) -> Li
 
 
 		# Apply action to the environment to get next state and reward
-		state, reward, done = tf_env_step(action_t)
+		state, reward, done = tf_env_step(running_action)
 		state.set_shape(initial_state_shape)
 
 		# Store reward
@@ -146,9 +149,9 @@ def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT
 				# 
 				action_logits = orchestrator.actors[i](states_n[i])
 
-				# for every discrete action
-				action_probs = tf.TensorArray(dtype=tf.float32, size=6) # TODO@luis: 6 it's the discrete actions ~ soft code this later
-				for k in tf.range(6): # TODO@luis: 6 it's the discrete actions ~ soft code this later
+				# for every discrete action ~ change to probs and organize it by batches
+				action_probs = tf.TensorArray(dtype=tf.float32, size=len(action_logits))
+				for k in tf.range(len(action_logits)):
 					action_probs_t = tf.TensorArray(dtype=tf.float32, size=trajectory_lenght)
 					for t in tf.range(trajectory_lenght):
 						#print(tf.nn.softmax(action_logits[k][t])[actions[i,t,k]])
