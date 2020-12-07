@@ -336,3 +336,18 @@ class Fog_env(gym.Env):
 		return self.clock >= self.max_time
 
 # <<<<<
+# >>>>> To map the action and observation spaces to a single integer if necessary
+def map_int_vect_to_int(vect, maxes):
+	retval = 0
+	for v, m in zip(vect, maxes):
+		assert v < m
+		retval = retval*m + v
+	return retval
+
+def map_int_to_int_vect(num, maxes):
+	vect = []; retval = num;
+	for m in reversed(maxes):
+		vect.insert(0,retval%m)
+		retval = int(retval/m)
+	return vect
+# <<<<<
