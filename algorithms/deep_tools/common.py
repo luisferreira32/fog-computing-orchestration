@@ -47,7 +47,7 @@ def general_advantage_estimator(rewards: tf.Tensor, values: tf.Tensor, next_valu
 
 	returns = gaes + values
 	if standardize:
-		returns = ((returns - tf.math.reduce_mean(returns)) / (tf.math.reduce_std(returns) + eps))
+		#returns = ((returns - tf.math.reduce_mean(returns)) / (tf.math.reduce_std(returns) + eps))
 		gaes = ((gaes - tf.math.reduce_mean(gaes)) / (tf.math.reduce_std(gaes) + eps))
 
 	# advantage and expected returns Q(s,a)
@@ -96,7 +96,8 @@ def critic_loss(values: tf.Tensor, expected_returns: tf.Tensor) -> tf.Tensor:
 def actor_loss(action_probs: tf.Tensor, advantages: tf.Tensor) -> tf.Tensor:
 	action_log_probs = tf.math.log(action_probs)
 	# sum log_probs on the multi discrete level (since it's a common advantage)
-	loss = -tf.math.reduce_sum(action_log_probs * advantages)  # (a * b + c * b) = (a + c) * b
+	action_log_probs = tf.math.reduce_sum(action_log_probs, 0) # (a * b + c * b) = (a + c) * b
+	loss = -tf.math.reduce_sum(action_log_probs * advantages)  
 	return loss
 
 def combined_loss(action_probs: tf.Tensor, advantages: tf.Tensor, values: tf.Tensor, expected_returns: tf.Tensor) -> tf.Tensor:

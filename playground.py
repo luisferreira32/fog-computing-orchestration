@@ -11,7 +11,7 @@ from utils.input_handler import argument_check
 
 # ---- command line input ----
 
-[debug, algs, cases, max_seed, train] = argument_check(sys.argv)
+[debug, algs, cases, max_seed, train, save] = argument_check(sys.argv)
 if not algs or not cases:
 	sys.exit(1)
 
@@ -51,7 +51,7 @@ for case in cases:
 				agents = create_basic_agents(env, alg, case)
 				compiled_info = run_basic_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
 			else:
-				compiled_info = run_rl_algorithm_on_envrionment(alg, env, case, info_gather_init(), debug, train)
+				compiled_info = run_rl_algorithm_on_envrionment(alg, env, case, info_gather_init(), debug, train, save)
 			# run the algorithm to collect info
 			# just to know
 			current+=1; print("[LOG] simulations ran ["+str(current)+"/"+total+"] in",round(time.time()-o_start_time,2),"seconds")

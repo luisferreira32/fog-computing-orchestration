@@ -12,14 +12,14 @@ from algorithms.a2c import A2c_Orchestrator
 
 def argument_check(argv):
 	# running variables
-	debug = False; train = False
+	debug = False; train = False; save = False;
 	algs = []; cases = []
 	max_seed = 10
 
 	# argument check
 	if len(argv) < 2:
 		print("run with --help or -H for more information")
-		return [debug, algs, cases, max_seed, train]
+		return [debug, algs, cases, max_seed, train, save]
 
 	# help print
 	if "--help" in argv or "-H" in argv:
@@ -38,7 +38,9 @@ def argument_check(argv):
 		print("   h1 : runs case X =[1, 2 or 3] with heavy traffic")
 		print("--seedmax= : by default 10, maximum value for a prime number seed")
 		print("--debug : will render every step")
-		return [debug, algs, cases, max_seed, train]
+		print("--train : will train the model before running sims")
+		print("--save : will save the model")
+		return [debug, algs, cases, max_seed, train, save]
 
 	# pick up the flags
 	if "--debug" in argv:
@@ -84,6 +86,8 @@ def argument_check(argv):
 				max_seed = 100
 		if "--train" in s:
 			train = True
+		if "--save" in s:
+			save = True
 
 	# default values if it was not chosen
 	if not algs:
@@ -91,4 +95,4 @@ def argument_check(argv):
 	if not cases:
 		cases = [BASE_SLICE_CHARS]
 
-	return [debug, algs, cases, max_seed, train]
+	return [debug, algs, cases, max_seed, train, save]

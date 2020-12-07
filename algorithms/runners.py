@@ -33,13 +33,13 @@ def run_basic_algorithm_on_envrionment(agents, env, case, compiled_info=None, de
 	return compiled_info
 
 
-def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=False, train=False):
+def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=False, train=False, save=False):
 	# runner for rl algorithms
 	set_tf_seed(ALGORITHM_SEED)
 	orchestrator = fetch_orchestrator(alg, env)
 
 	# train them if requested
-	if train: orchestrator = train_orchestrator_on_env(orchestrator, env)
+	if train: orchestrator = train_orchestrator_on_env(orchestrator, env, saving=save)
 
 	# and run as usual
 	start_time = time.time()

@@ -129,7 +129,7 @@ optimizer = tf.keras.optimizers.SGD(learning_rate=DEFAULT_LEARNING_RATE)
 optimizer_1 = tf.keras.optimizers.Adam(learning_rate=DEFAULT_LEARNING_RATE)
 
 def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT_ITERATIONS, trajectory_lenght: int = DEFAULT_TRAJECTORY,
-	batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS, saving: bool = True):
+	batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS, saving: bool = False):
 
 	# set the training env
 	initial_state = set_training_env(env)
