@@ -11,12 +11,13 @@ def save_orchestrator_models(orchestrator):
 		model.save(complete_path+name)
 	orchestrator.critic.save(complete_path+"_critic")
 
+load_fun = tf.keras.models.load_model
 def load_orchestrator_models(orchestrator):
 	complete_path = saved_models_path + orchestrator.name
 	try:
 		for i, name in enumerate(orchestrator.actors_names):
-			orchestrator.actors[i] = tf.keras.models.load_model(complete_path+name, compile=False)
-		orchestrator.critic = tf.keras.models.load_model(complete_path+"_critic", compile=False)
+			orchestrator.actors[i] = load_fun(complete_path+name, compile=False)
+		orchestrator.critic = load_fun(complete_path+"_critic", compile=False)
 	except Exception as e:
 		print("[ERROR LOG] It was not able to load the specified orchestrator model from ./algorithms/saved_models/")
 		return orchestrator # without trained model fetched

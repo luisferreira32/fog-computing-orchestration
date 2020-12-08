@@ -70,14 +70,14 @@ def run_tragectory(initial_state: tf.Tensor, orchestrator, max_steps: int) -> Li
 			state_t = state_t.write(i, state_t_i)
 
 			# Run the model and to get action probabilities and critic value
-			action_logits_t_i = orchestrator.actors[i](state_t_i)
+			off_action_logits_t_i, sch_action_logits_t_i = orchestrator.actors[i](state_t_i)
 
 			# Get the action and probability distributions for data ~ offloading and scheduling
-			off_action = tf.random.categorical(action_logits_t_i[0],1, dtype=tf.int32)[0,0]
-			sch_action = tf.random.categorical(action_logits_t_i[1],1, dtype=tf.int32)[0,0]
+			off_action = tf.random.categorical(off_action_logits_t_i,1, dtype=tf.int32)[0,0]
+			sch_action = tf.random.categorical(sch_action_logits_t_i,1, dtype=tf.int32)[0,0]
 			action_t_i =  tf.concat((off_action, sch_action), 0)
-			off_prob = tf.nn.softmax(action_logits_t_i[0])[0, off_action]
-			sch_prob = tf.nn.softmax(action_logits_t_i[1])[0, sch_action]
+			off_prob = tf.nn.softmax(off_action_logits_t_i)[0, off_action]
+			sch_prob = tf.nn.softmax(sch_action_logits_t_i)[0, sch_action]
 			action_probs_t_i = tf.concat((off_prob, sch_prob), 0)
 			off_action = map_int_to_int_vect(orchestrator.action_spaces[i][:3], off_action.numpy())
 			sch_action = map_int_to_int_vect(orchestrator.action_spaces[i][3:], sch_action.numpy())
