@@ -109,22 +109,13 @@ def run_tragectory(initial_state: tf.Tensor, orchestrator, max_steps: int) -> Li
 
 	# Stack them for every time step
 	action_probs = action_probs.stack()
-	actions =actions.stack()
-	states = states.stack()
-	# and re make them for struct [agent, time_steps, [default_size]]
-	actions_ret_val = tf.TensorArray(dtype=tf.int32, size=orchestrator.num_actors)
-	states_ret_val = tf.TensorArray(dtype=tf.uint8, size=orchestrator.num_actors)
-	for i in tf.range(orchestrator.num_actors):
-		actions_ret_val = actions_ret_val.write(i, actions[:,i])
-		states_ret_val = states_ret_val.write(i, states[:,i])
-	actions_ret_val = actions_ret_val.stack()
-	states_ret_val = states_ret_val.stack()
-	# here all are common for every agent
-	rewards = rewards.stack()
 	values = values.stack()
+	states = states.stack()
+	actions =actions.stack()
+	rewards = rewards.stack()
 	dones = dones.stack()
 
-	return states_ret_val, states, actions_ret_val, values, rewards, dones
+	return states, actions, rewards, dones, values, action_probs
 
 # --- the generic training function for an A2C architecture ---
 
@@ -141,50 +132,58 @@ def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT
 	current_state = initial_state
 	# Run the model for total_iterations
 	for iteration in range(total_iterations):
-		states_n, states, actions, values, rw, dones = run_tragectory(initial_state, orchestrator, trajectory_lenght)
-		advantages, target_values = general_advantage_estimator(rw[:-1], values[:-1], values[1:], dones[1:], 0.99)
+		states, actions, rewards, dones, values, action_probs = run_tragectory(current_state, orchestrator, trajectory_lenght)
+		print("Iterations",iteration," [iteration total reward:", tf.reduce_sum(rewards).numpy(), "]") # iteration print
 
-		# train each actor
-		losses = {}
-		for i in tf.range(orchestrator.num_actors):
-			with tf.GradientTape() as tape:
-				# 
-				action_logits = orchestrator.actors[i](states_n[i])
+		train_dataset = tf.data.Dataset.from_tensor_slices((states, actions, rewards, dones, values, action_probs))
+		train_dataset = train_dataset.shuffle(buffer_size=trajectory_lenght+batch_size).batch(batch_size)
 
-				# for every discrete action ~ change to probs and organize it by batches
-				action_probs = tf.TensorArray(dtype=tf.float32, size=len(action_logits))
-				for k in tf.range(len(action_logits)):
-					action_probs_t = tf.TensorArray(dtype=tf.float32, size=trajectory_lenght)
-					for t in tf.range(trajectory_lenght):
-						#print(tf.nn.softmax(action_logits[k][t])[actions[i,t,k]])
-						action_probs_t = action_probs_t.write(t, tf.nn.softmax(action_logits[k][t])[actions[i,t,k]])
-					action_probs = action_probs.write(k, action_probs_t.stack())
-				action_probs = action_probs.stack()
-				#print(action_probs)
+		for e in tf.range(epochs):
+			losses = {"critic": 0, 0:0, 1:0, 2:0, 3:0, 4:0}
+			for state, action, rw, done, v, old_action_probs in train_dataset:
+				advantages, target_values = general_advantage_estimator(rw[:-1], v[:-1], v[1:], done[1:], DEFAULT_GAMMA)
 
-				loss = actor_loss(action_probs[:,:-1], advantages)
-			grads = tape.gradient(loss, orchestrator.actors[i].trainable_weights)
-			optimizer.apply_gradients(zip(grads, orchestrator.actors[i].trainable_weights))
-			losses[i.numpy()] = tf.identity(loss).numpy()
-			del tape		
+				# train the critic
+				joint_state = tf.reshape(state,  [tf.shape(state)[0], tf.shape(state)[1]*tf.shape(state)[2]]) # keep batch, merge nodes
+				with tf.GradientTape() as tape:
+					values = orchestrator.critic(joint_state)
+					values = tf.squeeze(values)
+					loss = critic_loss(values[:-1], target_values)
+				grads = tape.gradient(loss, orchestrator.critic.trainable_weights)
+				optimizer.apply_gradients(zip(grads, orchestrator.critic.trainable_weights))
+				del tape
 
-		# and train the critic
-		with tf.GradientTape() as tape:
-			batch = tf.reshape(states, [tf.shape(states)[0], tf.shape(states)[1]*tf.shape(states)[2]])
-			values = orchestrator.critic(batch)[0]
-			loss = critic_loss(values[:-1,0], target_values)
-		grads = tape.gradient(loss, orchestrator.critic.trainable_weights)
-		optimizer.apply_gradients(zip(grads, orchestrator.critic.trainable_weights))
-		losses["critic"] = tf.identity(loss).numpy()
-		del tape
+				losses["critic"] += loss.numpy()
+
+				#and each actor
+				for i in tf.range(orchestrator.num_actors):
+					with tf.GradientTape() as tape:
+						# 
+						off_action_logits, sch_action_logits = orchestrator.actors[i](state[:,i])
+
+						# for every discrete action ~ change to probs and organize it by batches
+						action_probs = tf.TensorArray(dtype=tf.float32, size=DEFAULT_BATCH_SIZE)
+						for t in tf.range(DEFAULT_BATCH_SIZE):
+							off_action_probs = tf.nn.softmax(off_action_logits[t])[action[t,i,0]]
+							sch_action_probs = tf.nn.softmax(sch_action_logits[t])[action[t,i,1]]
+							action_probs = action_probs.write(t, [off_action_probs, sch_action_probs])
+						action_probs = action_probs.stack()
+
+						loss = actor_loss(action_probs[:-1], advantages)
+					grads = tape.gradient(loss, orchestrator.actors[i].trainable_weights)
+					optimizer.apply_gradients(zip(grads, orchestrator.actors[i].trainable_weights))
+					del tape
+
+					losses[i.numpy()] += loss.numpy()
+
+			print("[EPOCH",e.numpy()+1,"/",epochs,"] cumulative losses:", losses) # epoch print
 
 		# reset the env if needed
 		if training_env.clock + trajectory_lenght*TIME_STEP >= SIM_TIME:
 			training_env.reset()
 		current_state = training_env._get_state_obs()
-		# iteration print
-		print("Iterations",iteration," [iteration reward:", tf.reduce_sum(rw).numpy(), "] [losses",losses,"]")
-		iteration_rewards.append(tf.reduce_sum(rw).numpy())
+		# saving values
+		iteration_rewards.append(tf.reduce_sum(rewards).numpy())
 
 	# save trained orchestrator, then return it
 	if saving: save_orchestrator_models(orchestrator)

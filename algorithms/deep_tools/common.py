@@ -96,7 +96,7 @@ def critic_loss(values: tf.Tensor, expected_returns: tf.Tensor) -> tf.Tensor:
 def actor_loss(action_probs: tf.Tensor, advantages: tf.Tensor) -> tf.Tensor:
 	action_log_probs = tf.math.log(action_probs)
 	# sum log_probs on the multi discrete level (since it's a common advantage)
-	action_log_probs = tf.math.reduce_sum(action_log_probs, 0) # (a * b + c * b) = (a + c) * b
+	action_log_probs = tf.math.reduce_sum(action_log_probs, 1) # (a * b + c * b) = (a + c) * b
 	loss = -tf.math.reduce_sum(action_log_probs * advantages)  
 	return loss
 

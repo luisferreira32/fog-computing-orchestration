@@ -5,10 +5,10 @@ ALGORITHM_SEED = 2**3-1 # mersenne primes 2, 3, 5, 7, 13, 17, 19, 31
 DEFAULT_ACTION_SPACE = [6,6,6,11,11,11]
 
 # RL related variables
-DEFAULT_TRAJECTORY = 129 # 128 + 1, since last timestep won't be used
+DEFAULT_TRAJECTORY = 128
 DEFAULT_BATCH_SIZE = 32
 DEFAULT_EPOCHS = 5
-DEFAULT_ITERATIONS = 100
+DEFAULT_ITERATIONS = 30
 
 DEFAULT_LEARNING_RATE = 1e-4 # below 1e-4 to avoid suboptimal convergence
 DEFAULT_GAMMA = 0.95
