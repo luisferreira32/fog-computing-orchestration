@@ -54,10 +54,10 @@ class Frame_1(tf.keras.Model):
 	def __init__(self, output_size: int):
 		super(Frame_1, self).__init__()
 
-
-		self.rnn_input = layers.GRU(128)
 		self.dense_a = layers.Dense(128, activation="relu")
 		self.dense_b = layers.Dense(256, activation="relu")
+		self.dense_c = layers.Dense(512, activation="relu")
+		self.dense_d = layers.Dense(256, activation="relu")
 		# dense  layers 128, 64
 		self.dense_1 = layers.Dense(128)
 		self.dense_2 = layers.Dense(64)
@@ -71,9 +71,10 @@ class Frame_1(tf.keras.Model):
 			returns : N-D tensor (batch_size, [output_shape])
 		"""
 		# pass inputs on model and return the output value Tensor
-		x = self.rnn_input(inputs)
-		x = self.dense_a(x)
+		x = self.dense_a(inputs)
 		x = self.dense_b(x)
+		x = self.dense_c(x)
+		x = self.dense_d(x)
 		x = self.dense_1(x)
 		x = self.dense_2(x)
 		return self.output_layer(x)

@@ -7,7 +7,7 @@ import tensorflow as tf
 import numpy as np
 
 # since we're implementing ppo with deep neural networks
-from algorithms.deep_tools.frames import Simple_Frame
+from algorithms.deep_tools.frames import Simple_Frame, Frame_1
 from algorithms.deep_tools.common import general_advantage_estimator, normalize_state, map_int_vect_to_int, map_int_to_int_vect
 
 # some necesary constants
@@ -20,7 +20,7 @@ class A2c_Orchestrator(object):
 	"""A2c_Orchestrator
 	"""
 	basic = False
-	def __init__(self, env, actor_frame=Simple_Frame, critic_frame=Simple_Frame):
+	def __init__(self, env, actor_frame=Frame_1, critic_frame=Frame_1):
 		super(A2c_Orchestrator, self).__init__()
 		# common critic
 		self.critic = critic_frame(1)
