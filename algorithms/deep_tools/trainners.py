@@ -134,6 +134,8 @@ optimizer_1 = tf.keras.optimizers.Adam(learning_rate=DEFAULT_LEARNING_RATE)
 def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT_ITERATIONS, trajectory_lenght: int = DEFAULT_TRAJECTORY,
 	batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS, saving: bool = False):
 
+	# return values
+	iteration_rewards = []
 	# set the training env
 	initial_state = set_training_env(env)
 	current_state = initial_state
@@ -182,7 +184,8 @@ def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT
 		current_state = training_env._get_state_obs()
 		# iteration print
 		print("Iterations",iteration," [iteration reward:", tf.reduce_sum(rw).numpy(), "] [losses",losses,"]")
+		iteration_rewards.append(tf.reduce_sum(rw).numpy())
 
 	# save trained orchestrator, then return it
 	if saving: save_orchestrator_models(orchestrator)
-	return orchestrator
+	return orchestrator, iteration_rewards

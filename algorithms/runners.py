@@ -39,7 +39,7 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 	orchestrator = fetch_orchestrator(alg, env)
 
 	# train them if requested
-	if train: orchestrator = train_orchestrator_on_env(orchestrator, env, saving=save)
+	if train: orchestrator, iteration_rewards = train_orchestrator_on_env(orchestrator, env, saving=save)
 
 	# and run as usual
 	start_time = time.time()
