@@ -49,6 +49,13 @@ def plt_box_plot(df, mili=False, title="default_title"):
 	plt.tight_layout()
 	fig.savefig(my_path+title+".png")
 
+def plt_line_plot(df, normalize=False, title="default_line_plt"):
+	for key, values in df.items():
+		if normalize:
+			values = [v/(max(values)-min(values)) for v in values]
+		plt.plot(values, label=key)
+	plt.savefig(my_path+title+".png")
+
 # --- text log display ---
 # aux function
 def info_gather(compiled_info, info_n):

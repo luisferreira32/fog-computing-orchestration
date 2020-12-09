@@ -84,7 +84,7 @@ def argument_check(argv):
 			try:
 				max_seed = int(s.replace("--seedmax=",''))
 			except:
-				max_seed = 100
+				max_seed = 10
 		if "--train" in s:
 			train = True
 		if "--save" in s:

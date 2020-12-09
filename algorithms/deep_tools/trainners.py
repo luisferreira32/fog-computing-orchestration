@@ -155,8 +155,8 @@ def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT
 						action_logits = orchestrator.actors[i](state[:,i], training=True)
 
 						# for every discrete action ~ change to probs and organize it by batches
-						action_probs = tf.TensorArray(dtype=tf.float32, size=DEFAULT_BATCH_SIZE)
-						for t in tf.range(DEFAULT_BATCH_SIZE):
+						action_probs = tf.TensorArray(dtype=tf.float32, size=batch_size)
+						for t in tf.range(batch_size):
 							action_probs = action_probs.write(t, tf.nn.softmax(action_logits[t])[action[t,i]])
 						action_probs = action_probs.stack()
 

@@ -6,7 +6,7 @@ import tensorflow as tf
 
 # for information gathering
 from utils.tools import dictionary_append, append_to_file
-from utils.display import info_gather, info_logs
+from utils.display import info_gather, info_logs, plt_line_plot
 # the envrionment
 from algorithms.deep_tools.common import  set_tf_seed
 from algorithms.deep_tools.trainners import train_orchestrator_on_env
@@ -39,7 +39,9 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 	orchestrator = fetch_orchestrator(alg, env)
 
 	# train them if requested
-	if train: orchestrator, iteration_rewards = train_orchestrator_on_env(orchestrator, env, saving=save)
+	if train:
+		orchestrator, iteration_rewards = train_orchestrator_on_env(orchestrator, env, saving=save)
+		#plt_line_plot({"a2c_"+case["case"] : iteration_rewards})
 
 	# and run as usual
 	start_time = time.time()

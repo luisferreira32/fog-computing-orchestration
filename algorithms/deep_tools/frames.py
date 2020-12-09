@@ -64,7 +64,7 @@ class Frame_1(tf.keras.Model):
 		self.output_layer = layers.Dense(output_size)
 		
 	def __str__(self):
-		return "sf"
+		return "f1"
 
 	def call(self, inputs: tf.Tensor) -> List[tf.Tensor]:
 		""" inputs : tf.Tensor, (batch_size, [input_shape])

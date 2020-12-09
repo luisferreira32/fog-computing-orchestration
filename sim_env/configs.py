@@ -39,10 +39,10 @@ PACKET_SIZE = 5000 # bits = 5 kBits (7, 10?)
 
 # ---- simulation cases ---- 
 # slice characteristics 
-BASE_SLICE_CHARS = {
+BASE_SLICE_CHARS = { # case 3 has more heterogenity
 	"case": "base",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 1200, 400], [10, 600, 400], [10, 400, 1200]]
+	"task_type" : [[5, 600, 400], [10, 600, 400], [10, 400, 1200]]
 }
 # Case 1
 NORMAL_CASE_1 = {
