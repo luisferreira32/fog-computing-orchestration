@@ -69,21 +69,14 @@ def run_tragectory(initial_state: tf.Tensor, orchestrator, max_steps: int) -> Li
 			state_t_i = tf.expand_dims(state[i], 0) # batch size = 1
 			state_t = state_t.write(i, state_t_i)
 
-			# Run the model and to get action probabilities and critic value
-			off_action_logits_t_i, sch_action_logits_t_i = orchestrator.actors[i](state_t_i)
-
-			# Get the action and probability distributions for data ~ offloading and scheduling
-			off_action = tf.random.categorical(off_action_logits_t_i,1, dtype=tf.int32)[0,0]
-			sch_action = tf.random.categorical(sch_action_logits_t_i,1, dtype=tf.int32)[0,0]
-			action_t_i =  tf.concat((off_action, sch_action), 0)
-			off_prob = tf.nn.softmax(off_action_logits_t_i)[0, off_action]
-			sch_prob = tf.nn.softmax(sch_action_logits_t_i)[0, sch_action]
-			action_probs_t_i = tf.concat((off_prob, sch_prob), 0)
-			off_action = map_int_to_int_vect(orchestrator.action_spaces[i][:3], off_action.numpy())
-			sch_action = map_int_to_int_vect(orchestrator.action_spaces[i][3:], sch_action.numpy())
+			# Run the model and to get action probabilities for the actor
+			action_logits_t_i = orchestrator.actors[i](state_t_i)
+			action_t_i = tf.random.categorical(action_logits_t_i,1, dtype=tf.int32)[0,0]
+			action_probs_t_i = tf.nn.softmax(action_logits_t_i)[0, action_t_i]
+			running_action_i = map_int_to_int_vect(orchestrator.action_spaces[i], action_t_i.numpy())
 
 			# And append to the actual action that is gonna run
-			running_action = running_action.write(i, tf.concat((off_action, sch_action), 0))
+			running_action = running_action.write(i, running_action_i)
 			action_t = action_t.write(i, action_t_i)
 			action_probs_t = action_probs_t.write(i, action_probs_t_i)
 
@@ -159,14 +152,12 @@ def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT
 				for i in tf.range(orchestrator.num_actors):
 					with tf.GradientTape() as tape:
 						# 
-						off_action_logits, sch_action_logits = orchestrator.actors[i](state[:,i], training=True)
+						action_logits = orchestrator.actors[i](state[:,i], training=True)
 
 						# for every discrete action ~ change to probs and organize it by batches
 						action_probs = tf.TensorArray(dtype=tf.float32, size=DEFAULT_BATCH_SIZE)
 						for t in tf.range(DEFAULT_BATCH_SIZE):
-							off_action_probs = tf.nn.softmax(off_action_logits[t])[action[t,i,0]]
-							sch_action_probs = tf.nn.softmax(sch_action_logits[t])[action[t,i,1]]
-							action_probs = action_probs.write(t, [off_action_probs, sch_action_probs])
+							action_probs = action_probs.write(t, tf.nn.softmax(action_logits[t])[action[t,i]])
 						action_probs = action_probs.stack()
 
 						loss = ppo_actor_loss(old_action_probs[:-1,i], action_probs[:-1], advantages)

@@ -23,9 +23,9 @@ class A2c_Orchestrator(object):
 	def __init__(self, env, actor_frame=Simple_Frame, critic_frame=Simple_Frame):
 		super(A2c_Orchestrator, self).__init__()
 		# common critic
-		self.critic = critic_frame([1])
+		self.critic = critic_frame(1)
 		# node actors ~ each actor has two action spaces: for scheduling and for offloading
-		self.actors = [actor_frame([map_int_vect_to_int(action_space_n[:3])+1, map_int_vect_to_int(action_space_n[3:])+1]) for action_space_n in env.action_space.nvec]
+		self.actors = [actor_frame(map_int_vect_to_int(action_space_n)+1) for action_space_n in env.action_space.nvec]
 		self.actors_names = ["_node"+str(n.index) for n in env.nodes]
 		self.num_actors = len(env.nodes)
 
@@ -42,7 +42,6 @@ class A2c_Orchestrator(object):
 		return "a2c"
 
 	def act(self, obs_n):
-		#obs_n = normalize_state(obs_n, self.observation_spaces)
 		# for each agent decide an action
 		action = []
 		for obs, actor, action_space in zip(obs_n, self.actors, self.action_spaces):
@@ -50,8 +49,6 @@ class A2c_Orchestrator(object):
 			# call its model
 			action_logits_t = actor(obs)
 			# Since it's multi-discrete, for every discrete set of actions:
-			action_i = []
-			action_i.extend(map_int_to_int_vect(action_space[:3], tf.random.categorical(action_logits_t[0],1)[0,0].numpy()))
-			action_i.extend(map_int_to_int_vect(action_space[3:], tf.random.categorical(action_logits_t[1],1)[0,0].numpy()))
+			action_i = map_int_to_int_vect(action_space, tf.random.categorical(action_logits_t,1)[0,0].numpy())
 			action.append(action_i)
 		return np.array(action)
