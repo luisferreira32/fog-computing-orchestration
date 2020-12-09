@@ -54,4 +54,40 @@ class Simple_Frame(tf.keras.Model):
 		return output
 
 
+class Frame_1(tf.keras.Model):
+	"""Frame_1 deep neural network with  specific architecture
+	"""
+	def __init__(self, output_sizes: List[int]):
+		super(Frame_1, self).__init__()
 
+		self.dense_a = layers.Dense(64, activation="relu")
+		self.dense_b = layers.Dense(128, activation="relu")
+		self.dense_c = layers.Dense(256, activation="relu")
+
+		self.rnn_mid = layers.GRU(128)
+		# dense  layers 128, 64
+		self.dense_1 = layers.Dense(128)
+		self.dense_2 = layers.Dense(64)
+		# output layers
+		self.output_layers = []
+		for output_size in output_sizes:
+			self.output_layers.append(layers.Dense(output_size)) # it's gonna return logits without activation="softmax"
+		
+	def __str__(self):
+		return "sf"
+
+	def call(self, inputs: tf.Tensor) -> List[tf.Tensor]:
+		""" inputs : tf.Tensor, (batch_size, [input_shape])
+			returns : N-D tensor (batch_size, [output_shape])
+		"""
+		# pass inputs on model and return the output value Tensor
+		x = self.dense_a(inputs)
+		x = self.dense_b(x)
+		x = self.dense_c(x)
+		x = self.rnn_mid(x)
+		x = self.dense_1(x)
+		x = self.dense_2(x)
+		output = []
+		for output_layer in self.output_layers:
+			output.append(output_layer(x))
+		return output
