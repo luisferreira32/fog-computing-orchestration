@@ -7,7 +7,7 @@ import tensorflow as tf
 from typing import Tuple, List
 
 # and constants imports
-from algorithms.configs import DEFAULT_TRAJECTORY, DEFAULT_LEARNING_RATE
+from algorithms.configs import DEFAULT_PPO_EPS
 
 
 # to set the tf random seed for reproducibility
@@ -98,6 +98,15 @@ def actor_loss(action_probs: tf.Tensor, advantages: tf.Tensor) -> tf.Tensor:
 	# sum log_probs on the multi discrete level (since it's a common advantage)
 	action_log_probs = tf.math.reduce_sum(action_log_probs, 1) # (a * b + c * b) = (a + c) * b
 	loss = -tf.math.reduce_sum(action_log_probs * advantages)  
+	return loss
+
+def ppo_actor_loss(old_action_probs: tf.Tensor, action_probs: tf.Tensor, advantages: tf.Tensor, ppo_eps: tf.Tensor = DEFAULT_PPO_EPS) -> tf.Tensor:
+	action_probs = tf.math.reduce_sum(action_probs, 1)
+	old_action_probs = tf.math.reduce_sum(old_action_probs, 1)
+	ratio = tf.math.divide(action_probs, old_action_probs)
+	s1 = tf.clip_by_value(ratio, 1-ppo_eps, 1+ppo_eps)*advantages
+	s2 = ratio*advantages
+	loss = -tf.math.reduce_mean(tf.math.minimum(s1, s2)) # reduce_mean or reduce_sum?
 	return loss
 
 def combined_loss(action_probs: tf.Tensor, advantages: tf.Tensor, values: tf.Tensor, expected_returns: tf.Tensor) -> tf.Tensor:

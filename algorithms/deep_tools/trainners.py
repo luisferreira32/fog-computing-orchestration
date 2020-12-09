@@ -6,7 +6,7 @@ import tensorflow as tf
 from typing import Any, List, Sequence, Tuple
 
 from .savers import save_orchestrator_models
-from .common import combined_loss, general_advantage_estimator, critic_loss, actor_loss
+from .common import combined_loss, general_advantage_estimator, critic_loss, actor_loss, ppo_actor_loss
 from .common import map_int_vect_to_int, map_int_to_int_vect
 
 # constants
@@ -132,10 +132,10 @@ def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT
 	current_state = initial_state
 	# Run the model for total_iterations
 	for iteration in range(total_iterations):
-		states, actions, rewards, dones, values, action_probs = run_tragectory(current_state, orchestrator, trajectory_lenght)
+		states, actions, rewards, dones, values, run_action_probs = run_tragectory(current_state, orchestrator, trajectory_lenght)
 		print("Iterations",iteration," [iteration total reward:", tf.reduce_sum(rewards).numpy(), "]") # iteration print
 
-		train_dataset = tf.data.Dataset.from_tensor_slices((states, actions, rewards, dones, values, action_probs))
+		train_dataset = tf.data.Dataset.from_tensor_slices((states, actions, rewards, dones, values, run_action_probs))
 		train_dataset = train_dataset.shuffle(buffer_size=trajectory_lenght+batch_size).batch(batch_size)
 
 		for e in tf.range(epochs):
@@ -146,7 +146,7 @@ def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT
 				# train the critic
 				joint_state = tf.reshape(state,  [tf.shape(state)[0], tf.shape(state)[1]*tf.shape(state)[2]]) # keep batch, merge nodes
 				with tf.GradientTape() as tape:
-					values = orchestrator.critic(joint_state)
+					values = orchestrator.critic(joint_state, training=True)
 					values = tf.squeeze(values)
 					loss = critic_loss(values[:-1], target_values)
 				grads = tape.gradient(loss, orchestrator.critic.trainable_weights)
@@ -159,7 +159,7 @@ def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT
 				for i in tf.range(orchestrator.num_actors):
 					with tf.GradientTape() as tape:
 						# 
-						off_action_logits, sch_action_logits = orchestrator.actors[i](state[:,i])
+						off_action_logits, sch_action_logits = orchestrator.actors[i](state[:,i], training=True)
 
 						# for every discrete action ~ change to probs and organize it by batches
 						action_probs = tf.TensorArray(dtype=tf.float32, size=DEFAULT_BATCH_SIZE)
@@ -169,7 +169,7 @@ def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT
 							action_probs = action_probs.write(t, [off_action_probs, sch_action_probs])
 						action_probs = action_probs.stack()
 
-						loss = actor_loss(action_probs[:-1], advantages)
+						loss = ppo_actor_loss(old_action_probs[:-1,i], action_probs[:-1], advantages)
 					grads = tape.gradient(loss, orchestrator.actors[i].trainable_weights)
 					optimizer.apply_gradients(zip(grads, orchestrator.actors[i].trainable_weights))
 					del tape
