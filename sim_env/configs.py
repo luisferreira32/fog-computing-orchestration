@@ -15,7 +15,7 @@ RANDOM_SEED = 2**19-1 # mersenne prime seeds at 2, 3, 5, 7, 13, 17, 19, 31
 RANDOM_SEED_LIST = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
 
 # NODES CONSTANTS
-N_NODES = 5
+N_NODES = 5 # default = 5
 # transmission
 NODE_BANDWIDTH = 1e6 # Hz
 NODE_BANDWIDTH_UNIT = 1e4 # Hz , i.e., 100 concurrent transmissions is the maximum
@@ -42,40 +42,40 @@ PACKET_SIZE = 5000 # bits = 5 kBits (7, 10?)
 BASE_SLICE_CHARS = {
 	"case": "base",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 500, 400], [50, 800, 200], [10, 200, 1200]]
+	"task_type" : [[10, 1200, 400], [10, 600, 400], [10, 400, 1200]]
 }
 # Case 1
 NORMAL_CASE_1 = {
 	"case": "n1",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 400, 400], [10, 600, 400], [10, 200, 1200]]
+	"task_type" : [[10, 1200, 400], [10, 600, 400], [10, 400, 1200]]
 }
 HEAVY_CASE_1 ={
 	"case": "h1",
 	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[10, 400, 400], [10, 600, 400], [10, 200, 1200]]
+	"task_type" : [[10, 1200, 400], [10, 600, 400], [10, 400, 1200]]
 }
 # Case 2
 NORMAL_CASE_2 = {
 	"case": "n2",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 400, 400], [50, 400, 400], [100, 400, 400]]
+	"task_type" : [[5, 600, 400], [10, 600, 400], [20, 600, 400]]
 }
 HEAVY_CASE_2 = {
 	"case": "h2",
 	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[10, 400, 400], [50, 400, 400], [100, 400, 400]]
+	"task_type" : [[5, 600, 400], [10, 600, 400], [20, 600, 400]]
 }
 # Case 3
 NORMAL_CASE_3 = {
 	"case": "n3",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 400, 400], [10, 600, 400], [50, 400, 400]]
+	"task_type" : [[5, 600, 400], [10, 600, 400], [10, 400, 1200]]
 }
 HEAVY_CASE_3 = {
 	"case": "h3",
 	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[10, 400, 400], [10, 600, 400], [50, 400, 400]]
+	"task_type" : [[5, 600, 400], [10, 600, 400], [10, 400, 1200]]
 }
 # cases compilations
 ALL_CASES = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3, HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
