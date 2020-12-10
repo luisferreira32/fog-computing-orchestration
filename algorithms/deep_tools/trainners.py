@@ -112,11 +112,12 @@ def run_tragectory(initial_state: tf.Tensor, orchestrator, max_steps: int) -> Li
 
 # --- the generic training function for an A2C architecture ---
 
-optimizer = tf.keras.optimizers.SGD(learning_rate=DEFAULT_LEARNING_RATE)
-optimizer_1 = tf.keras.optimizers.Adam(learning_rate=DEFAULT_LEARNING_RATE)
 
 def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT_ITERATIONS, trajectory_lenght: int = DEFAULT_TRAJECTORY,
-	batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS, saving: bool = False):
+	batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS, lr: int = DEFAULT_LEARNING_RATE, saving: bool = False):
+
+	optimizer = tf.keras.optimizers.SGD(learning_rate=lr)
+	optimizer_1 = tf.keras.optimizers.Adam(learning_rate=lr)
 
 	# return values
 	iteration_rewards = []
@@ -126,7 +127,7 @@ def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT
 	# Run the model for total_iterations
 	for iteration in range(total_iterations):
 		states, actions, rewards, dones, values, run_action_probs = run_tragectory(current_state, orchestrator, trajectory_lenght)
-		print("Iterations",iteration," [iteration total reward:", tf.reduce_sum(rewards).numpy(), "]") # iteration print
+		print("Iterations",iteration," [iteration avg reward:", tf.reduce_sum(rewards).numpy()/trajectory_lenght, "]") # iteration print
 
 		train_dataset = tf.data.Dataset.from_tensor_slices((states, actions, rewards, dones, values, run_action_probs))
 		train_dataset = train_dataset.shuffle(buffer_size=trajectory_lenght+batch_size).batch(batch_size)
@@ -174,7 +175,7 @@ def train_orchestrator_on_env(orchestrator, env, total_iterations: int = DEFAULT
 			training_env.reset()
 		current_state = training_env._get_state_obs()
 		# saving values
-		iteration_rewards.append(tf.reduce_sum(rewards).numpy())
+		iteration_rewards.append(tf.reduce_sum(rewards).numpy()/trajectory_lenght)
 
 	# save trained orchestrator, then return it
 	if saving: save_orchestrator_models(orchestrator)

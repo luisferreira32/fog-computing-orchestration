@@ -102,7 +102,7 @@ def ppo_actor_loss(old_action_probs: tf.Tensor, action_probs: tf.Tensor, advanta
 	ratio = tf.math.divide(action_probs, old_action_probs)
 	s1 = tf.clip_by_value(ratio, 1-ppo_eps, 1+ppo_eps)*advantages
 	s2 = ratio*advantages
-	loss = -tf.math.reduce_sum(tf.math.minimum(s1, s2)) # reduce_mean or reduce_sum?
+	loss = -tf.math.reduce_mean(tf.math.minimum(s1, s2)) # reduce_mean or reduce_sum?
 	return loss
 
 def combined_loss(action_probs: tf.Tensor, advantages: tf.Tensor, values: tf.Tensor, expected_returns: tf.Tensor) -> tf.Tensor:
