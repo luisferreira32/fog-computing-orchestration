@@ -21,10 +21,10 @@ def run_basic_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug
 	done = False;
 	while not done:
 		action_n = np.array([agent.act(obs) for agent,obs in zip(agents, obs_n)], dtype=np.uint8)
-		obs_n, rw_n, done, info_n = env.step(action_n)
+		obs_n, rw_n, done, info = env.step(action_n)
 		if debug: env.render()
 		# -- info gathering
-		if compiled_info is not None: compiled_info = info_gather(compiled_info, info_n)
+		if compiled_info is not None: compiled_info = info_gather(compiled_info, info)
 		# --
 
 	# -- info logs
@@ -42,7 +42,7 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 		orchestrator.load_models()
 	if train:
 		iteration_rewards = orchestrator.train(save=save)
-		#plt_line_plot({"a2c_"+case["case"] : iteration_rewards})
+		plt_line_plot({"a2c_"+case["case"] : iteration_rewards})
 
 	# and run as usual
 	start_time = time.time()
@@ -50,10 +50,10 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 	done = False;
 	while not done:
 		action_n = np.array(orchestrator.act(obs_n), dtype=np.uint8)
-		obs_n, rw_n, done, info_n = env.step(action_n)
+		obs_n, rw_n, done, info = env.step(action_n)
 		if debug: env.render()
 		# -- info gathering
-		if compiled_info is not None: compiled_info = info_gather(compiled_info, info_n)
+		if compiled_info is not None: compiled_info = info_gather(compiled_info, info)
 		# --
 
 	# -- info logs

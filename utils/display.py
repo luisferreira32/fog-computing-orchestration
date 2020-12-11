@@ -58,13 +58,12 @@ def plt_line_plot(df, normalize=False, title="default_line_plt"):
 
 # --- text log display ---
 # aux function
-def info_gather(compiled_info, info_n):
+def info_gather(compiled_info, info):
 	#print(compiled_info)
-	for key, info in info_n.items():
-		compiled_info["delay_sum"] += sum(info["delay_list"])
-		compiled_info["succeeded"] += len(info["delay_list"])
-		compiled_info["overflowed"] += info["overflow"]
-		compiled_info["discarded"] += info["discarded"]
+	compiled_info["delay_sum"] += sum(info["delay_list"])
+	compiled_info["succeeded"] += len(info["delay_list"])
+	compiled_info["overflowed"] += info["overflow"]
+	compiled_info["discarded"] += info["discarded"]
 	compiled_info["total"] = compiled_info["discarded"] + compiled_info["succeeded"] + compiled_info["overflowed"]
 	if compiled_info["total"] > 0:
 		compiled_info["average_delay"] = compiled_info["delay_sum"]/compiled_info["total"]

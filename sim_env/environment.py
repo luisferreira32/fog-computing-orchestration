@@ -20,7 +20,7 @@ import numpy as np
 from sim_env.fog import create_random_node, point_to_point_transmission_rate
 from sim_env.events import Event_queue, is_arrival_on_slice
 from sim_env.events import Stop_transmitting, Set_arrivals, Offload_task, Start_transmitting, Start_processing
-from sim_env.configs import TIME_STEP, SIM_TIME, RANDOM_SEED, OVERLOAD_WEIGHT
+from sim_env.configs import TIME_STEP, SIM_TIME, RANDOM_SEED, OVERLOAD_WEIGHT, TOTAL_TIME_STEPS
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
 from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS, NODE_BANDWIDTH_UNIT
 
@@ -110,7 +110,7 @@ class Fog_env(gym.Env):
 			obs_n: np.array in observation_space - the observation after the time step ocurred
 			reward_n: float - the total reward of the timestep (sum of all agents rewards for their actions)
 			done: bool - indicates weather or not this envrionment is out of events to simulate, i.e. ended the simulation time
-			info_n: dict - a compiling of information for display
+			info: dict - a compiling of information for display
 		"""
 
 		# to make sure you give actions in the FORMATED action space
@@ -120,8 +120,12 @@ class Fog_env(gym.Env):
 
 		# to return it's necessary to return a lists in
 		obs_n = [] # observations (POMDP)
-		reward_n = [] # local rewards
-		info_n = {} # information per agent
+		rw = 0 # total reward
+		info = {
+				"delay_list" : [],
+				"overflow" : 0,
+				"discarded" : 0,
+				}; # env step information
 
 		# update some envrionment values
 		for n in self.nodes:
@@ -129,16 +133,9 @@ class Fog_env(gym.Env):
 
 		# measure instant reward of an action taken and queue it
 		for i in range(N_NODES):
-			# set the zeroed info
-			info_n[i] = {
-				"delay_list" : [],
-				"overflow" : 0,
-				"discarded" : 0,
-				};
-
 			# calculate the instant rewards, based on state, action pair
-			rw = self._agent_reward_fun(self.nodes[i], self._get_agent_observation(n), action_n[i])
-			reward_n.append(rw)
+			#rw = self._agent_reward_fun(self.nodes[i], self._get_agent_observation(n), action_n[i])
+			#reward_n.append(rw)
 
 			# and execute the action
 			self._set_agent_action(self.nodes[i], action_n[i]) 
@@ -155,11 +152,11 @@ class Fog_env(gym.Env):
 			# --- GET INFORMAITON HERE ---
 			if t is not None: # means it came from a node
 				if t.is_completed(): # finished
-					info_n[n.index-1]["delay_list"].append(t.task_delay())
+					info["delay_list"].append(t.task_delay())
 				elif t.task_time() == ev.time: # overflowed
-					info_n[n.index-1]["overflow"] += 1
+					info["overflow"] += 1
 				else: # discarded because of delay constraint
-					info_n[n.index-1]["discarded"] += 1
+					info["discarded"] += 1
 
 
 		# obtain next observation
@@ -169,8 +166,9 @@ class Fog_env(gym.Env):
 		self.saved_step_info = [state_t, action_n]
 
 		# joint optimization -> reward sum
-		#assert self.observation_space.contains(obs_n)
-		return obs_n, sum(reward_n), done, info_n
+		rw = 1.0*len(info["delay_list"])-20.0*info["overflow"]-0.5*info["discarded"]
+		#if info["overflow"]: print(rw, len(info["delay_list"]), info["overflow"], info["discarded"])
+		return obs_n, rw, done, info
 
 
 	def reset(self):
@@ -182,6 +180,9 @@ class Fog_env(gym.Env):
 		for node in self.nodes:
 			node.reset() # empty buffers
 		self.clock = 0 # and zero simulation clock
+		# then run a bit in the beginning to set up a random beginning state
+		for _ in range(int(TOTAL_TIME_STEPS/16)):
+			self.step(self.action_space.sample())
 		return self._get_state_obs()
 
 	def _get_state_obs(self):
