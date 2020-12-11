@@ -76,8 +76,8 @@ def argument_check(argv):
 			if "h3" in s:
 				cases.append(HEAVY_CASE_3)
 		if "--basic" in s or "-B" in s:
-			algs = [NORMAL_CASE_1]
-			cases = [Nearest_Round_Robin]
+			algs = [Nearest_Round_Robin]
+			cases = [NORMAL_CASE_1]
 			break # actually will just run default
 
 		if "--seedmax=" in s:

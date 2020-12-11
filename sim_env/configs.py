@@ -3,7 +3,7 @@
 
 # GLOBAL FOG VARIABLES
 TIME_STEP = 0.001 # seconds
-TOTAL_TIME_STEPS = 1024
+TOTAL_TIME_STEPS = 4096
 SIM_TIME = TOTAL_TIME_STEPS*TIME_STEP
 DEBUG = False
 
@@ -18,7 +18,7 @@ RANDOM_SEED_LIST = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 
 N_NODES = 5 # default = 5
 # transmission
 NODE_BANDWIDTH = 1e6 # Hz
-NODE_BANDWIDTH_UNIT = 1e4 # Hz , i.e., 100 concurrent transmissions is the maximum
+NODE_BANDWIDTH_UNIT = 1e5 # Hz , i.e., 10 concurrent transmissions is the maximum
 TRANSMISSION_POWER = 20 # dBm
 # resources
 DEFAULT_SLICES = 3
@@ -35,7 +35,7 @@ PATH_LOSS_CONSTANT = 0.001
 THERMAL_NOISE_DENSITY = -174 # dBm/Hz
 
 # TASK CONSTANTS
-PACKET_SIZE = 5000 # bits = 5 kBits (7, 10?)
+PACKET_SIZE = 5000 # bits = 5 kBits
 
 # ---- simulation cases ---- 
 # slice characteristics 
