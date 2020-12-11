@@ -85,7 +85,7 @@ class Fog_env(gym.Env):
 		# where values can be between 0 and I for f_ik, and 0 and N=limited by either memory or cpu for w_ik
 		action_possibilities = [np.append([N_NODES+1 for _ in range(n.max_k)],
 			[min(n._avail_cpu_units, n._avail_ram_units/np.ceil(case["task_type"][2][k]/RAM_UNIT))+1 for k in range(n.max_k)]) for n in self.nodes]
-		action_possibilities = np.array(action_possibilities, dtype=np.uint8)
+		action_possibilities = np.array(action_possibilities, dtype=np.float32)
 		self.action_space = spaces.MultiDiscrete(action_possibilities)
 
 		# and the state space with I nodes and K slices each
@@ -95,7 +95,7 @@ class Fog_env(gym.Env):
 		state_possibilities = [np.concatenate(([2 for _ in range(n.max_k)],[MAX_QUEUE+1 for _ in range(n.max_k)],
 			[min(n._avail_cpu_units,  n._avail_ram_units/np.ceil(case["task_type"][2][k]/RAM_UNIT))+1 for k in range(n.max_k)],
 			[n._avail_cpu_units+1], [n._avail_ram_units+1])) for n in self.nodes]
-		state_possibilities = np.array(state_possibilities, dtype=np.uint8)
+		state_possibilities = np.array(state_possibilities, dtype=np.float32)
 		self.observation_space = spaces.MultiDiscrete(state_possibilities)
 
 		# and the first event that will trigger subsequent arrivals
@@ -187,7 +187,7 @@ class Fog_env(gym.Env):
 	def _get_state_obs(self):
 		""" Gets the whole state observation by obtaining POMDP for each agent """
 
-		return np.array([self._get_agent_observation(n) for n in self.nodes], dtype=np.uint8)
+		return np.array([self._get_agent_observation(n) for n in self.nodes], dtype=np.float32)
 
 	def _get_agent_observation(self, n):
 		""" Gets POMDP for each agent/node
@@ -203,7 +203,7 @@ class Fog_env(gym.Env):
 		pobs = np.concatenate(([1 if len(n.buffers[k]) > 0 and self.clock == n.buffers[k][-1]._timestamp else 0 for k in range(n.max_k)],
 			[len(n.buffers[k]) for k in range(n.max_k)], [n.being_processed_on_slice(k) for k in range(n.max_k)],
 			[n._avail_cpu_units],[n._avail_ram_units]))
-		return np.array(pobs, dtype=np.uint8)
+		return np.array(pobs, dtype=np.float32)
 
 	def _cap_action_n(self, action_n):
 		""" Caps the action for a possible action to take. This way a model free algorithm will associte impossible actions with the capped version.

@@ -13,7 +13,7 @@ from algorithms.deep_tools.trainners import run_actor_critic_tragectory, set_tra
 
 # some necesary constants
 from algorithms.configs import DEFAULT_SAVE_MODELS_PATH, DEFAULT_ITERATIONS, DEFAULT_PPO_LEARNING_RATE, DEFAULT_CRITIC_LEARNING_RATE
-from algorithms.configs import DEFAULT_GAMMA, DEFAULT_EPOCHS, DEFAULT_BATCH_SIZE, DEFAULT_TRAJECTORY
+from algorithms.configs import DEFAULT_GAMMA, DEFAULT_EPOCHS, DEFAULT_BATCH_SIZE, DEFAULT_TRAJECTORY, TIME_SEQUENCE_SIZE
 from sim_env.configs import TIME_STEP, SIM_TIME
 
 
@@ -25,9 +25,9 @@ class A2c_Orchestrator(object):
 	def __init__(self, env, actor_frame=Frame_1, critic_frame=Frame_1):
 		super(A2c_Orchestrator, self).__init__()
 		# common critic
-		self.critic = critic_frame(1)
+		self.critic = critic_frame(1, 55)
 		# node actors ~ each actor has two action spaces: for scheduling and for offloading
-		self.actors = [actor_frame(map_int_vect_to_int(action_space_n)+1) for action_space_n in env.action_space.nvec]
+		self.actors = [actor_frame(map_int_vect_to_int(action_space_n)+1, 11) for action_space_n in env.action_space.nvec]
 		self.actors_names = ["_node"+str(n.index) for n in env.nodes]
 		self.num_actors = len(env.nodes)
 
@@ -36,6 +36,9 @@ class A2c_Orchestrator(object):
 		self.env = env
 		self.action_spaces = env.action_space.nvec
 		self.observation_spaces = env.observation_space.nvec
+
+		# and aux variables
+		self.act_state = None
 
 	def __str__(self):
 		return self.name
@@ -46,10 +49,17 @@ class A2c_Orchestrator(object):
 
 	def act(self, obs_n):
 		""" takes the whole system observation and returns the action step of all the nodes """
+		if self.act_state is None:
+			x = tf.expand_dims(obs_n, 0)
+			self.act_state = tf.repeat(x, repeats=TIME_SEQUENCE_SIZE, axis=0)
+		# roll one timestep and stack the new obs
+		actor_state_list = tf.unstack(self.act_state)
+		self.act_state = tf.stack((actor_state_list[1:]))
+		self.act_state = tf.concat((self.act_state, [obs_n]), axis=0)
 
 		# for each agent decide an action
 		action = []
-		for obs, actor, action_space in zip(obs_n, self.actors, self.action_spaces):
+		for obs, actor, action_space in zip(self.act_state, self.actors, self.action_spaces):
 			obs = tf.expand_dims(obs, 0)
 			# call its model
 			action_logits_t = actor(obs)
@@ -101,8 +111,9 @@ class A2c_Orchestrator(object):
 				for state, action, rw, done, v, old_action_probs in train_dataset:
 					advantages, target_values = general_advantage_estimator(rw[:-1], v[:-1], v[1:], done[1:], DEFAULT_GAMMA)
 
-					# train the critic
-					joint_state = tf.reshape(state,  [tf.shape(state)[0], tf.shape(state)[1]*tf.shape(state)[2]]) # keep batch, merge nodes
+					# train the critic, keep batch, merge nodes
+					node_state_list = tf.unstack(state, axis=1)
+					joint_state = tf.concat(node_state_list, -1) # concat along the features
 					with tf.GradientTape() as tape:
 						values = self.critic(joint_state, training=True)
 						values = tf.squeeze(values)
