@@ -34,6 +34,7 @@ def tf_env_step(action: tf.Tensor) -> List[tf.Tensor]:
 def run_actor_critic_tragectory(initial_state: tf.Tensor, orchestrator, max_steps: int) -> List[tf.Tensor]:
 	"""Runs a single tragectory to collect training data for each agent."""
 
+	assert np.all(initial_state == training_env._get_state_obs())
 	# arrays to gather data
 	action_probs = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
 	states = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
