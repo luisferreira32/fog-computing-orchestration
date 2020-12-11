@@ -9,12 +9,12 @@ from utils.tools import dictionary_append, append_to_file
 from utils.display import info_gather, info_logs, plt_line_plot
 # the envrionment
 from algorithms.deep_tools.common import  set_tf_seed
-from algorithms.deep_tools.trainners import train_orchestrator_on_env
-from algorithms.deep_tools.savers import fetch_orchestrator
 from algorithms.configs import ALGORITHM_SEED
 
 
-def run_basic_algorithm_on_envrionment(agents, env, case, compiled_info=None, debug=False):
+def run_basic_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=False):
+	# set up the agents
+	agents = [alg(n, case) for n in env.nodes]
 	# runner for simple baseline algorithms
 	start_time = time.time()
 	obs_n = env.reset()
@@ -33,14 +33,15 @@ def run_basic_algorithm_on_envrionment(agents, env, case, compiled_info=None, de
 	return compiled_info
 
 
-def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=False, train=False, save=False):
+def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=False, train=False, save=False, load=False):
 	# runner for rl algorithms
 	set_tf_seed(ALGORITHM_SEED)
-	orchestrator = fetch_orchestrator(alg, env)
+	orchestrator = alg(env)
 
-	# train them if requested
+	if load:
+		orchestrator.load_models()
 	if train:
-		orchestrator, iteration_rewards = train_orchestrator_on_env(orchestrator, env, saving=save)
+		iteration_rewards = orchestrator.train(save=save)
 		#plt_line_plot({"a2c_"+case["case"] : iteration_rewards})
 
 	# and run as usual

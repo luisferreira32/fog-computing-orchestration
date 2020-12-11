@@ -20,7 +20,6 @@ if not algs or not cases:
 from utils.tools import dictionary_append, write_all_to_csvs, random_seed_primes
 from utils.display import plt_bar, plt_error_bar, plt_box_plot, info_gather_init
 from sim_env.environment import Fog_env
-from algorithms.basic import create_basic_agents
 from algorithms.runners import run_rl_algorithm_on_envrionment, run_basic_algorithm_on_envrionment
 
 # --- the main playground ---
@@ -30,8 +29,6 @@ delays_df={}; success_rate_df={}; overflow_rate_df={};
 random_seeds = random_seed_primes(max_seed)
 if not random_seeds: random_seeds = [2]
 
-models_linux_path = os.getcwd() + "/algorithms/saved_models/"
-models_windows_path = os.getcwd() + "\\algorithms\\saved_models\\"
 
 # ---- algorithms runnning for every case - GRAPHICAL RESULTS ----
 
@@ -48,8 +45,7 @@ for case in cases:
 			env = Fog_env(case, seed)
 			# run either a basic algorithm or a RL algorithm
 			if alg.basic:
-				agents = create_basic_agents(env, alg, case)
-				compiled_info = run_basic_algorithm_on_envrionment(agents, env, case, info_gather_init(), debug)
+				compiled_info = run_basic_algorithm_on_envrionment(alg, env, case, info_gather_init(), debug)
 			else:
 				compiled_info = run_rl_algorithm_on_envrionment(alg, env, case, info_gather_init(), debug, train, save)
 			# run the algorithm to collect info

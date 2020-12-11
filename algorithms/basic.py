@@ -6,10 +6,6 @@ from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, RAM_UNIT, TIME_S
 from sim_env.events import Start_processing, Stop_processing
 from utils.tools import uniform_rand_array
 
-def create_basic_agents(env, alg, case):
-	agents = [alg(n, case) for n in env.nodes]
-	return agents
-
 class Nearest_Round_Robin(object):
 	"""Nearest_Round_Robin
 	"""
