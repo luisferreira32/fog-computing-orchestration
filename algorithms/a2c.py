@@ -14,7 +14,7 @@ from algorithms.deep_tools.trainners import run_actor_critic_tragectory, set_tra
 
 # some necesary constants
 from algorithms.configs import DEFAULT_SAVE_MODELS_PATH, DEFAULT_ITERATIONS, DEFAULT_PPO_LEARNING_RATE, DEFAULT_CRITIC_LEARNING_RATE
-from algorithms.configs import DEFAULT_GAMMA, DEFAULT_EPOCHS, DEFAULT_BATCH_SIZE, DEFAULT_TRAJECTORY, TIME_SEQUENCE_SIZE, PARALEL_ENVS
+from algorithms.configs import DEFAULT_GAMMA, DEFAULT_EPOCHS, DEFAULT_BATCH_SIZE, DEFAULT_TRAJECTORY, TIME_SEQUENCE_SIZE, PARALLEL_ENVS
 from sim_env.configs import TIME_STEP, SIM_TIME
 
 
@@ -34,7 +34,7 @@ class A2c_Orchestrator(object):
 
 		# meta-data
 		self.name = env.case["case"]+"_rd"+str(env.rd_seed)+"_a2c_orchestrator_"+str(self.critic)
-		self.env_vec = [copy.deepcopy(env) for _ in range(PARALEL_ENVS)]
+		self.env_vec = [copy.deepcopy(env) for _ in range(PARALLEL_ENVS)]
 		self.action_spaces = env.action_space.nvec
 		self.observation_spaces = env.observation_space.nvec
 
@@ -106,21 +106,23 @@ class A2c_Orchestrator(object):
 		# Run the model for total_iterations
 		for iteration in range(total_iterations):
 
-			# run a trajectory in each of the PARALEL_ENVS 
+			# run a trajectory in each of the PARALLEL_ENVS 
 			train_dataset = None # free previous dataset memory
 			it_rw = 0
-			for env_n in range(PARALEL_ENVS):
-				states, actions, rewards, dones, values, run_action_probs = run_actor_critic_tragectory(current_state, 0, self, trajectory_lenght)
+			for env_n in range(PARALLEL_ENVS):
+				states, actions, rewards, dones, values, run_action_probs = run_actor_critic_tragectory(current_state, env_n, self, trajectory_lenght)
+				x = tf.data.Dataset.from_tensor_slices((states, actions, rewards, dones, values, run_action_probs))
 				if train_dataset is None:
-					train_dataset = tf.data.Dataset.from_tensor_slices((states, actions, rewards, dones, values, run_action_probs))
+					train_dataset = x
 				else:
-					train_dataset.concatenate(tf.data.Dataset.from_tensor_slices((states, actions, rewards, dones, values, run_action_probs)))
+					train_dataset = train_dataset.concatenate(x)
 				it_rw += tf.reduce_sum(rewards).numpy()/trajectory_lenght
 			
-			print("Iterations",iteration," [iteration avg reward:", it_rw/PARALEL_ENVS, "]") # iteration print
+			print("Iterations",iteration," [iteration avg reward:", it_rw/PARALLEL_ENVS, "]") # iteration print
 
 			# shuffle data and create the batches
-			train_dataset = train_dataset.shuffle(buffer_size=(trajectory_lenght+batch_size)*PARALEL_ENVS).batch(batch_size)
+			train_dataset = train_dataset.shuffle(buffer_size=(trajectory_lenght+batch_size)*PARALLEL_ENVS).batch(batch_size)
+			#print(train_dataset.cardinality())
 
 			# after running trajectories train with the whole data
 			for e in tf.range(epochs):

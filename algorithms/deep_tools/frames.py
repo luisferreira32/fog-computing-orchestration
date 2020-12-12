@@ -37,11 +37,11 @@ class Simple_Frame(tf.keras.Model):
 		return "sf"
 
 	def call(self, inputs: tf.Tensor) -> tf.Tensor:
-		""" inputs : tf.Tensor, (batch_size, [input_shape])
+		""" inputs : tf.Tensor, (batch_size, time_steps,[input_shape])
 			returns : N-D tensor (batch_size, [output_shape])
 		"""
 		# pass inputs on model and return the output value Tensor
-		x = self.dense_a(inputs)
+		x = self.dense_a(inputs[:,-1])
 		x = self.dense_b(x)
 		x = self.dense_c(x)
 		x = self.dense_1(x)
