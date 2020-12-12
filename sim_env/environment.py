@@ -283,6 +283,8 @@ class Fog_env(gym.Env):
 				for ev in self.evq.queue():
 					if is_arrival_on_slice(ev, self.nodes[fks[k]-1], k) and ev.time <= self.clock+Dt_ik:
 						arr += 1
+				# and estimated new arrivals too
+				arr += np.ceil(Dt_ik*case["arrivals"][k])
 				# also, verify if there is an overload chance in the arriving node
 				arrival_node = self.nodes[fks[k]-1] if fks[k] > 0 else n
 				arr_obs = self._get_agent_observation(arrival_node)
