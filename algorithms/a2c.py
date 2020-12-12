@@ -2,18 +2,19 @@
 
 # advantages of PPO are found in a discrete actions and multi-process style; offers fast convergence
 
-# and external imports
+# external imports
 import tensorflow as tf
 import numpy as np
+import copy
 
 # since we're implementing ppo with deep neural networks
 from algorithms.deep_tools.frames import Simple_Frame, Frame_1
 from algorithms.deep_tools.common import general_advantage_estimator, map_int_vect_to_int, map_int_to_int_vect, critic_loss, ppo_actor_loss
-from algorithms.deep_tools.trainners import run_actor_critic_tragectory, set_training_env
+from algorithms.deep_tools.trainners import run_actor_critic_tragectory, set_training_env_vec, training_env_vec_state
 
 # some necesary constants
 from algorithms.configs import DEFAULT_SAVE_MODELS_PATH, DEFAULT_ITERATIONS, DEFAULT_PPO_LEARNING_RATE, DEFAULT_CRITIC_LEARNING_RATE
-from algorithms.configs import DEFAULT_GAMMA, DEFAULT_EPOCHS, DEFAULT_BATCH_SIZE, DEFAULT_TRAJECTORY, TIME_SEQUENCE_SIZE
+from algorithms.configs import DEFAULT_GAMMA, DEFAULT_EPOCHS, DEFAULT_BATCH_SIZE, DEFAULT_TRAJECTORY, TIME_SEQUENCE_SIZE, PARALEL_ENVS
 from sim_env.configs import TIME_STEP, SIM_TIME
 
 
@@ -33,7 +34,7 @@ class A2c_Orchestrator(object):
 
 		# meta-data
 		self.name = env.case["case"]+"_rd"+str(env.rd_seed)+"_a2c_orchestrator_"+str(self.critic)
-		self.env = env
+		self.env_vec = [copy.deepcopy(env) for _ in range(PARALEL_ENVS)]
 		self.action_spaces = env.action_space.nvec
 		self.observation_spaces = env.observation_space.nvec
 
@@ -96,16 +97,28 @@ class A2c_Orchestrator(object):
 		# return values
 		iteration_rewards = []
 		# set the training env
-		initial_state = set_training_env(self.env)
+		initial_state = set_training_env_vec(self.env_vec)
 		current_state = initial_state
 		# Run the model for total_iterations
 		for iteration in range(total_iterations):
-			states, actions, rewards, dones, values, run_action_probs = run_actor_critic_tragectory(current_state, self, trajectory_lenght)
-			print("Iterations",iteration," [iteration avg reward:", tf.reduce_sum(rewards).numpy()/trajectory_lenght, "]") # iteration print
 
-			train_dataset = tf.data.Dataset.from_tensor_slices((states, actions, rewards, dones, values, run_action_probs))
-			train_dataset = train_dataset.shuffle(buffer_size=trajectory_lenght+batch_size).batch(batch_size)
+			# run a trajectory in each of the PARALEL_ENVS 
+			train_dataset = None # free previous dataset memory
+			it_rw = 0
+			for env_n in range(PARALEL_ENVS):
+				states, actions, rewards, dones, values, run_action_probs = run_actor_critic_tragectory(current_state, 0, self, trajectory_lenght)
+				if train_dataset is None:
+					train_dataset = tf.data.Dataset.from_tensor_slices((states, actions, rewards, dones, values, run_action_probs))
+				else:
+					train_dataset.concatenate(tf.data.Dataset.from_tensor_slices((states, actions, rewards, dones, values, run_action_probs)))
+				it_rw += tf.reduce_sum(rewards).numpy()/trajectory_lenght
+			
+			print("Iterations",iteration," [iteration avg reward:", it_rw/PARALEL_ENVS, "]") # iteration print
 
+			# shuffle data and create the batches
+			train_dataset = train_dataset.shuffle(buffer_size=(trajectory_lenght+batch_size)*PARALEL_ENVS).batch(batch_size)
+
+			# after running trajectories train with the whole data
 			for e in tf.range(epochs):
 				losses = {"critic": 0, 0:0, 1:0, 2:0, 3:0, 4:0}
 				for state, action, rw, done, v, old_action_probs in train_dataset:
@@ -146,7 +159,7 @@ class A2c_Orchestrator(object):
 				print("[EPOCH",e.numpy()+1,"/",epochs,"] cumulative losses:", losses) # epoch print
 
 			# fetch the new state
-			current_state = self.env._get_state_obs()
+			current_state = training_env_vec_state()
 			# saving values
 			iteration_rewards.append(tf.reduce_sum(rewards).numpy()/trajectory_lenght)
 

@@ -10,31 +10,33 @@ from .common import map_int_to_int_vect
 from algorithms.configs import TIME_SEQUENCE_SIZE
 
 
-def set_training_env(env):
-	global training_env
-	training_env = env
-	return env.reset()
+def set_training_env_vec(env_vec):
+	global training_env_vec
+	training_env_vec = env_vec
+	return [t.reset() for t in training_env_vec]
+
+def training_env_vec_state():
+	return [t._get_state_obs() for t in training_env_vec]
 
 # Wrap OpenAI Gym's `env.step` call as an operation in a TensorFlow function.
 # This would allow it to be included in a callable TensorFlow graph.
 
-def env_step(action: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def env_step(action: np.ndarray, env_n: np.int32) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
 	"""Returns state, reward and done flag given an action."""
 
-	state, reward, done, _ = training_env.step(action)
+	state, reward, done, _ = training_env_vec[env_n].step(action)
 	return (state.astype(np.float32), 
 		np.array(reward, np.float32), 
 		np.array(done, np.int32))
 
 
-def tf_env_step(action: tf.Tensor) -> List[tf.Tensor]:
-	return tf.numpy_function(env_step, [action], 
+def tf_env_step(action: tf.Tensor, env_n: tf.Tensor) -> List[tf.Tensor]:
+	return tf.numpy_function(env_step, [action, env_n], 
 		[tf.float32, tf.float32, tf.int32])
 
-def run_actor_critic_tragectory(initial_state: tf.Tensor, orchestrator, max_steps: int) -> List[tf.Tensor]:
+def run_actor_critic_tragectory(initial_state: tf.Tensor, env_n, orchestrator, max_steps: int) -> List[tf.Tensor]:
 	"""Runs a single tragectory to collect training data for each agent."""
 
-	assert np.all(initial_state == training_env._get_state_obs())
 	# arrays to gather data
 	action_probs = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
 	states = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
@@ -43,8 +45,8 @@ def run_actor_critic_tragectory(initial_state: tf.Tensor, orchestrator, max_step
 	rewards = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
 	dones = tf.TensorArray(dtype=tf.int32, size=0, dynamic_size=True)
 
-	initial_state_shape = initial_state.shape
-	state = initial_state
+	initial_state_shape = initial_state[env_n].shape
+	state = initial_state[env_n]
 
 	# tensor that holds the previous state
 	x = tf.expand_dims(state, 0)
@@ -103,7 +105,7 @@ def run_actor_critic_tragectory(initial_state: tf.Tensor, orchestrator, max_step
 
 
 		# Apply action to the environment to get next state and reward
-		state, reward, done = tf_env_step(running_action)
+		state, reward, done = tf_env_step(running_action, env_n)
 		state.set_shape(initial_state_shape)
 
 		# Store reward
