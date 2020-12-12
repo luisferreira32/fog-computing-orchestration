@@ -89,8 +89,8 @@ def normalize_state(state: tf.Tensor, max_values: tf.Tensor) -> tf.Tensor:
 huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 cce = tf.keras.losses.CategoricalCrossentropy(reduction=tf.keras.losses.Reduction.SUM)
 
-def critic_loss(values: tf.Tensor, expected_returns: tf.Tensor) -> tf.Tensor:
-	loss = huber_loss(values, expected_returns)
+def critic_loss(values: tf.Tensor, target_values: tf.Tensor) -> tf.Tensor:
+	loss = huber_loss(values, target_values)
 	return loss
 
 def actor_loss(action_probs: tf.Tensor, advantages: tf.Tensor) -> tf.Tensor:
@@ -128,3 +128,9 @@ def map_int_to_int_vect(maxes, num):
 		retval = int(retval/m)
 	return vect
 # <<<<<
+
+def roll_one_step(df, new_value):
+	df_list = tf.unstack(df)
+	df = tf.stack((df_list[1:]))
+	df = tf.concat((df, [new_value]), axis=0)
+	return df

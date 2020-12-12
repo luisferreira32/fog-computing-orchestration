@@ -57,14 +57,18 @@ class A2c_Orchestrator(object):
 		actor_state_list = tf.unstack(self.act_state)
 		self.act_state = tf.stack((actor_state_list[1:]))
 		self.act_state = tf.concat((self.act_state, [obs_n]), axis=0)
+		print(self.act_state.shape)
 
 		# for each agent decide an action
 		action = []
-		for obs, actor, action_space in zip(self.act_state, self.actors, self.action_spaces):
+		for i in range(len(self.actors)):
+			obs = self.act_state[:,i]
+			actor = self.actors[i]
+			action_space = self.action_spaces[i]
+			# just one batch
 			obs = tf.expand_dims(obs, 0)
 			# call its model
 			action_logits_t = actor(obs)
-			# Since it's multi-discrete, for every discrete set of actions:
 			action_i = map_int_to_int_vect(action_space, tf.random.categorical(action_logits_t,1)[0,0].numpy())
 			action.append(action_i)
 		return np.array(action)

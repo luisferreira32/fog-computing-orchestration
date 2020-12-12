@@ -165,7 +165,7 @@ class Fog_env(gym.Env):
 		self.saved_step_info = [state_t, action_n]
 
 		# joint optimization -> reward sum
-		rw = 5.0*len(info["delay_list"])-.5*info["overflow"]-.5*info["discarded"]
+		#rw = 5.0*len(info["delay_list"])-.5*info["overflow"]-.5*info["discarded"]
 		#if info["overflow"]: print(rw, len(info["delay_list"]), info["overflow"], info["discarded"])
 		return obs_n, rw, done, info
 
@@ -180,7 +180,7 @@ class Fog_env(gym.Env):
 			node.reset() # empty buffers
 		self.clock = 0 # and zero simulation clock
 		# then run a bit in the beginning to set up a random beginning state
-		rand_iters = self.np_random.randint(int(TOTAL_TIME_STEPS/32), int(TOTAL_TIME_STEPS/16))
+		rand_iters = self.np_random.randint(int(TOTAL_TIME_STEPS/64), int(TOTAL_TIME_STEPS/32))
 		for _ in range(rand_iters):
 			self.step(self.action_space.sample())
 		return self._get_state_obs()

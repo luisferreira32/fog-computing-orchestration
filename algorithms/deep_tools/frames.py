@@ -32,6 +32,9 @@ class Simple_Frame(tf.keras.Model):
 		
 	def __str__(self):
 		return "sf"
+	@staticmethod
+	def short_str():
+		return "sf"
 
 	def call(self, inputs: tf.Tensor) -> tf.Tensor:
 		""" inputs : tf.Tensor, (batch_size, [input_shape])
@@ -59,6 +62,9 @@ class Frame_1(tf.keras.Model):
 		self.output_layer = layers.Dense(output_size)
 		
 	def __str__(self):
+		return "f1"
+	@staticmethod
+	def short_str():
 		return "f1"
 
 	def call(self, inputs: tf.Tensor) -> tf.Tensor:
