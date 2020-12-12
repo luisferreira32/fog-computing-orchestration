@@ -108,10 +108,11 @@ def run_actor_critic_tragectory(initial_state: tf.Tensor, orchestrator, max_step
 
 		# Store reward
 		rewards = rewards.write(t, reward)
-		dones = dones.write(t, done)
 
-		if tf.cast(done, tf.bool):
-			break
+		# the env doesn't actually have a "done" that reflects in the reward ~ it's just timed out
+		dones = dones.write(t, 0) # done
+		#if tf.cast(done, tf.bool):
+		#	break
 
 	# Stack them for every time step
 	action_probs = action_probs.stack()

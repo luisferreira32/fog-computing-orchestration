@@ -145,14 +145,12 @@ class A2c_Orchestrator(object):
 
 				print("[EPOCH",e.numpy()+1,"/",epochs,"] cumulative losses:", losses) # epoch print
 
-			# reset the env if needed
-			if self.env.clock + trajectory_lenght*TIME_STEP >= SIM_TIME:
-				current_state = self.env.reset()
+			# fetch the new state
 			current_state = self.env._get_state_obs()
 			# saving values
 			iteration_rewards.append(tf.reduce_sum(rewards).numpy()/trajectory_lenght)
 
-		# save trained orchestrator, then return it
+		# save trained orchestrator, then return iteration rewards
 		if save:
 			orchestrator.save_models()
 		return iteration_rewards
