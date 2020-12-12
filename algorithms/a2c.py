@@ -57,7 +57,6 @@ class A2c_Orchestrator(object):
 		actor_state_list = tf.unstack(self.act_state)
 		self.act_state = tf.stack((actor_state_list[1:]))
 		self.act_state = tf.concat((self.act_state, [obs_n]), axis=0)
-		print(self.act_state.shape)
 
 		# for each agent decide an action
 		action = []
