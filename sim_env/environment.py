@@ -134,8 +134,7 @@ class Fog_env(gym.Env):
 		# measure instant reward of an action taken and queue it
 		for i in range(N_NODES):
 			# calculate the instant rewards, based on state, action pair
-			#rw = self._agent_reward_fun(self.nodes[i], self._get_agent_observation(n), action_n[i])
-			#reward_n.append(rw)
+			rw += self._agent_reward_fun(self.nodes[i], self._get_agent_observation(n), action_n[i])
 
 			# and execute the action
 			self._set_agent_action(self.nodes[i], action_n[i]) 
@@ -166,7 +165,7 @@ class Fog_env(gym.Env):
 		self.saved_step_info = [state_t, action_n]
 
 		# joint optimization -> reward sum
-		rw = 1.0*len(info["delay_list"])-20.0*info["overflow"]-0.5*info["discarded"]
+		#rw = 1.0*len(info["delay_list"])-20.0*info["overflow"]-0.5*info["discarded"]
 		#if info["overflow"]: print(rw, len(info["delay_list"]), info["overflow"], info["discarded"])
 		return obs_n, rw, done, info
 
@@ -284,7 +283,7 @@ class Fog_env(gym.Env):
 					if is_arrival_on_slice(ev, self.nodes[fks[k]-1], k) and ev.time <= self.clock+Dt_ik:
 						arr += 1
 				# and estimated new arrivals too
-				arr += np.ceil(Dt_ik*case["arrivals"][k])
+				arr += np.ceil(Dt_ik*self.case["arrivals"][k])
 				# also, verify if there is an overload chance in the arriving node
 				arrival_node = self.nodes[fks[k]-1] if fks[k] > 0 else n
 				arr_obs = self._get_agent_observation(arrival_node)
