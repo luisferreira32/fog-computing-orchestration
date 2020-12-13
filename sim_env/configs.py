@@ -3,12 +3,12 @@
 
 # GLOBAL FOG VARIABLES
 TIME_STEP = 0.001 # seconds
-TOTAL_TIME_STEPS = 4096
+TOTAL_TIME_STEPS = 1024
 SIM_TIME = TOTAL_TIME_STEPS*TIME_STEP
 DEBUG = False
 
 # envrionment reward related
-OVERLOAD_WEIGHT = 0.2
+OVERLOAD_WEIGHT = 2
 
 # random related
 RANDOM_SEED = 2**19-1 # mersenne prime seeds at 2, 3, 5, 7, 13, 17, 19, 31
