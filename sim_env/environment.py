@@ -164,9 +164,7 @@ class Fog_env(gym.Env):
 		# just save it for render
 		self.saved_step_info = [state_t, action_n]
 
-		# joint optimization -> reward sum
-		#rw = 5.0*len(info["delay_list"])-.5*info["overflow"]-.5*info["discarded"]
-		#if info["overflow"]: print(rw, len(info["delay_list"]), info["overflow"], info["discarded"])
+		# return obs, rw, done and info
 		return obs_n, rw, done, info
 
 
