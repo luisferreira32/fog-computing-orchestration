@@ -9,7 +9,7 @@ and a calculation of the task communication time, given the right parameters.
 
 # >>>>> imports
 # sim_env imports
-from sim_env.configs import CPU_UNIT, RAM_UNIT, PACKET_SIZE, DEBUG
+from sim_env import configs as cfg
 # utils imports
 from utils.custom_exceptions import InvalidValueError, InvalidStateError
 
@@ -34,7 +34,7 @@ def task_processing_time(t, cpu_units=1):
 	# task has cpu_demand cycles/bit
 	total_cycles = t.cpu_demand*t.packet_size
 	# processing units are in 1GHz each
-	total_time = total_cycles/(cpu_units*CPU_UNIT)
+	total_time = total_cycles/(cpu_units*cfg.CPU_UNIT)
 	return total_time
 
 def task_communication_time(packet_size_, bit_rate):
@@ -70,7 +70,7 @@ class Task(object):
 		_expected_delay: float - expected processing delay
 
 	"""
-	def __init__(self, timestamp, packet_size=PACKET_SIZE, delay_constraint=10, cpu_demand=400, ram_demand=400, task_type=None):
+	def __init__(self, timestamp, packet_size=cfg.PACKET_SIZE, delay_constraint=10, cpu_demand=400, ram_demand=400, task_type=None):
 		"""
 		Parameters:
 			timestamp - the timestamp of task creation

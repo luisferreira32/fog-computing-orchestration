@@ -13,10 +13,7 @@ import numpy as np
 from collections import deque
 
 # sim_env imports
-from sim_env.configs import MAX_QUEUE, CPU_UNIT, RAM_UNIT, CPU_CLOCKS, RAM_SIZES, BASE_SLICE_CHARS, DEFAULT_SLICES
-from sim_env.configs import AREA, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT, THERMAL_NOISE_DENSITY
-from sim_env.configs import NODE_BANDWIDTH, TRANSMISSION_POWER, PACKET_SIZE
-from sim_env.configs import DEBUG
+from sim_env import configs as cfg
 from .calculators import euclidean_distance, channel_gain, shannon_hartley, db_to_linear
 from .task import Task
 
@@ -30,7 +27,7 @@ __author__ = "Luis Ferreira @ IST"
 
 # <<<<<
 # >>>>> classes and functions
-def point_to_point_transmission_rate(d, bw=NODE_BANDWIDTH):
+def point_to_point_transmission_rate(d, bw=cfg.NODE_BANDWIDTH):
 	""" Calculates the transmission rate over a noisy channel between two nodes
 
 	Parameters:
@@ -39,9 +36,9 @@ def point_to_point_transmission_rate(d, bw=NODE_BANDWIDTH):
 	"""
 	if bw <= 0:
 		raise InvalidValueError("Available bandwidth has to be positive", "[0,+inf[")
-	g = channel_gain(d, PATH_LOSS_CONSTANT, PATH_LOSS_EXPONENT)
-	p_mw = db_to_linear(TRANSMISSION_POWER)
-	n0_mw = db_to_linear(THERMAL_NOISE_DENSITY)
+	g = channel_gain(d, cfg.PATH_LOSS_CONSTANT, cfg.PATH_LOSS_EXPONENT)
+	p_mw = db_to_linear(cfg.TRANSMISSION_POWER)
+	n0_mw = db_to_linear(cfg.THERMAL_NOISE_DENSITY)
 	return shannon_hartley(g, p_mw, bw, n0_mw)
 
 def create_random_node(index=0):
@@ -50,11 +47,11 @@ def create_random_node(index=0):
 	Parameters:
 		index: int - the node identifier (and index on a node list)
 	"""
-	[x, y] = [uniform_rand_int(low=0, high=AREA[0]), uniform_rand_int(low=0, high=AREA[1])]
-	number_of_slices = DEFAULT_SLICES
-	cpu = uniform_rand_choice(CPU_CLOCKS)
-	ram = uniform_rand_choice(RAM_SIZES)
-	if DEBUG:
+	[x, y] = [uniform_rand_int(low=0, high=cfg.AREA[0]), uniform_rand_int(low=0, high=cfg.AREA[1])]
+	number_of_slices = cfg.DEFAULT_SLICES
+	cpu = uniform_rand_choice(cfg.CPU_CLOCKS)
+	ram = uniform_rand_choice(cfg.RAM_SIZES)
+	if cfg.DEBUG:
 		print("[DEBUG] Node",index,"created at (x,y) = ",(x,y),"cpu =",cpu,"ram =",ram)
 	return Fog_node(index, x, y, cpu, ram, number_of_slices)
 
@@ -113,13 +110,13 @@ class Fog_node():
 		self.x = x
 		self.y = y
 		self._distances = {}
-		self._bandwidth = NODE_BANDWIDTH
+		self._bandwidth = cfg.NODE_BANDWIDTH
 		self.cpu_frequency = cpu_frequency
 		self.ram_size = ram_size
-		self._avail_cpu_units = cpu_frequency/CPU_UNIT
-		self._avail_ram_units = int(ram_size/RAM_UNIT)
+		self._avail_cpu_units = cpu_frequency/cfg.CPU_UNIT
+		self._avail_ram_units = int(ram_size/cfg.RAM_UNIT)
 		self.max_k = number_of_slices
-		self.buffers = [deque(maxlen=MAX_QUEUE) for _ in range(number_of_slices)]
+		self.buffers = [deque(maxlen=cfg.MAX_QUEUE) for _ in range(number_of_slices)]
 		self._dealt_tasks = np.zeros(number_of_slices, dtype=np.uint64)
 		self._total_time_intervals = 0
 		self._service_rate = np.zeros(number_of_slices, dtype=np.float32)
@@ -231,14 +228,14 @@ class Fog_node():
 		# only process if there is a task on the buffer
 		for task in self.buffers[k]:
 			# only process if has cores, memory and an action request W for it
-			if not task.is_processing() and w > 0 and self._avail_cpu_units > 0 and self._avail_ram_units >= np.ceil(task.ram_demand/RAM_UNIT):
+			if not task.is_processing() and w > 0 and self._avail_cpu_units > 0 and self._avail_ram_units >= np.ceil(task.ram_demand/cfg.RAM_UNIT):
 				# if processor tries to load them and they exceeded constraint, move on
 				if task.exceeded_constraint(time):
 					discarded.append(task)
 					continue
 				# one cpu unit per task and the ram demand they require
 				n_cpu_units = 1
-				n_memory_units = np.ceil(task.ram_demand/RAM_UNIT)
+				n_memory_units = np.ceil(task.ram_demand/cfg.RAM_UNIT)
 				# and take them from the available pool
 				self._avail_cpu_units -= n_cpu_units
 				self._avail_ram_units -= n_memory_units
@@ -318,8 +315,8 @@ class Fog_node():
 
 		for i in range(self.max_k):
 			self.buffers[i].clear()
-		self._avail_cpu_units = int(self.cpu_frequency/CPU_UNIT)
-		self._avail_ram_units = int(self.ram_size/RAM_UNIT)
+		self._avail_cpu_units = int(self.cpu_frequency/cfg.CPU_UNIT)
+		self._avail_ram_units = int(self.ram_size/cfg.RAM_UNIT)
 
 	# <<<<<
 # <<<<<

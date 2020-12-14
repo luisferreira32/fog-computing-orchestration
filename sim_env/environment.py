@@ -20,9 +20,7 @@ import numpy as np
 from sim_env.fog import create_random_node, point_to_point_transmission_rate
 from sim_env.events import Event_queue, is_arrival_on_slice
 from sim_env.events import Stop_transmitting, Set_arrivals, Offload_task, Start_transmitting, Start_processing
-from sim_env.configs import TIME_STEP, SIM_TIME, RANDOM_SEED, OVERLOAD_WEIGHT, TOTAL_TIME_STEPS
-from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, CPU_UNIT, RAM_UNIT
-from sim_env.configs import PACKET_SIZE, BASE_SLICE_CHARS, NODE_BANDWIDTH_UNIT
+from sim_env import configs as cfg
 
 # for reproductibility
 from utils.tools import set_tools_seed
@@ -53,7 +51,7 @@ class Fog_env(gym.Env):
 
 	metadata = {'render.modes': ['human']}
 
-	def __init__(self, case=BASE_SLICE_CHARS, rd_seed=RANDOM_SEED, max_time=SIM_TIME, time_step=TIME_STEP):
+	def __init__(self, case=cfg.BASE_SLICE_CHARS, rd_seed=cfg.RANDOM_SEED, max_time=cfg.SIM_TIME, time_step=cfg.TIME_STEP):
 		"""
 		Parameters:
 			case: dict - the case that defines slices characteristics and arrival rates
@@ -61,13 +59,13 @@ class Fog_env(gym.Env):
 		"""
 
 		super(Fog_env, self).__init__()
-		# Set up seeds for reproductibility
+		# Set up global seeds for reproductibility
 		self.rd_seed = rd_seed
-		self.seed(rd_seed)
+		set_tools_seed(rd_seed)
 
 		# envrionment variables
 		# self.nodes, self.evq, etc...
-		self.nodes = [create_random_node(i) for i in range(1,N_NODES+1)]
+		self.nodes = [create_random_node(i) for i in range(1,cfg.N_NODES+1)]
 		self.case = case
 		for n in self.nodes:
 			n.set_distances(self.nodes)
@@ -83,8 +81,8 @@ class Fog_env(gym.Env):
 		# [[f_00, ..., f_0k, w_00, ..., w_0k], ..., [f_i0, ..., f_ik, w_i0, ..., w_ik]]
 		# for each node there is an action [f_i0, ..., f_ik, w_i0, ..., w_ik]
 		# where values can be between 0 and I for f_ik, and 0 and N=limited by either memory or cpu for w_ik
-		action_possibilities = [np.append([N_NODES+1 for _ in range(n.max_k)],
-			[min(n._avail_cpu_units, n._avail_ram_units/np.ceil(case["task_type"][2][k]/RAM_UNIT))+1 for k in range(n.max_k)]) for n in self.nodes]
+		action_possibilities = [np.append([cfg.N_NODES+1 for _ in range(n.max_k)],
+			[min(n._avail_cpu_units, n._avail_ram_units/np.ceil(case["task_type"][2][k]/cfg.RAM_UNIT))+1 for k in range(n.max_k)]) for n in self.nodes]
 		action_possibilities = np.array(action_possibilities, dtype=np.float32)
 		self.action_space = spaces.MultiDiscrete(action_possibilities)
 
@@ -92,14 +90,17 @@ class Fog_env(gym.Env):
 		# [a_00, ..., a_0k, b_00, ..., b_0k, be_00, ..., be_0k, rc_0, rm_0,
 		# ..., a_i0, ..., a_ik, b_i0, ..., b_ik, be_i0, ..., be_ik, rc_i, rm_i]
 		# state_lows has to be remade if nodes don't have same slices
-		state_possibilities = [np.concatenate(([2 for _ in range(n.max_k)],[MAX_QUEUE+1 for _ in range(n.max_k)],
-			[min(n._avail_cpu_units,  n._avail_ram_units/np.ceil(case["task_type"][2][k]/RAM_UNIT))+1 for k in range(n.max_k)],
+		state_possibilities = [np.concatenate(([2 for _ in range(n.max_k)],[cfg.MAX_QUEUE+1 for _ in range(n.max_k)],
+			[min(n._avail_cpu_units,  n._avail_ram_units/np.ceil(case["task_type"][2][k]/cfg.RAM_UNIT))+1 for k in range(n.max_k)],
 			[n._avail_cpu_units+1], [n._avail_ram_units+1])) for n in self.nodes]
 		state_possibilities = np.array(state_possibilities, dtype=np.float32)
 		self.observation_space = spaces.MultiDiscrete(state_possibilities)
 
 		# and the first event that will trigger subsequent arrivals
 		self.evq.add_event(Set_arrivals(0, time_step, self.nodes, self.case))
+
+		# and lastly seed the env itself
+		self.seed(rd_seed)
 
 	def step(self, action_n):
 		""" Method that provices a step in time, given an action_n, decided by the N agents/nodes, and returns an observaiton.
@@ -132,7 +133,7 @@ class Fog_env(gym.Env):
 			n.new_interval_update_service_rate()
 
 		# measure instant reward of an action taken and queue it
-		for i in range(N_NODES):
+		for i in range(cfg.N_NODES):
 			# calculate the instant rewards, based on state, action pair
 			rw += self._agent_reward_fun(self.nodes[i], self._get_agent_observation(n), action_n[i])
 
@@ -178,7 +179,7 @@ class Fog_env(gym.Env):
 			node.reset() # empty buffers
 		self.clock = 0 # and zero simulation clock
 		# then run a bit in the beginning to set up a random beginning state
-		rand_iters = self.np_random.randint(int(TOTAL_TIME_STEPS/64), int(TOTAL_TIME_STEPS/32))
+		rand_iters = self.np_random.randint(int(cfg.TOTAL_TIME_STEPS/64), int(cfg.TOTAL_TIME_STEPS/32))
 		for _ in range(rand_iters):
 			self.step(self.action_space.sample())
 		return self._get_state_obs()
@@ -234,7 +235,7 @@ class Fog_env(gym.Env):
 		[fks, wks] = np.split(action, 2)
 		# concurrent offloads
 		concurr = sum([1 if fk!=n.index and fk!=0 else 0 for fk in fks])
-		for k in range(DEFAULT_SLICES):
+		for k in range(cfg.DEFAULT_SLICES):
 			# start processing if there is any request
 			if wks[k] != 0:
 				self.evq.add_event(Start_processing(self.clock, n, k, wks[k]))
@@ -262,13 +263,13 @@ class Fog_env(gym.Env):
 				# if it's offloaded adds communication time to delay
 				if fks[k] != n.index and fks[k] != 0:
 					bw = int(n.available_bandwidth()/concurr)
-					if bw >= NODE_BANDWIDTH_UNIT: # just make sure it is actually going to offload
-						Dt_ik = PACKET_SIZE / (point_to_point_transmission_rate(n._distances[fks[k]],concurr))
+					if bw >= cfg.NODE_BANDWIDTH_UNIT: # just make sure it is actually going to offload
+						Dt_ik = cfg.PACKET_SIZE / (point_to_point_transmission_rate(n._distances[fks[k]],concurr))
 						D_ik += Dt_ik*1000 # converto to milliseconds
 				# calculate the Queue delay: b_ik/service_rate_i
 				D_ik += obs[n.max_k+k]/n._service_rate[k] # service rate per millisecond
 				# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
-				D_ik +=  1000* PACKET_SIZE*self.case["task_type"][k][1] / (CPU_UNIT) # convert it to milliseconds
+				D_ik +=  1000* cfg.PACKET_SIZE*self.case["task_type"][k][1] / (cfg.CPU_UNIT) # convert it to milliseconds
 				# finally, check if slice delay constraint is met
 				if D_ik >= self.case["task_type"][k][0]:
 					coeficient = -1
@@ -285,8 +286,8 @@ class Fog_env(gym.Env):
 				# also, verify if there is an overload chance in the arriving node
 				arrival_node = self.nodes[fks[k]-1] if fks[k] > 0 else n
 				arr_obs = self._get_agent_observation(arrival_node)
-				if arr_obs[DEFAULT_SLICES+k]+arr+1 >= MAX_QUEUE:
-					coeficient -= OVERLOAD_WEIGHT # tunable_weight
+				if arr_obs[cfg.DEFAULT_SLICES+k]+arr+1 >= cfg.MAX_QUEUE:
+					coeficient -= cfg.OVERLOAD_WEIGHT # tunable_weight
 
 				# a_ik * ( (-1)if(delay_constraint_unmet) - (tunable_weight)if(overflow_chance) )
 				node_reward += obs[k] * coeficient
@@ -303,13 +304,13 @@ class Fog_env(gym.Env):
 		nodes_actions = self.saved_step_info[1]
 		curr_obs = self._get_state_obs()
 		print("------",round(self.clock*1000,2),"ms ------")
-		for i in range(N_NODES):
+		for i in range(cfg.N_NODES):
 			print("--- ",self.nodes[i]," ---")
-			[a, b, be, rc, rm] = np.split(nodes_obs[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
+			[a, b, be, rc, rm] = np.split(nodes_obs[i], [cfg.DEFAULT_SLICES, cfg.DEFAULT_SLICES*2, cfg.DEFAULT_SLICES*3, cfg.DEFAULT_SLICES*3+1])
 			print(" obs[ a:", a,"b:", b, "be:", be, "rc:",rc, "rm:",rm,"]")
 			[f, w] = np.split(nodes_actions[i], 2)
 			print("act[ f:",f,"w:",w,"]")
-			[a, b, be, rc, rm] = np.split(curr_obs[i], [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
+			[a, b, be, rc, rm] = np.split(curr_obs[i], [cfg.DEFAULT_SLICES, cfg.DEFAULT_SLICES*2, cfg.DEFAULT_SLICES*3, cfg.DEFAULT_SLICES*3+1])
 			print(" obs[ a:", a,"b:", b, "be:", be, "rc:",rc, "rm:",rm,"]")
 			#print("-- current state: --")
 			#for k,buf in enumerate(self.nodes[i].buffers):
@@ -327,8 +328,7 @@ class Fog_env(gym.Env):
 		# set all the necessary seeds for reproductibility
 		# one for the sim_env random requirements
 		self.np_random, seed = seeding.np_random(seed)
-		# and another for the global randoms
-		set_tools_seed(seed)
+		self.action_space.seed(seed)
 		return [seed]
 
 	def is_done(self):

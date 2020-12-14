@@ -3,7 +3,7 @@
 
 # >>>>> imports
 from sim_env.fog import Fog_node, task_communication_time, point_to_point_transmission_rate
-from sim_env.configs import NODE_BANDWIDTH_UNIT
+from sim_env import configs as cfg
 from utils.custom_exceptions import InvalidValueError
 from .core import Event
 from .task_arrival import Task_arrival
@@ -53,7 +53,7 @@ class Offload_task(Event):
 
 		# can't send if it's busy sending - and doesn't have a unit available for all transmissions
 		bw = int(self.node.available_bandwidth()/self.concurr)
-		if bw < NODE_BANDWIDTH_UNIT:
+		if bw < cfg.NODE_BANDWIDTH_UNIT:
 			return None
 		# then pop the last task we got
 		t = self.node.pop_task_to_send(self.k, self.time)
