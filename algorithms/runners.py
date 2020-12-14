@@ -41,7 +41,7 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 	if load:
 		orchestrator.load_models()
 	if train:
-		iteration_rewards = orchestrator.train(save=save)
+		iteration_rewards = orchestrator.train()
 		plt_line_plot({alg.short_str()+"_"+case["case"]+"_nodes"+str(len(env.nodes)) : iteration_rewards}, True, 1*len(env.nodes)+3*len(env.nodes), title="avg_rw"+case["case"])
 
 	# and run as usual
@@ -59,6 +59,8 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 	# -- info logs
 	if compiled_info is not None: info_logs(str(orchestrator), round(time.time()-start_time,2), compiled_info)
 	# --
-	# to clear all the models, since they're already saved after trainning
+	# to clear all the models after saving if requested
+	if save:
+		orchestrator.save_models()
 	tf.keras.backend.clear_session()
 	return compiled_info

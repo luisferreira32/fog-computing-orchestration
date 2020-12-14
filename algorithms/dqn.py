@@ -95,7 +95,7 @@ class Dqn_Orchestrator(object):
 		for dqn_target, dqn in zip(actors_dqn_target, self.actors_dqn):
 			dqn_target.set_weights(dqn.get_weights())
 
-	def train(self, batch_size: int = DEFAULT_BATCH_SIZE,  save: bool = False):
+	def train(self, batch_size: int = DEFAULT_BATCH_SIZE):
 		# init a replay buffer with fixed size
 		replay_buffer_states = tf.TensorArray(dtype=tf.float32, size=REPLAY_BUFFER_SIZE)
 		replay_buffer_actions = tf.TensorArray(dtype=tf.float32, size=REPLAY_BUFFER_SIZE)

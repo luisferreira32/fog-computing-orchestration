@@ -92,7 +92,7 @@ class A2c_Orchestrator(object):
 
 	def train(self, total_iterations: int = DEFAULT_ITERATIONS, trajectory_lenght: int = DEFAULT_TRAJECTORY,
 		batch_size: int = DEFAULT_BATCH_SIZE, epochs: int = DEFAULT_EPOCHS, ppo_lr: int = DEFAULT_PPO_LEARNING_RATE,
-		critic_lr: float = DEFAULT_CRITIC_LEARNING_RATE, save: bool = False):
+		critic_lr: float = DEFAULT_CRITIC_LEARNING_RATE):
 
 		critic_optimizer = tf.keras.optimizers.SGD(learning_rate=critic_lr)
 		actor_optimizer = tf.keras.optimizers.Adam(learning_rate=ppo_lr)
@@ -168,7 +168,5 @@ class A2c_Orchestrator(object):
 			# saving values
 			iteration_rewards.append(tf.reduce_sum(rewards).numpy()/trajectory_lenght)
 
-		# save trained orchestrator, then return iteration rewards
-		if save:
-			orchestrator.save_models()
+		#then return iteration rewards
 		return iteration_rewards
