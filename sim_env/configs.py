@@ -61,23 +61,5 @@ NORMAL_CASE_2 = {
 	"arrivals" : [0.6, 0.6, 0.6],
 	"task_type" : [[5, 600, 400], [10, 600, 400], [20, 600, 400]]
 }
-HEAVY_CASE_2 = {
-	"case": "h2",
-	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[5, 600, 400], [10, 600, 400], [20, 600, 400]]
-}
-# Case 3
-NORMAL_CASE_3 = {
-	"case": "n3",
-	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[5, 600, 400], [10, 600, 400], [10, 400, 1200]]
-}
-HEAVY_CASE_3 = {
-	"case": "h3",
-	"arrivals" : [0.8, 0.8, 0.8],
-	"task_type" : [[5, 600, 400], [10, 600, 400], [10, 400, 1200]]
-}
 # cases compilations
-ALL_CASES = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3, HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
-HEAVY_CASES = [HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3]
-NORMAL_CASES = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3]
+ALL_CASES = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3]
