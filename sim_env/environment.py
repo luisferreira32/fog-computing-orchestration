@@ -51,7 +51,7 @@ class Fog_env(gym.Env):
 
 	metadata = {'render.modes': ['human']}
 
-	def __init__(self, case=cfg.BASE_SLICE_CHARS, rd_seed=cfg.RANDOM_SEED, max_time=cfg.SIM_TIME, time_step=cfg.TIME_STEP):
+	def __init__(self, case=cfg.BASE_SLICE_CHARS, rd_seed=cfg.RANDOM_SEED, max_time=cfg.SIM_TIME, time_step=cfg.TIME_STEP, n_nodes=cfg.N_NODES):
 		"""
 		Parameters:
 			case: dict - the case that defines slices characteristics and arrival rates
@@ -65,7 +65,8 @@ class Fog_env(gym.Env):
 
 		# envrionment variables
 		# self.nodes, self.evq, etc...
-		self.nodes = [create_random_node(i) for i in range(1,cfg.N_NODES+1)]
+		self.n_nodes = n_nodes
+		self.nodes = [create_random_node(i) for i in range(1,n_nodes+1)]
 		self.case = case
 		for n in self.nodes:
 			n.set_distances(self.nodes)
@@ -81,7 +82,7 @@ class Fog_env(gym.Env):
 		# [[f_00, ..., f_0k, w_00, ..., w_0k], ..., [f_i0, ..., f_ik, w_i0, ..., w_ik]]
 		# for each node there is an action [f_i0, ..., f_ik, w_i0, ..., w_ik]
 		# where values can be between 0 and I for f_ik, and 0 and N=limited by either memory or cpu for w_ik
-		action_possibilities = [np.append([cfg.N_NODES+1 for _ in range(n.max_k)],
+		action_possibilities = [np.append([self.n_nodes+1 for _ in range(n.max_k)],
 			[min(n._avail_cpu_units, n._avail_ram_units/np.ceil(case["task_type"][2][k]/cfg.RAM_UNIT))+1 for k in range(n.max_k)]) for n in self.nodes]
 		action_possibilities = np.array(action_possibilities, dtype=np.float32)
 		self.action_space = spaces.MultiDiscrete(action_possibilities)
@@ -133,7 +134,7 @@ class Fog_env(gym.Env):
 			n.new_interval_update_service_rate()
 
 		# measure instant reward of an action taken and queue it
-		for i in range(cfg.N_NODES):
+		for i in range(self.n_nodes):
 			# calculate the instant rewards, based on state, action pair
 			rw += self._agent_reward_fun(self.nodes[i], self._get_agent_observation(n), action_n[i])
 
@@ -304,7 +305,7 @@ class Fog_env(gym.Env):
 		nodes_actions = self.saved_step_info[1]
 		curr_obs = self._get_state_obs()
 		print("------",round(self.clock*1000,2),"ms ------")
-		for i in range(cfg.N_NODES):
+		for i in range(self.n_nodes):
 			print("--- ",self.nodes[i]," ---")
 			[a, b, be, rc, rm] = np.split(nodes_obs[i], [cfg.DEFAULT_SLICES, cfg.DEFAULT_SLICES*2, cfg.DEFAULT_SLICES*3, cfg.DEFAULT_SLICES*3+1])
 			print(" obs[ a:", a,"b:", b, "be:", be, "rc:",rc, "rm:",rm,"]")

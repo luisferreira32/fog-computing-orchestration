@@ -5,7 +5,6 @@ from sim_env.configs import BASE_SLICE_CHARS
 from sim_env.configs import NORMAL_CASES, HEAVY_CASES, ALL_CASES
 from sim_env.configs import NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3
 from sim_env.configs import HEAVY_CASE_1, HEAVY_CASE_2, HEAVY_CASE_3
-from algorithms.configs import ALGORITHM_SEED
 # algorithms
 from algorithms.basic import Nearest_Round_Robin, Nearest_Priority_Queue
 from algorithms.a2c import A2c_Orchestrator

@@ -9,7 +9,7 @@ from utils.tools import dictionary_append, append_to_file
 from utils.display import info_gather, info_logs, plt_line_plot
 # the envrionment
 from algorithms.deep_tools.common import  set_tf_seed
-from algorithms.configs import ALGORITHM_SEED
+from algorithms.configs import ALGORITHM_SEED, DEFAULT_ITERATIONS
 
 
 def run_basic_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=False):
@@ -42,7 +42,7 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 		orchestrator.load_models()
 	if train:
 		iteration_rewards = orchestrator.train(save=save)
-		plt_line_plot({"a2c_"+case["case"] : iteration_rewards})
+		plt_line_plot({"a2c_"+case["case"]+str(len(env.nodes)) : iteration_rewards}, title="rw1_iters"+str(DEFAULT_ITERATIONS))
 
 	# and run as usual
 	start_time = time.time()
