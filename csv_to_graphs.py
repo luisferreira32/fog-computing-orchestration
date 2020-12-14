@@ -6,8 +6,8 @@ from utils.tools import read_all_from_csvs
 from utils.display import plt_bar, plt_error_bar
 # just a simple file for a simple function
 def csv_to_graphs():
-	print("[INFO] python csv_to_graphs.py [path-to-results-folder-with-csv:default=./results/] [case:default=n1 n2 n3 h1 h2 h3]")
-	cases = ["n1", "n2", "n3", "h1", "h2", "h3"]
+	print("[INFO] python csv_to_graphs.py [path-to-results-folder-with-csv:default=./results/] [case:default=n1 n2 n3]")
+	cases = ["n1", "n2", "n3"]
 	if len(sys.argv) < 2:
 		(delays_df, success_rate_df, overflow_rate_df) = read_all_from_csvs()
 	elif len(sys.argv) < 3:
