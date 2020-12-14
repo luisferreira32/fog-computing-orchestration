@@ -42,7 +42,7 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 		orchestrator.load_models()
 	if train:
 		iteration_rewards = orchestrator.train(save=save)
-		plt_line_plot({"a2c_"+case["case"]+str(len(env.nodes)) : iteration_rewards}, title="rw1_iters"+str(DEFAULT_ITERATIONS))
+		plt_line_plot({alg.short_str()+"_"+case["case"]+"_nodes"+str(len(env.nodes)) : iteration_rewards}, True, 1*len(env.nodes)+3*len(env.nodes), title="avg_rw"+case["case"])
 
 	# and run as usual
 	start_time = time.time()

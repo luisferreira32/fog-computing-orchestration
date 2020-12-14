@@ -38,11 +38,11 @@ o_start_time = time.time()
 
 # get some simulations to do the average
 for case in cases:
-	for alg in algs:
-		for seed in random_seeds:
+	for seed in random_seeds:
+		# generate the env
+		env = Fog_env(case, seed)
+		for alg in algs:
 			start_time = time.time()
-			# generate the env
-			env = Fog_env(case, seed)
 			# run either a basic algorithm or a RL algorithm
 			if alg.basic:
 				compiled_info = run_basic_algorithm_on_envrionment(alg, env, case, info_gather_init(), debug)

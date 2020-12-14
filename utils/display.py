@@ -50,10 +50,12 @@ def plt_box_plot(df, mili=False, title="default_title"):
 	fig.savefig(my_path+title+".png")
 
 eps = np.finfo(np.float32).eps.item() # almost zero value
-def plt_line_plot(df, normalize=False, title="default_line_plt"):
+def plt_line_plot(df, normalize=False, r=None, title="default_line_plt"):
 	for key, values in df.items():
 		if normalize:
-			values = [(v+eps)/(max(values)-min(values)+eps) for v in values]
+			if r is None:
+				r = max(values)-min(values)
+			values = [(v+eps)/(r+eps) for v in values]
 		plt.plot(values, label=key)
 	plt.legend(loc="upper right")
 	plt.savefig(my_path+title+".png")

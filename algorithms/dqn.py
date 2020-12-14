@@ -137,7 +137,8 @@ class Dqn_Orchestrator(object):
 			state = tf.identity(next_state)
 			if t%1000 == 0:
 				print(".", end='', flush=True)
-		print(" Done!", flush=True)
+		print(" ")
+		print("[LOG] Done starting replay buffer!", flush=True)
 
 		replay_buffer_states = replay_buffer_states.stack()
 		replay_buffer_actions = replay_buffer_actions.stack()
@@ -246,7 +247,8 @@ class Dqn_Orchestrator(object):
 				e_start = e_start*EPSILON_RENEWAL_FACTOR
 				e_decay = (e_start - MIN_EPSILON)/R_e
 
-			print("Iteration",t.numpy()," [iteration reward:", reward, "] [time", round(time.time()-start_time,2),"]", flush=True) # iteration print
+			if t%10 == 0:
+				print("Iteration",t.numpy()," [iteration reward:", reward, "] [time", round(time.time()-start_time,2),"]", flush=True) # iteration print
 
 		return iter_rewards
 		
