@@ -4,25 +4,6 @@ The objective of this work is to work on the state-of-the-art for Fog Computing 
 
 
 ---
-
-##  How to run
-
-First install the necessary dependencies - Tensorflow 2.x and Matplotlib for results.
-
-For help in commands run the command:
-```
-python playground.py --help
-```
-If you want to run all cases defined in `sim_env/configs.py`, with the baseline algorithms (Nearest Round Robin or Nearest Priority Queue):
-```
-python playground.py --algorithm=rrpq --cases=all
-```
-To train a Reinforcement Learning, for example Advantage Actor Critc agent in a case described in `sim_env/configs.py`, use: [NOTE: still bugged]
-```
-python playground.py --algorithm=a2c --cases=n1 --train
-```
-
----
 ## Technical details
   
 DISCLAIMER: each of this libraries is not mine, the authors are as stated in the links below, and they were only used in this work for academic purposes.  
@@ -43,7 +24,10 @@ To run this simulations it is necessary to have Tensorflow 2.x installed and its
 - Re-model channel gain with friis equation;
 - Add node ABC class;
 - Implement Cloud node, subclass of node;  
+- Re-model communications (in general) for more options of architectures;
+- ... 
 
 ### on the orchestrator algorithms...
+- Create orchestrator ABC class;
 - ...
 
