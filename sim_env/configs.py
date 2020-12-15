@@ -21,7 +21,7 @@ NODE_BANDWIDTH = 1e6 # Hz
 NODE_BANDWIDTH_UNIT = 1e5 # Hz , i.e., 10 concurrent transmissions is the maximum
 TRANSMISSION_POWER = 20 # dBm
 # resources
-DEFAULT_SLICES = 3
+DEFAULT_SLICES = 3# default = 3
 MAX_QUEUE = 10
 CPU_CLOCKS = [5e9, 6e9, 7e9, 8e9, 9e9, 10e9] # [5, 6, 7, 8, 9, 10] GHz
 RAM_SIZES = [2400, 4000, 8000] # MB = [6, 10, 20] units
@@ -58,7 +58,7 @@ NORMAL_CASE_2 = {
 }
 # Case 3
 NORMAL_CASE_3 = {
-	"case": "base",
+	"case": "n3",
 	"arrivals" : [0.6, 0.6, 0.6],
 	"task_type" : [[5, 600, 400], [10, 600, 400], [10, 400, 1200]]
 }

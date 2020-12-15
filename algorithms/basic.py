@@ -71,7 +71,7 @@ class Nearest_Priority_Queue(object):
 		self.node = node
 		self.case = case
 		# make slice priority on nodes
-		delay_constraints = [k[0] for k in case["task_type"]]
+		delay_constraints = [case["task_type"][k][0] for k in range(DEFAULT_SLICES)]
 		# to make priorities shuffeled at equal values
 		aux_random = uniform_rand_array(len(delay_constraints))
 		self.priorities = np.lexsort((aux_random, delay_constraints))
