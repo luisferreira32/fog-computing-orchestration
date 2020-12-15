@@ -21,7 +21,7 @@ NODE_BANDWIDTH = 1e6 # Hz
 NODE_BANDWIDTH_UNIT = 1e5 # Hz , i.e., 10 concurrent transmissions is the maximum
 TRANSMISSION_POWER = 20 # dBm
 # resources
-DEFAULT_SLICES = 3# default = 3
+DEFAULT_SLICES = 1# default = 3
 MAX_QUEUE = 10
 CPU_CLOCKS = [5e9, 6e9, 7e9, 8e9, 9e9, 10e9] # [5, 6, 7, 8, 9, 10] GHz
 RAM_SIZES = [2400, 4000, 8000] # MB = [6, 10, 20] units
@@ -37,13 +37,14 @@ THERMAL_NOISE_DENSITY = -174 # dBm/Hz
 # TASK CONSTANTS
 PACKET_SIZE = 5000 # bits = 5 kBits
 
-# ---- simulation cases ---- 
-# slice characteristics 
+# experimental case
 BASE_SLICE_CHARS = { # case 3 has more heterogenity
 	"case": "base",
-	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[5, 600, 400], [10, 600, 400], [10, 400, 1200]]
+	"arrivals" : [1.0],
+	"task_type" : [[20, 1200, 600]]
 }
+
+# ---- default simulation cases ---- 
 # Case 1
 NORMAL_CASE_1 = {
 	"case": "n1",

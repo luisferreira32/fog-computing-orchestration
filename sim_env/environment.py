@@ -83,7 +83,7 @@ class Fog_env(gym.Env):
 		# for each node there is an action [f_i0, ..., f_ik, w_i0, ..., w_ik]
 		# where values can be between 0 and I for f_ik, and 0 and N=limited by either memory or cpu for w_ik
 		action_possibilities = [np.append([self.n_nodes+1 for _ in range(n.max_k)],
-			[min(n._avail_cpu_units, n._avail_ram_units/np.ceil(case["task_type"][2][k]/cfg.RAM_UNIT))+1 for k in range(n.max_k)]) for n in self.nodes]
+			[min(n._avail_cpu_units, n._avail_ram_units/(np.ceil(case["task_type"][k][2]/cfg.RAM_UNIT)))+1 for k in range(n.max_k)]) for n in self.nodes]
 		action_possibilities = np.array(action_possibilities, dtype=np.float32)
 		self.action_space = spaces.MultiDiscrete(action_possibilities)
 
@@ -92,7 +92,7 @@ class Fog_env(gym.Env):
 		# ..., a_i0, ..., a_ik, b_i0, ..., b_ik, be_i0, ..., be_ik, rc_i, rm_i]
 		# state_lows has to be remade if nodes don't have same slices
 		state_possibilities = [np.concatenate(([2 for _ in range(n.max_k)],[cfg.MAX_QUEUE+1 for _ in range(n.max_k)],
-			[min(n._avail_cpu_units,  n._avail_ram_units/np.ceil(case["task_type"][2][k]/cfg.RAM_UNIT))+1 for k in range(n.max_k)],
+			[min(n._avail_cpu_units,  n._avail_ram_units/(np.ceil(case["task_type"][k][2]/cfg.RAM_UNIT)))+1 for k in range(n.max_k)],
 			[n._avail_cpu_units+1], [n._avail_ram_units+1])) for n in self.nodes]
 		state_possibilities = np.array(state_possibilities, dtype=np.float32)
 		self.observation_space = spaces.MultiDiscrete(state_possibilities)
