@@ -48,7 +48,7 @@ BASE_SLICE_CHARS = { # case 3 has more heterogenity
 NORMAL_CASE_1 = {
 	"case": "n1",
 	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[10, 1200, 400], [10, 600, 400], [10, 400, 1200]]
+	"task_type" : [[20, 1200, 400], [20, 600, 400], [20, 400, 1200]]
 }
 # Case 2
 NORMAL_CASE_2 = {
