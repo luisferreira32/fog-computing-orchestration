@@ -57,7 +57,7 @@ def plt_line_plot(df, normalize=False, r=None, title="default_line_plt"):
 				r = max(values)-min(values)
 			values = [(v+eps)/(r+eps) for v in values]
 		plt.plot(values, label=key)
-	plt.legend(loc="upper right")
+	plt.legend(loc="upper left")
 	plt.savefig(my_path+title+".png")
 
 # --- text log display ---

@@ -4,7 +4,7 @@ import numpy as np
 
 from sim_env.configs import N_NODES, DEFAULT_SLICES, MAX_QUEUE, RAM_UNIT, TIME_STEP
 from sim_env.events import Start_processing, Stop_processing
-from utils.tools import uniform_rand_array
+from utils.tools import uniform_rand_array, uniform_rand_int
 
 # --- offloading decision functions ---
 
@@ -24,6 +24,17 @@ def nearest_node(node, a_k, b_k, threshold):
 			fks[k] =min_n
 	return fks
 
+def random_offload(node, a_k, b_k, threshold):
+	fks = np.zeros(DEFAULT_SLICES, dtype=np.uint8)
+	# offload to the Nearest Node if buffer bigger than 0.8
+	for k in range(node.max_k):
+		if a_k[k] == 1:
+			fks[k] = node.index
+		if b_k[k] >= threshold*MAX_QUEUE and a_k[k] == 1:
+			# set the f_ik to a random node
+			fks[k] = uniform_rand_int(1, N_NODES+1)
+	return fks
+
 # --- doesn't actually do proper scheduling ---
 
 class Placeholder_Algorithm(object):
@@ -35,7 +46,7 @@ class Placeholder_Algorithm(object):
 		self.offload_fun = offload_fun
 
 	def __str__(self):
-		return "placeholder"
+		return "placeholder_"+self.offload_fun.__name__
 
 	@staticmethod
 	def short_str():
@@ -65,11 +76,12 @@ class Nearest_Round_Robin(object):
 	"""Nearest_Round_Robin
 	"""
 	basic = True
-	def __init__(self, node, case):
+	def __init__(self, node, case, offload_fun=nearest_node):
 		# to keep track of what slice is processing
 		self.process = 0
 		self.node = node
 		self.case = case
+		self.offload_fun = offload_fun
 
 	def __str__(self):
 		return "Nearest Round Robin"
@@ -101,7 +113,7 @@ class Nearest_Round_Robin(object):
 				self.process = 0
 
 		# offload to the Nearest Node if buffer bigger than 0.8
-		fks = nearest_node(self.node, a_k, b_k, 0.8)
+		fks = offload_fun(self.node, a_k, b_k, 0.8)
 
 		# and return the action
 		return np.append(fks, wks)
@@ -112,9 +124,10 @@ class Nearest_Priority_Queue(object):
 	"""Nearest_Priority_Queue
 	"""
 	basic = True
-	def __init__(self, node, case):
+	def __init__(self, node, case, offload_fun=nearest_node):
 		self.node = node
 		self.case = case
+		self.offload_fun = offload_fun
 		# make slice priority on nodes
 		delay_constraints = [case["task_type"][k][0] for k in range(DEFAULT_SLICES)]
 		# to make priorities shuffeled at equal values
@@ -148,7 +161,7 @@ class Nearest_Priority_Queue(object):
 				be_k[k] += 1
 
 		# offload to the Nearest Node if buffer bigger than 0.8
-		fks = nearest_node(self.node, a_k, b_k, 0.8)
+		fks = offload_fun(self.node, a_k, b_k, 0.8)
 
 		# and return the action
 		return np.append(fks, wks)

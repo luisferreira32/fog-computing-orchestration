@@ -10,11 +10,12 @@ from utils.display import info_gather, info_logs, plt_line_plot
 # the envrionment
 from algorithms.deep_tools.common import  set_tf_seed
 from algorithms.configs import ALGORITHM_SEED, DEFAULT_ITERATIONS
+from algorithms.basic import nearest_node
 
 
-def run_basic_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=False):
+def run_basic_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=False, offload_fun=nearest_node):
 	# set up the agents
-	agents = [alg(n, case) for n in env.nodes]
+	agents = [alg(n, case, offload_fun) for n in env.nodes]
 	# runner for simple baseline algorithms
 	start_time = time.time()
 	obs_n = env.reset()
@@ -29,8 +30,9 @@ def run_basic_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug
 
 	# -- info logs
 	if compiled_info is not None: info_logs(str(agents[0])+str(case), round(time.time()-start_time,2), compiled_info)
+	key = str(agents[0])+case["case"]
 	# --
-	return compiled_info
+	return compiled_info, key
 
 
 def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=False, train=False, save=False, load=False):
@@ -42,7 +44,7 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 		orchestrator.load_models()
 	if train:
 		iteration_rewards = orchestrator.train()
-		plt_line_plot({alg.short_str()+"_"+case["case"]+"_nodes"+str(len(env.nodes)) : iteration_rewards}, True, 1*len(env.nodes)+3*len(env.nodes), title="avg_rw"+case["case"])
+		plt_line_plot({alg.short_str()+"_"+case["case"] : iteration_rewards}, title="avg_rw"+case["case"])
 
 	# and run as usual
 	start_time = time.time()
@@ -58,9 +60,10 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 
 	# -- info logs
 	if compiled_info is not None: info_logs(str(orchestrator), round(time.time()-start_time,2), compiled_info)
+	key = str(orchestrator)
 	# --
 	# to clear all the models after saving if requested
 	if save:
 		orchestrator.save_models()
 	tf.keras.backend.clear_session()
-	return compiled_info
+	return compiled_info, key

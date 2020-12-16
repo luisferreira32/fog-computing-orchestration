@@ -38,10 +38,10 @@ THERMAL_NOISE_DENSITY = -174 # dBm/Hz
 PACKET_SIZE = 5000 # bits = 5 kBits
 
 # experimental case
-BASE_SLICE_CHARS = { # case 3 has more heterogenity
+BASE_SLICE_CHARS = {
 	"case": "base",
-	"arrivals" : [1.0],
-	"task_type" : [[20, 1200, 600]]
+	"arrivals" : [0.6],
+	"task_type" : [[50, 1500, 600]]
 }
 
 # ---- default simulation cases ---- 

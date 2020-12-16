@@ -163,10 +163,16 @@ class A2c_Orchestrator(object):
 
 				print("[EPOCH",e.numpy()+1,"/",epochs,"] cumulative losses:", losses) # epoch print
 
-			# fetch the new state
-			current_state = set_training_env_vec(self.env_vec)
+			# fetch the new state: with reset given some iterations ~ in order to visit more states
+			if iteration%10 == 0:
+				current_state = set_training_env_vec(self.env_vec)
+			else:
+				current_state = training_env_vec_state()
 			# saving values
-			iteration_rewards.append(tf.reduce_sum(rewards).numpy()/trajectory_lenght)
+			r = it_rw/PARALLEL_ENVS
+			if iteration_rewards:
+				r = (1-DEFAULT_GAMMA)*r + DEFAULT_GAMMA*iteration_rewards[-1]
+			iteration_rewards.append(r)
 
 		#then return iteration rewards
 		return iteration_rewards
