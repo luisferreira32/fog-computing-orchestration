@@ -30,7 +30,7 @@ def run_basic_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug
 
 	# -- info logs
 	if compiled_info is not None: info_logs(str(agents[0])+str(case), round(time.time()-start_time,2), compiled_info)
-	key = str(agents[0])+case["case"]
+	key = case["case"]+str(agents[0])
 	# --
 	return compiled_info, key
 

@@ -17,10 +17,11 @@ from gym.utils import seeding
 import numpy as np
 
 # fog related imports
-from sim_env.fog import create_random_node, point_to_point_transmission_rate
-from sim_env.events import Event_queue, is_arrival_on_slice
+from sim_env.fog import create_random_node
+from sim_env.events import Event_queue
 from sim_env.events import Stop_transmitting, Set_arrivals, Offload_task, Start_transmitting, Start_processing
 from sim_env import configs as cfg
+from sim_env.rewards import jbaek_reward_fun, sr_or_reward
 
 # for reproductibility
 from utils.tools import set_tools_seed
@@ -76,6 +77,7 @@ class Fog_env(gym.Env):
 		self.max_time = max_time
 		self.time_step = time_step
 
+		self.reward_fun = sr_or_reward
 		self.saved_step_info = None
 
 		# define the action space with I nodes and K slices each
@@ -133,12 +135,11 @@ class Fog_env(gym.Env):
 		for n in self.nodes:
 			n.new_interval_update_service_rate()
 
-		# measure instant reward of an action taken and queue it
+		# measure instant reward
+		rw = self.reward_fun(self, action_n)
+		print(rw)
+		# and queue the actions
 		for i in range(self.n_nodes):
-			# calculate the instant rewards, based on state, action pair
-			rw += self._agent_reward_fun(self.nodes[i], self._get_agent_observation(n), action_n[i])
-
-			# and execute the action
 			self._set_agent_action(self.nodes[i], action_n[i]) 
 
 		# increase the clock a timestep
@@ -164,7 +165,7 @@ class Fog_env(gym.Env):
 		obs_n = self._get_state_obs()
 
 		# just save it for render
-		self.saved_step_info = [state_t, action_n]
+		self.saved_step_info = [state_t, action_n, info]
 
 		# return obs, rw, done and info
 		return obs_n, rw, done, info
@@ -243,57 +244,6 @@ class Fog_env(gym.Env):
 			if fks[k] != n.index and fks[k] != 0:
 				self.evq.add_event(Offload_task(self.clock, n, k, self.nodes[fks[k]-1], concurr))
 
-	def _agent_reward_fun(self, n, obs, action):
-		""" Calculates the reward for an agent given his own observation and an action
-
-		Parameters:
-			n: Fog_node - a node of the nodes list in the envrionment
-			obs: np.arry - the POMPD of the agent/node n
-			action: np.arry - the action that was decided by the agent/node n
-		"""
-
-		# calculate the reward for the agent (node) n
-		node_reward = 0
-		[fks, wks] = np.split(action, 2)
-		concurr = sum([1 if fk!=n.index and fk!=0 else 0 for fk in fks])
-		for k in range(n.max_k):
-			# only makes sense to calculate the coefficient if a[k] = 1
-			if obs[k]:
-				D_ik = 0; Dt_ik = 0
-				# if it's offloaded adds communication time to delay
-				if fks[k] != n.index and fks[k] != 0:
-					bw = int(n.available_bandwidth()/concurr)
-					if bw >= cfg.NODE_BANDWIDTH_UNIT: # just make sure it is actually going to offload
-						Dt_ik = cfg.PACKET_SIZE / (point_to_point_transmission_rate(n._distances[fks[k]],concurr))
-						D_ik += Dt_ik*1000 # converto to milliseconds
-				# calculate the Queue delay: b_ik/service_rate_i
-				D_ik += obs[n.max_k+k]/n._service_rate[k] # service rate per millisecond
-				# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
-				D_ik +=  1000* cfg.PACKET_SIZE*self.case["task_type"][k][1] / (cfg.CPU_UNIT) # convert it to milliseconds
-				# finally, check if slice delay constraint is met
-				if D_ik >= self.case["task_type"][k][0]:
-					coeficient = -1
-				else:
-					coeficient = 1
-
-				# count the number of new arrivals in the arriving node
-				arr = 0
-				for ev in self.evq.queue():
-					if is_arrival_on_slice(ev, self.nodes[fks[k]-1], k) and ev.time <= self.clock+Dt_ik:
-						arr += 1
-				# and estimated new arrivals too
-				arr += np.ceil(Dt_ik*self.case["arrivals"][k])
-				# also, verify if there is an overload chance in the arriving node
-				arrival_node = self.nodes[fks[k]-1] if fks[k] > 0 else n
-				arr_obs = self._get_agent_observation(arrival_node)
-				if arr_obs[cfg.DEFAULT_SLICES+k]+arr+1 >= cfg.MAX_QUEUE:
-					coeficient -= cfg.OVERLOAD_WEIGHT # tunable_weight
-
-				# a_ik * ( (-1)if(delay_constraint_unmet) - (tunable_weight)if(overflow_chance) )
-				node_reward += obs[k] * coeficient
-
-		# float point reward: 1/k * reward on each slice
-		return node_reward/n.max_k
 
 	def render(self, mode='human', close=False):
 		""" Renders the last step taken given a saved_step_info with the generic observation and the actions taken plus the current state (result) """
