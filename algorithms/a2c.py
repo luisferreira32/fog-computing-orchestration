@@ -110,7 +110,8 @@ class A2c_Orchestrator(object):
 			it_rw = 0
 			for env_n in range(PARALLEL_ENVS):
 				states, actions, rewards, dones, values, run_action_probs = run_actor_critic_tragectory(current_state, env_n, self, trajectory_lenght)
-				x = tf.data.Dataset.from_tensor_slices((states, actions, rewards, dones, values, run_action_probs))
+				advantages, target_values = general_advantage_estimator(rewards[:-1], values[:-1], values[1:], dones[1:], DEFAULT_GAMMA)
+				x = tf.data.Dataset.from_tensor_slices((states[:-1], actions[:-1], run_action_probs[:-1], advantages, target_values))
 				if train_dataset is None:
 					train_dataset = x
 				else:
@@ -123,24 +124,29 @@ class A2c_Orchestrator(object):
 			train_dataset = train_dataset.shuffle(buffer_size=(trajectory_lenght+batch_size)*PARALLEL_ENVS).batch(batch_size)
 			#print(train_dataset.cardinality())
 
+
+			# train the critic for the dataset
+			critic_total_loss = 0
+			for state, _, _, _, tv in train_dataset:
+
+				# train the critic, keep batch, merge nodes
+				node_state_list = tf.unstack(state, axis=1)
+				joint_state = tf.concat(node_state_list, -1) # concat along the features
+				with tf.GradientTape() as tape:
+					values = self.critic(joint_state, training=True)
+					values = tf.squeeze(values)
+					loss = critic_loss(values, tv)
+				grads = tape.gradient(loss, self.critic.trainable_weights)
+				critic_optimizer.apply_gradients(zip(grads, self.critic.trainable_weights))
+				del tape
+
+				critic_total_loss += loss.numpy()
+			print("[CRITIC UPDATE] total loss", critic_total_loss)
+
 			# after running trajectories train with the whole data
 			for e in tf.range(epochs):
-				losses = {"critic": 0, 0:0, 1:0, 2:0, 3:0, 4:0}
-				for state, action, rw, done, v, old_action_probs in train_dataset:
-					advantages, target_values = general_advantage_estimator(rw[:-1], v[:-1], v[1:], done[1:], DEFAULT_GAMMA)
-
-					# train the critic, keep batch, merge nodes
-					node_state_list = tf.unstack(state, axis=1)
-					joint_state = tf.concat(node_state_list, -1) # concat along the features
-					with tf.GradientTape() as tape:
-						values = self.critic(joint_state, training=True)
-						values = tf.squeeze(values)
-						loss = critic_loss(values[:-1], target_values)
-					grads = tape.gradient(loss, self.critic.trainable_weights)
-					critic_optimizer.apply_gradients(zip(grads, self.critic.trainable_weights))
-					del tape
-
-					losses["critic"] += loss.numpy()
+				losses = {0:0, 1:0, 2:0, 3:0, 4:0}
+				for state, action, old_action_probs, adv, _ in train_dataset:
 
 					#and each actor
 					for i in tf.range(self.num_actors):
@@ -154,7 +160,7 @@ class A2c_Orchestrator(object):
 								action_probs = action_probs.write(t, tf.nn.softmax(action_logits[t])[action[t,i]])
 							action_probs = action_probs.stack()
 
-							loss = ppo_actor_loss(old_action_probs[:-1,i], action_probs[:-1], advantages)
+							loss = ppo_actor_loss(old_action_probs[:,i], action_probs, adv)
 						grads = tape.gradient(loss, self.actors[i].trainable_weights)
 						actor_optimizer.apply_gradients(zip(grads, self.actors[i].trainable_weights))
 						del tape
