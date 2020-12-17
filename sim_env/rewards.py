@@ -60,8 +60,6 @@ def jbaek_reward_fun2(env, action_n):
 				for ev in env.evq.queue():
 					if is_arrival_on_slice(ev, env.nodes[fks[k]-1], k) and ev.time <= env.clock+Dt_ik:
 						arr += 1
-				# and estimated new arrivals too
-				arr += np.ceil(1000*Dt_ik*env.case["arrivals"][k]) # convert to milliseconds
 				# also, verify if there is an overload chance in the arriving node
 				arrival_node = env.nodes[fks[k]-1] if fks[k] > 0 else n
 				arr_obs = env._get_agent_observation(arrival_node)
