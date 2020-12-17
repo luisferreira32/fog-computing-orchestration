@@ -43,7 +43,7 @@ def jbaek_reward_fun2(env, action_n):
 				if fks[k] != n.index:
 					bw = int(n.available_bandwidth()/concurr)
 					if bw >= cfg.NODE_BANDWIDTH_UNIT: # just make sure it is actually going to offload
-						Dt_ik = cfg.PACKET_SIZE / (point_to_point_transmission_rate(n._distances[fks[k]],concurr))
+						Dt_ik = cfg.PACKET_SIZE / (point_to_point_transmission_rate(n._distances[fks[k]],bw))
 						D_ik += Dt_ik*1000 # converto to milliseconds
 				# calculate the Queue delay: b_ik/service_rate_i
 				D_ik += obs[n.max_k+k]/env.nodes[fks[k]-1]._service_rate[k] # service rate per millisecond
