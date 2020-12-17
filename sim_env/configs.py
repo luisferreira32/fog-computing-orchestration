@@ -41,7 +41,7 @@ PACKET_SIZE = 5000 # bits = 5 kBits
 BASE_SLICE_CHARS = {
 	"case": "base",
 	"arrivals" : [0.6],
-	"task_type" : [[100, 1200, 600]]
+	"task_type" : [[15, 1200, 600]]
 }
 
 # ---- default simulation cases ---- 

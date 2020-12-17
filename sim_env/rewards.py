@@ -37,7 +37,7 @@ def jbaek_reward_fun2(env, action_n):
 		concurr = sum([1 if fk!=n.index and fk!=0 else 0 for fk in fks])
 		for k in range(n.max_k):
 			# only makes sense to calculate the coefficient if a[k] = 1
-			if obs[k] == 1 and wks[k] > 0 and fks[k] != 0: # will only be completed if scheduled [TODO@luis - move or remove wks?]
+			if obs[k] == 1 and fks[k] != 0: #  and wks[k] > 0  will only be completed if scheduled [TODO@luis - move or remove wks?]
 				D_ik = 0; Dt_ik = 0
 				# if it's offloaded adds communication time to delay
 				if fks[k] != n.index:
@@ -76,10 +76,10 @@ def jbaek_reward_fun2(env, action_n):
 	return rw
 
 
-def sr_or_reward(env, action_n):
+def simple_reward(env, action_n):
 	# a reward that seeks to maximize the success and minimize overflow
 	rw = 0.0
 	if env.saved_step_info is not None:
 		info = env.saved_step_info[2]
-		rw = 2.0*len(info["delay_list"]) - 0.5*info["overflow"]
+		rw = .5*len(info["delay_list"]) - 2.0*info["overflow"]
 	return rw
