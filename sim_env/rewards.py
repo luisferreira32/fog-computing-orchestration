@@ -74,6 +74,75 @@ def jbaek_reward_fun2(env, action_n):
 	return rw
 
 
+def jbaek_reward_fun_alt(env, action_n):
+	""" Calculates the reward for the system given its own observation and an action
+
+	Parameters:
+		env: Fog_env - the environment in which the simulation is running
+		action_n: np.arry - the action that was decided by each agent/node n
+	"""
+
+	rw = 0.0
+	for i,n in enumerate(env.nodes):
+		# get state and actions
+		obs = env._get_agent_observation(n)
+		action = action_n[i]
+		[a_k, b_k, be_k, rc_k, rm_k] = np.split(obs, [cfg.DEFAULT_SLICES, cfg.DEFAULT_SLICES*2, cfg.DEFAULT_SLICES*3, cfg.DEFAULT_SLICES*3+1])
+		[fks, wks] = np.split(action, 2)
+
+
+		# calculate the reward for the agent (node) n
+		node_reward = 0.0
+
+		# guarantee resources are being allocated to the max
+		for k in range(n.max_k):
+			rm_k -= wks[k]*int(np.ceil(env.case["task_type"][k][2]/cfg.RAM_UNIT))
+			rc_k -= wks[k]
+		if rc_k <= 0 or rm_k <= 0:
+			node_reward += 1.0
+		
+
+		# guarantee offload was done correctly
+		concurr = sum([1 if fk!=n.index and fk!=0 else 0 for fk in fks])
+		for k in range(n.max_k):
+			# only makes sense to calculate the coefficient if a[k] = 1
+			if a_k[k] == 1 and fks[k] != 0: #  and wks[k] > 0  will only be completed if scheduled [TODO@luis - move or remove wks?]
+				D_ik = 0; Dt_ik = 0
+				# if it's offloaded adds communication time to delay
+				if fks[k] != n.index:
+					bw = int(n.available_bandwidth()/concurr)
+					if bw >= cfg.NODE_BANDWIDTH_UNIT: # just make sure it is actually going to offload
+						Dt_ik = cfg.PACKET_SIZE / (point_to_point_transmission_rate(n._distances[fks[k]],bw))
+						D_ik += Dt_ik*1000 # converto to milliseconds
+				# calculate the Queue delay: b_ik/service_rate_i
+				D_ik += b_k[k]/env.nodes[fks[k]-1]._service_rate[k] # service rate per millisecond
+				# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
+				D_ik +=  1000* cfg.PACKET_SIZE*env.case["task_type"][k][1] / (cfg.CPU_UNIT) # convert it to milliseconds
+				# finally, check if slice delay constraint is met
+				if D_ik >= env.case["task_type"][k][0]:
+					coeficient = -1
+				else:
+					coeficient = 1
+
+				# count the number of new arrivals in the arriving node
+				arr = 0
+				for ev in env.evq.queue():
+					if is_arrival_on_slice(ev, env.nodes[fks[k]-1], k) and ev.time <= env.clock+Dt_ik:
+						arr += 1
+				# also, verify if there is an overload chance in the arriving node
+				arrival_node = env.nodes[fks[k]-1] if fks[k] > 0 else n
+				arr_obs = env._get_agent_observation(arrival_node)
+				if arr_obs[cfg.DEFAULT_SLICES+k]+arr+1 >= cfg.MAX_QUEUE:
+					coeficient -= cfg.OVERLOAD_WEIGHT # tunable_weight
+
+				# a_ik * ( (-1)if(delay_constraint_unmet) - (tunable_weight)if(overflow_chance) )
+				node_reward += a_k[k] * coeficient
+
+		# float point reward: 1/k * reward on each slice
+		rw += node_reward/n.max_k
+	return rw
+
+
 def simple_reward(env, action_n):
 	# a reward that seeks to maximize the success and minimize overflow
 	rw = 0.0
