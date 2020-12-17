@@ -35,6 +35,14 @@ def random_offload(node, a_k, b_k, threshold):
 			fks[k] = uniform_rand_int(1, N_NODES+1)
 	return fks
 
+def no_offload(node, a_k, b_k, threshold):
+	fks = np.zeros(DEFAULT_SLICES, dtype=np.uint8)
+	# offload to the Nearest Node if buffer bigger than 0.8
+	for k in range(node.max_k):
+		if a_k[k] == 1:
+			fks[k] = node.index
+	return fks
+
 # --- doesn't actually do proper scheduling ---
 
 class Placeholder_Algorithm(object):
