@@ -47,7 +47,7 @@ from utils.display import info_gather_init
 
 env = Fog_env()
 # this run will display some results in the command line, you can pick them up from the return values too
-run_rl_algorithm_on_envrionment(Nearest_Priority_Queue, env, case, info_gather_init(), debug=False, train=True, save=False, load=False)
+run_rl_algorithm_on_envrionment(A2c_Orchestrator, env, case, info_gather_init(), debug=False, train=True, save=False, load=False)
 ```
   
 A reinforcement learning algorithm purpose is to maximize a reward given by the environment, those rewards are defined in `sim_env.rewards` and can be then imported in the `sim_env.environment` to be used as the reward function of the environment itself.  
