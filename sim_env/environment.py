@@ -21,7 +21,7 @@ from sim_env.fog import create_random_node
 from sim_env.events import Event_queue
 from sim_env.events import Stop_transmitting, Set_arrivals, Offload_task, Start_transmitting, Start_processing
 from sim_env import configs as cfg
-from sim_env.rewards import jbaek_reward_fun, sr_or_reward
+from sim_env.rewards import jbaek_reward_fun2, sr_or_reward
 
 # for reproductibility
 from utils.tools import set_tools_seed
@@ -77,7 +77,7 @@ class Fog_env(gym.Env):
 		self.max_time = max_time
 		self.time_step = time_step
 
-		self.reward_fun = sr_or_reward
+		self.reward_fun = jbaek_reward_fun2
 		self.saved_step_info = None
 
 		# define the action space with I nodes and K slices each
@@ -137,7 +137,7 @@ class Fog_env(gym.Env):
 
 		# measure instant reward
 		rw = self.reward_fun(self, action_n)
-		print(rw)
+		
 		# and queue the actions
 		for i in range(self.n_nodes):
 			self._set_agent_action(self.nodes[i], action_n[i]) 
