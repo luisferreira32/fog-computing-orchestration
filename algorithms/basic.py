@@ -121,7 +121,7 @@ class Nearest_Round_Robin(object):
 				self.process = 0
 
 		# offload to the Nearest Node if buffer bigger than 0.8
-		fks = offload_fun(self.node, a_k, b_k, 0.8)
+		fks = self.offload_fun(self.node, a_k, b_k, 0.8)
 
 		# and return the action
 		return np.append(fks, wks)
@@ -169,7 +169,7 @@ class Nearest_Priority_Queue(object):
 				be_k[k] += 1
 
 		# offload to the Nearest Node if buffer bigger than 0.8
-		fks = offload_fun(self.node, a_k, b_k, 0.8)
+		fks = self.offload_fun(self.node, a_k, b_k, 0.8)
 
 		# and return the action
 		return np.append(fks, wks)

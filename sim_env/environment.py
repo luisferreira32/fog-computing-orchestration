@@ -21,7 +21,7 @@ from sim_env.fog import create_random_node
 from sim_env.events import Event_queue
 from sim_env.events import Stop_transmitting, Set_arrivals, Offload_task, Start_transmitting, Start_processing
 from sim_env import configs as cfg
-from sim_env.rewards import jbaek_reward_fun2, simple_reward, jbaek_reward_fun_alt
+from sim_env.rewards import jbaek_reward_fun2, simple_reward
 
 # for reproductibility
 from utils.tools import set_tools_seed
@@ -234,7 +234,7 @@ class Fog_env(gym.Env):
 		# takes the action in the system, i.e. sets up the offloading events
 		# for node n: [f_0, ..., f_k, w_0, ..., w_k]
 		[fks, wks] = np.split(action, 2)
-		wks = np.full(len(wks), 10) # TODO@luis: remove this if you want to make it a scheduling problem too
+		wks = np.full(len(wks), cfg.MAX_QUEUE) # TODO@luis: remove this if you want to make it a scheduling problem too
 
 		# concurrent offloads
 		concurr = sum([1 if fk!=n.index and fk!=0 else 0 for fk in fks])
