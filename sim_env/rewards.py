@@ -72,5 +72,5 @@ def jbaek_reward_fun2(env, state, action, next_state, info):
 def simple_reward(env, state, action, next_state, info):
 	return len(info["delay_list"]) - info["overflow"]
 
-def simple_reward2(env, state, action, next_state, info)
-	return len(info["delay_list"]) - info["overflow"] - info["discarded"]
+def simple_reward2(env, state, action, next_state, info):
+	return -info["overflow"]-info["discarded"]

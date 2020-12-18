@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+## IMPORTANT NOTE: this algorithm was not actually extensively tested, might be bugged...
 
 import tensorflow as tf
 import numpy as np
