@@ -134,9 +134,6 @@ class Fog_env(gym.Env):
 		# update some envrionment values
 		for n in self.nodes:
 			n.new_interval_update_service_rate()
-
-		# measure instant reward
-		rw = self.reward_fun(self, action_n)
 		
 		# and queue the actions
 		for i in range(self.n_nodes):
@@ -163,6 +160,9 @@ class Fog_env(gym.Env):
 
 		# obtain next observation
 		obs_n = self._get_state_obs()
+
+		# measure instant reward
+		rw = self.reward_fun(self, state_t, action_n, obs_n, info)
 
 		# just save it for render
 		self.saved_step_info = [state_t, action_n, info]

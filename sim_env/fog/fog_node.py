@@ -265,7 +265,6 @@ class Fog_node():
 		if self.buffers[k][-1].is_processing(): return None
 		# and should only offload a task arriving in this timestep
 		if self.buffers[k][-1]._timestamp != time: return None
-		self._dealt_tasks[k] += 1
 		return self.buffers[k].pop()
 
 	def finished_transmitting(self, bw):
