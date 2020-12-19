@@ -8,6 +8,7 @@ import time
 
 from algorithms.deep_tools.frames import Simple_Frame, Frame_1
 from algorithms.deep_tools.common import map_int_vect_to_int, map_int_to_int_vect, roll_one_step, critic_loss
+from algorithms.deep_tools.dqn_aux import Replay_buffer, Temporary_experience, instant_rw_fun
 
 from algorithms.configs import INITIAL_EPSILON, MIN_EPSILON, EPSILON_RENEWAL_RATE, EPSILON_RENEWAL_FACTOR, ALGORITHM_SEED
 from algorithms.configs import DEFAULT_BATCH_SIZE, TARGET_NETWORK_UPDATE_RATE, MAX_DQN_TRAIN_ITERATIONS, DEFAULT_GAMMA
@@ -95,22 +96,36 @@ class Dqn_Orchestrator(object):
 	def update_target_network(self, actors_dqn_target):
 		for dqn_target, dqn in zip(actors_dqn_target, self.actors_dqn):
 			dqn_target.set_weights(dqn.get_weights())
+		return actors_dqn_target
+
 
 	def train(self, batch_size: int = DEFAULT_BATCH_SIZE):
-		# init a replay buffer with fixed size
-		replay_buffer_states = tf.TensorArray(dtype=tf.float32, size=REPLAY_BUFFER_SIZE)
-		replay_buffer_actions = tf.TensorArray(dtype=tf.float32, size=REPLAY_BUFFER_SIZE)
-		replay_buffer_rewards = tf.TensorArray(dtype=tf.float32, size=REPLAY_BUFFER_SIZE)
-		replay_buffer_next_states = tf.TensorArray(dtype=tf.float32, size=REPLAY_BUFFER_SIZE)
+		# set up training variables
+		# for training steps
+		iter_rewards = []
+		optimizer = tf.keras.optimizers.Adam(learning_rate=DEFAULT_DQN_LEARNING_RATE)
+		huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
+		# for epsilon calculations too
+		e_start = INITIAL_EPSILON
+		R_e = EPSILON_RENEWAL_RATE
+		e_decay = (e_start - MIN_EPSILON)/R_e
 
-		# run for 10^4 iterations from random sampling to the replay buffer
+		# init a replay buffer with fixed size
+		experience_replay_buffer = Replay_buffer(REPLAY_BUFFER_SIZE)
+		temporary_experience_buffer = []
+
+		# set the initial state
 		obs_n = self.env.reset()
 		x = tf.expand_dims(obs_n, 0)
 		state = tf.repeat(x, repeats=TIME_SEQUENCE_SIZE, axis=0)
 
-		print("[LOG] Starting replay buffer", flush=True)
-		for t in tf.range(REPLAY_BUFFER_SIZE):
+		# set up a target network
+		actors_dqn_target =  [Frame_1(map_int_vect_to_int(action_space_n)+1, 11) for action_space_n in self.action_spaces]
 
+		# for a defined maximum number of iterations
+		for t in tf.range(MAX_DQN_TRAIN_ITERATIONS):
+
+			# >>>>>> RUN one timestep where you store state, action, rw, next_state in a temporary buffer, then update to the replay buffer if able
 			# pick up the action
 			action = []; action_integers = [];
 			for i in range(self.num_actors):
@@ -125,131 +140,97 @@ class Dqn_Orchestrator(object):
 				action_i = self.policy(tf.squeeze(q_values))
 				action.append(map_int_to_int_vect(action_space, action_i))
 				action_integers.append(action_i)
-			obs_n, reward, done, _ = self.env.step(np.array(action))
+
+			rw, estimated_trasmission_delays = instant_rw_fun(self.env, obs_n, action)
+			action_init_time = self.env.clock
+			obs_n, _, _, _ = self.env.step(np.array(action))
+
 
 			# roll a time_step and concat observation
 			next_state = roll_one_step(state, obs_n)
 
-			replay_buffer_states = replay_buffer_states.write(t, state)
-			replay_buffer_actions = replay_buffer_actions.write(t, action_integers)
-			replay_buffer_rewards = replay_buffer_rewards.write(t, reward)
-			replay_buffer_next_states = replay_buffer_next_states.write(t, next_state)
+			# place it in the temporary experience buffer
+			experience = Temporary_experience(state, action_integers, rw, next_state, action_init_time, estimated_trasmission_delays)
+			temporary_experience_buffer.append(experience)
 
+			# check out if any temporary experience is complete
+			for e in temporary_experience_buffer:
+				finished = e.check_update(self.env.clock, obs_n)
+				# if no more updates then no need to be in the temporary experience and go to the replay buffer
+				if finished:
+					temporary_experience_buffer.remove(e)
+					state_t, action_t, total_rw_t, next_state_t = e.value_tuple()
+					experience_replay_buffer.push(state_t, action_t, total_rw_t, next_state_t)
+
+			# then get ready on the next state
 			state = tf.identity(next_state)
-			if t%1000 == 0:
-				print(".", end='', flush=True)
-		print(" ")
-		print("[LOG] Done starting replay buffer!", flush=True)
-
-		replay_buffer_states = replay_buffer_states.stack()
-		replay_buffer_actions = replay_buffer_actions.stack()
-		replay_buffer_rewards = replay_buffer_rewards.stack()
-		replay_buffer_next_states = replay_buffer_next_states.stack()
-		
-		# set up a target network
-		actors_dqn_target =  [Frame_1(map_int_vect_to_int(action_space_n)+1, 11) for action_space_n in self.action_spaces]
-		for dqn_target in actors_dqn_target:
-			obs = state[:,0]
-			obs = tf.expand_dims(obs, 0)
-			dqn_target(obs)
-		self.update_target_network(actors_dqn_target)
-
-		# train the DQN agents
-		# set up variables
-		iter_rewards = []
-		optimizer = tf.keras.optimizers.Adam(learning_rate=DEFAULT_DQN_LEARNING_RATE)
-		huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
-
-		# for epsilon calc too
-		e_start = INITIAL_EPSILON
-		R_e = EPSILON_RENEWAL_RATE
-		e_decay = (e_start - MIN_EPSILON)/R_e
-
-		for t in tf.range(1, MAX_DQN_TRAIN_ITERATIONS):
-			start_time = time.time()
-			# update epsilon
-			self.epsilon = max(e_start-e_decay*(tf.cast(t%R_e, tf.float32)), MIN_EPSILON)
-
-			# run with last obtained state:
-			# 1. pick up the action
-			action = []; action_integers = [];
-			for i in range(self.num_actors):
-				obs = state[:,i]
-				actor_dqn = self.actors_dqn[i]
-				action_space = self.action_spaces[i]
-				# just one batch
-				obs = tf.expand_dims(obs, 0)
-				# call its model
-				q_values = actor_dqn(obs)
-				# remove the batch and calculate the action
-				action_i = self.policy(tf.squeeze(q_values))
-				action.append(map_int_to_int_vect(action_space, action_i))
-				action_integers.append(action_i)
-			obs_n, reward, done, _ = self.env.step(np.array(action))
-			iter_rewards.append(reward)
-
-			# 2. roll a time_step and concat observation
-			next_state = roll_one_step(state, obs_n)
-
-			# 3. save new iteration
-			replay_buffer_states = roll_one_step(replay_buffer_states, state)
-			replay_buffer_actions = roll_one_step(replay_buffer_actions, action_integers)
-			replay_buffer_rewards = roll_one_step(replay_buffer_rewards, reward)
-			replay_buffer_next_states = roll_one_step(replay_buffer_next_states, next_state)
-
-			# 4. and
-			state = tf.identity(next_state)
+			# <<<<<<
 
 
-			# sample random mini-batch and perform gradients to update network
-			# 1. create a dataframe and shuffle it in batches
-			train_dataset = tf.data.Dataset.from_tensor_slices((replay_buffer_states, replay_buffer_actions, replay_buffer_rewards, replay_buffer_next_states))
-			train_dataset = train_dataset.shuffle(buffer_size=REPLAY_BUFFER_SIZE+REPLAY_BUFFER_SIZE).batch(batch_size)
+			# >>>>>> TRAIN the network starting a specific iteration
+			# only start training after the replay buffer has filled
+			if experience_replay_buffer.size() == REPLAY_BUFFER_SIZE:
 
-			# 2. sample just one mini batch
-			for data in train_dataset:
-				(train_state, train_action, train_reward, train_next_state) = data
-				break
-			#print(train_state.shape, train_next_state.shape, train_reward.shape, train_action.shape)
+				# update epsilon
+				self.epsilon = max(e_start-e_decay*(tf.cast(t%R_e, tf.float32)), MIN_EPSILON)
 
-			# 3. compute targets and gradeient for every actor, then apply it with optimizer 
-			for i in tf.range(self.num_actors):
-				actor_train_state = train_state[:,:,i]
-				actor_train_next_state = train_next_state[:,:,i]
+				# 1. create a dataframe and shuffle it in batches
+				train_dataset = tf.data.Dataset.from_tensor_slices(experience_replay_buffer.get_tuple())
+				train_dataset = train_dataset.shuffle(buffer_size=REPLAY_BUFFER_SIZE+REPLAY_BUFFER_SIZE).batch(batch_size)
 
-				y_target = tf.TensorArray(dtype=tf.float32, size=batch_size)
-				for b_t in tf.range(batch_size):
-					x = tf.expand_dims(actor_train_next_state[b_t], 0)
-					q_next_target_values = actors_dqn_target[i](x)
-					q_next_target_values = tf.squeeze(q_next_target_values)
-					y_target = y_target.write(b_t, train_reward[b_t] + DEFAULT_GAMMA*tf.reduce_max(q_next_target_values))
-				y_target = y_target.stack()
-				#print(y_target.shape)
-			
-				with tf.GradientTape() as tape:
-					q_values = self.actors_dqn[i](actor_train_state)
+				# 2. sample just one mini batch
+				for data in train_dataset:
+					(train_state, train_action, train_reward, train_next_state) = data
+					break
 
-					# pick up actual chosen Q values
-					actual_q_values =  tf.TensorArray(dtype=tf.float32, size=batch_size)
+				# 3. compute targets and gradeient for every actor, then apply it with optimizer 
+				for i in tf.range(self.num_actors):
+					actor_train_state = train_state[:,:,i]
+					actor_train_next_state = train_next_state[:,:,i]
+
+					y_target = tf.TensorArray(dtype=tf.float32, size=batch_size)
 					for b_t in tf.range(batch_size):
-						actual_q_values = actual_q_values.write(b_t, q_values[b_t][int(train_action[b_t, i])])
-					actual_q_values = actual_q_values.stack()
+						x = tf.expand_dims(actor_train_next_state[b_t], 0)
+						q_next_target_values = actors_dqn_target[i](x)
+						t_rw_bt = tf.cast(train_reward[b_t], tf.float32)
+						y_target_t = t_rw_bt + DEFAULT_GAMMA*tf.reduce_max(tf.squeeze(q_next_target_values))
+						y_target = y_target.write(b_t, y_target_t)
+					y_target = y_target.stack()
+					#print(y_target.shape)
+				
+					with tf.GradientTape() as tape:
+						q_values = self.actors_dqn[i](actor_train_state)
 
-					loss = huber_loss(actual_q_values, y_target)
-				grads = tape.gradient(loss, self.actors_dqn[i].trainable_weights)
-				optimizer.apply_gradients(zip(grads, self.actors_dqn[i].trainable_weights))
+						# pick up actual chosen Q values
+						actual_q_values =  tf.TensorArray(dtype=tf.float32, size=batch_size)
+						for b_t in tf.range(batch_size):
+							actual_q_values = actual_q_values.write(b_t, q_values[b_t][int(train_action[b_t, i])])
+						actual_q_values = actual_q_values.stack()
 
-			# every C steps replace target network with trained network
-			if t%TARGET_NETWORK_UPDATE_RATE == 0:
-				self.update_target_network(actors_dqn_target)
+						loss = huber_loss(actual_q_values, y_target)
+					grads = tape.gradient(loss, self.actors_dqn[i].trainable_weights)
+					optimizer.apply_gradients(zip(grads, self.actors_dqn[i].trainable_weights))
 
-			# update epsilon updating parameters every R_e
-			if t%R_e == 0:
-				e_start = e_start*EPSILON_RENEWAL_FACTOR
-				e_decay = (e_start - MIN_EPSILON)/R_e
+				
+				# every C steps replace target network with trained network
+				if t%TARGET_NETWORK_UPDATE_RATE == 0:
+					actors_dqn_target = self.update_target_network(actors_dqn_target)
 
-			if t%10 == 0:
-				print("Iteration",t.numpy()," [iteration reward:", reward, "] [time", round(time.time()-start_time,2),"]", flush=True) # iteration print
+				# update epsilon updating parameters every R_e
+				if t%R_e == 0:
+					e_start = e_start*EPSILON_RENEWAL_FACTOR
+					e_decay = (e_start - MIN_EPSILON)/R_e
+
+				# for display
+				reward = sum(train_reward)/batch_size
+				if t%10 == 0:
+					print("Iteration",t.numpy()," [iteration average train:", reward, "]", flush=True) # iteration print
+
+				if iter_rewards:
+					reward = (1-DEFAULT_GAMMA)*reward + DEFAULT_GAMMA*iter_rewards[-1]
+				iter_rewards.append(reward)
+
+			# <<<<<<
 
 		return iter_rewards
 		

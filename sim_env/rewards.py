@@ -29,18 +29,26 @@ def jbaek_reward_fun2(env, state, action, next_state, info):
 
 		for k in range(cfg.DEFAULT_SLICES):
 			if s[k] == 1 and fks[k] != 0:
-				# total delay and com delay
-				D_ik = 0; Dt_ik = 0
 
-				# if it's offloaded adds communication time to delay
+				# If there is a transmission, get the transmission delay and the destination node itself
+				Dt_ik = 0.0
 				if fks[k] != n.index:
 					bw = int(n.available_bandwidth()/concurr)
 					if bw >= cfg.NODE_BANDWIDTH_UNIT: # just make sure it is actually going to offload
-						Dt_ik = cfg.PACKET_SIZE / (point_to_point_transmission_rate(n._distances[fks[k]],bw))
-						D_ik += Dt_ik*1000 # converto to milliseconds
+						Dt_ik = cfg.PACKET_SIZE / (point_to_point_transmission_rate(n._distances[fks[k]],bw)) # in [s]
 
+
+				# TODO@luis: solve this, how to accuratly estimate if its going to be overlowed?
+				dest_node = env.nodes[fks[k]-1]
+				# an estimated buffer length is the number of timesteps til actual arrival [ms] * (arrival - service_rate) + current buffer length
+				estimated_buffer_length = np.ceil(np.ceil(Dt_ik*1000)*(max(case["arrivals"][k]-dest_node._service_rate[k], 0)) + state[fks[k]-1][cfg.DEFAULT_SLICES+k])
+				
+
+				# Calculate the total processing delay in [ms]
+				# which is the transmission delay (=0.0 if no offload)
+				D_ik = Dt_ik*1000
 				# calculate the Queue delay: b_ik/service_rate_i
-				D_ik += s[n.max_k+k]/env.nodes[fks[k]-1]._service_rate[k] # service rate per millisecond
+				D_ik += estimated_buffer_length/dest_node._service_rate[k] # service rate is per millisecond
 				# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
 				D_ik +=  1000* cfg.PACKET_SIZE*case["task_type"][k][1] / (cfg.CPU_UNIT) # convert it to milliseconds
 				# finally, check if slice delay constraint is met
@@ -49,16 +57,9 @@ def jbaek_reward_fun2(env, state, action, next_state, info):
 				else:
 					coeficient = 1
 
-				# TODO@luis: solve this, how to accuratly predict if its going to be overlowed?
-				# count the number of new arrivals in the arriving node 
-				#arr = 0
-				#for ev in env.evq.queue():
-				#	if is_arrival_on_slice(ev, env.nodes[fks[k]-1], k) and ev.time <= env.clock+Dt_ik:
-				#		arr += 1
-				# also, verify if there is an overload chance in the arriving node
-				#arr_obs = next_state[fks[k]-1]
-				#if arr_obs[cfg.DEFAULT_SLICES+k]+arr+1 >= cfg.MAX_QUEUE:
-				#	coeficient -= cfg.OVERLOAD_WEIGHT # tunable_weight
+				# then just verify if the destination buffer overflowed with the new offload
+				if estimated_buffer_length+1 >= cfg.MAX_QUEUE:
+					coeficient -= cfg.OVERLOAD_WEIGHT # tunable_weight
 
 				# a_ik * ( (-1)if(delay_constraint_unmet) - (tunable_weight)if(overflow_chance) )
 				node_reward += s[k] * coeficient
@@ -73,4 +74,4 @@ def simple_reward(env, state, action, next_state, info):
 	return len(info["delay_list"]) - info["overflow"]
 
 def simple_reward2(env, state, action, next_state, info):
-	return -info["overflow"]-info["discarded"]
+	return -(info["overflow"]+info["discarded"])

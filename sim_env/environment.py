@@ -77,7 +77,7 @@ class Fog_env(gym.Env):
 		self.max_time = max_time
 		self.time_step = time_step
 
-		self.reward_fun = simple_reward2 # TODO@luis: the reward change is here, do it on arguments!
+		self.reward_fun = jbaek_reward_fun2 # TODO@luis: the reward change is here, do it on arguments!
 		self.saved_step_info = None
 
 		# define the action space with I nodes and K slices each
@@ -181,7 +181,7 @@ class Fog_env(gym.Env):
 			node.reset() # empty buffers
 		self.clock = 0 # and zero simulation clock
 		# then run a bit in the beginning to set up a random beginning state
-		for _ in range(10):
+		for _ in range(5):
 			self.step(self.action_space.sample())
 		return self._get_state_obs()
 
@@ -234,7 +234,7 @@ class Fog_env(gym.Env):
 		# takes the action in the system, i.e. sets up the offloading events
 		# for node n: [f_0, ..., f_k, w_0, ..., w_k]
 		[fks, wks] = np.split(action, 2)
-		wks = np.full(len(wks), cfg.MAX_QUEUE) # TODO@luis: remove this if you want to make it a scheduling problem too
+		#wks = np.full(len(wks), cfg.MAX_QUEUE) # TODO@luis: remove this if you want to make it a scheduling problem too
 
 		# concurrent offloads
 		concurr = sum([1 if fk!=n.index and fk!=0 else 0 for fk in fks])

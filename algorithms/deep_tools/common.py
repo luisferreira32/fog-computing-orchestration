@@ -134,3 +134,5 @@ def roll_one_step(df, new_value):
 	df = tf.stack((df_list[1:]))
 	df = tf.concat((df, [new_value]), axis=0)
 	return df
+
+
