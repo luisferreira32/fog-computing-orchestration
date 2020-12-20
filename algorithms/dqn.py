@@ -175,8 +175,8 @@ class Dqn_Orchestrator(object):
 			# only start training after the replay buffer has filled
 			if experience_replay_buffer.size() == REPLAY_BUFFER_SIZE:
 
-				# update epsilon: EXP ( (-LOG(e_start)/R^e + LOG(e_min)/R^e) * t - log(e_start) )
-				self.epsilon = max( math.exp( -e_decay*(math.fmod(t,EPSILON_RENEWAL_RATE)) - math.log(e_start) ) , MIN_EPSILON)
+				# update epsilon: EXP ( (-LOG(e_start)/R^e + LOG(e_min)/R^e) * t + log(e_start) )
+				self.epsilon = max( math.exp( -e_decay*(math.fmod(t,EPSILON_RENEWAL_RATE)) + math.log(e_start) ) , MIN_EPSILON)
 
 				# 1. create a dataframe and shuffle it in batches
 				train_dataset = tf.data.Dataset.from_tensor_slices(experience_replay_buffer.get_tuple())
@@ -233,11 +233,16 @@ class Dqn_Orchestrator(object):
 			# <<<<<<
 
 		# and calculate discounted rewards
-		instant_rw_buffer = instant_rw_buffer.stack().numpy()
-		iter_rewards = [instant_rw_buffer[0]]
-		for r in instant_rw_buffer:
-			x = RW_EPS*r + (1-RW_EPS)*iter_rewards[-1]
-			iter_rewards.append(x)
+		print("Calculating average total reward...")
+		instant_rw_buffer = instant_rw_buffer.stack()
+		instant_rw_buffer_d = tf.data.Dataset.from_tensor_slices(instant_rw_buffer).batch(batch_size)
+		iter_rewards = []
+		for r in instant_rw_buffer_d:
+			reward = tf.reduce_sum(r)/batch_size
+			if iter_rewards:
+				av_r = RW_EPS*reward + (1-RW_EPS)*iter_rewards[-1]
+			iter_rewards.append(reward)
+		print("Done!")
 
 		# after training swap to exploit
 		self.epsilon = MIN_EPSILON
