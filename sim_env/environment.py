@@ -181,8 +181,8 @@ class Fog_env(gym.Env):
 			node.reset() # empty buffers
 		self.clock = 0 # and zero simulation clock
 		# then run a bit in the beginning to set up a random beginning state
-		for _ in range(5):
-			self.step(self.action_space.sample())
+		#for _ in range(5):
+		#	self.step(self.action_space.sample())
 		return self._get_state_obs()
 
 	def _get_state_obs(self):

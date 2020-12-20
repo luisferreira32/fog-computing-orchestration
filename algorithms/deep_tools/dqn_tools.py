@@ -100,6 +100,7 @@ class Temporary_experience(object):
 		self.instant_rw = instant_rw
 		self.next_state = next_state
 
+		self.init_time = init_time
 		self.times = []
 		for node, node_times in enumerate(transmission_delays):
 			for slice_k, slice_node_times in enumerate(node_times):

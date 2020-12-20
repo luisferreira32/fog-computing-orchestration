@@ -5,6 +5,7 @@
 import tensorflow as tf
 import numpy as np
 import time
+import math
 
 from algorithms.deep_tools.frames import Simple_Frame, Frame_1
 from algorithms.deep_tools.common import map_int_vect_to_int, map_int_to_int_vect, roll_one_step, critic_loss
@@ -101,13 +102,12 @@ class Dqn_Orchestrator(object):
 	def train(self, batch_size: int = DEFAULT_BATCH_SIZE):
 		# set up training variables
 		# for training steps
-		iter_rewards = []
+		instant_rw_buffer = tf.TensorArray(dtype=tf.float32, size=MAX_DQN_TRAIN_ITERATIONS)
 		optimizer = tf.keras.optimizers.Adam(learning_rate=DEFAULT_DQN_LEARNING_RATE)
 		huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 		# for epsilon calculations too
 		e_start = INITIAL_EPSILON
-		R_e = EPSILON_RENEWAL_RATE
-		e_decay = (e_start - MIN_EPSILON)/R_e
+		e_decay = math.log(e_start)/EPSILON_RENEWAL_RATE - math.log(MIN_EPSILON)/EPSILON_RENEWAL_RATE
 
 		# init a replay buffer with fixed size
 		experience_replay_buffer = Replay_buffer(REPLAY_BUFFER_SIZE)
@@ -159,13 +159,14 @@ class Dqn_Orchestrator(object):
 				if finished:
 					temporary_experience_buffer.remove(e)
 					state_t, action_t, total_rw_t, next_state_t = e.value_tuple()
+					instant_rw_buffer = instant_rw_buffer.write(int(e.init_time*1000), total_rw_t)
 					experience_replay_buffer.push(state_t, action_t, total_rw_t, next_state_t)
 
 			# then get ready on the next state
 			state = tf.identity(next_state)
 
 			# just some state prints
-			if experience_replay_buffer.size() < REPLAY_BUFFER_SIZE and t%100:
+			if experience_replay_buffer.size() < REPLAY_BUFFER_SIZE and t%100 == 0:
 				print("Iteration",t.numpy(),"filling replay buffer...", flush=True)
 			# <<<<<<
 
@@ -174,8 +175,8 @@ class Dqn_Orchestrator(object):
 			# only start training after the replay buffer has filled
 			if experience_replay_buffer.size() == REPLAY_BUFFER_SIZE:
 
-				# update epsilon
-				self.epsilon = max(e_start-e_decay*(tf.cast(t%R_e, tf.float32)), MIN_EPSILON)
+				# update epsilon: EXP ( (-LOG(e_start)/R^e + LOG(e_min)/R^e) * t - log(e_start) )
+				self.epsilon = max( math.exp( -e_decay*(math.fmod(t,EPSILON_RENEWAL_RATE)) - math.log(e_start) ) , MIN_EPSILON)
 
 				# 1. create a dataframe and shuffle it in batches
 				train_dataset = tf.data.Dataset.from_tensor_slices(experience_replay_buffer.get_tuple())
@@ -219,20 +220,24 @@ class Dqn_Orchestrator(object):
 				if t%TARGET_NETWORK_UPDATE_RATE == 0:
 					actors_dqn_target = self.update_target_network(actors_dqn_target)
 
-				# update epsilon updating parameters every R_e
-				if t%R_e == 0:
+				# update epsilon updating parameters every EPSILON_RENEWAL_RATE
+				if t%EPSILON_RENEWAL_RATE == 0:
 					e_start = e_start*EPSILON_RENEWAL_FACTOR
-					e_decay = (e_start - MIN_EPSILON)/R_e
+					e_decay = math.log(e_start)/EPSILON_RENEWAL_RATE - math.log(MIN_EPSILON)/EPSILON_RENEWAL_RATE
 
 				# for display
-				if iter_rewards:
-					rw = (1-DEFAULT_GAMMA)*rw + DEFAULT_GAMMA*iter_rewards[-1]
-				iter_rewards.append(rw)
 				if t%10 == 0:
-					print("Iteration",t.numpy()," [cummulative instant rw:", rw, "][curr epsilon:", self.epsilon,"]", flush=True) # iteration print
+					print("Iteration",t.numpy()," [instant rw:", rw, "][curr epsilon:", self.epsilon,"]", flush=True) # iteration print
 
 
 			# <<<<<<
+
+		# and calculate discounted rewards
+		instant_rw_buffer = instant_rw_buffer.stack().numpy()
+		iter_rewards = [instant_rw_buffer[0]]
+		for r in instant_rw_buffer:
+			x = RW_EPS*r + (1-RW_EPS)*iter_rewards[-1]
+			iter_rewards.append(x)
 
 		# after training swap to exploit
 		self.epsilon = MIN_EPSILON
