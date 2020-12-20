@@ -14,7 +14,7 @@ from algorithms.deep_tools.trainners import run_actor_critic_tragectory, set_tra
 
 # some necesary constants
 from algorithms.configs import DEFAULT_SAVE_MODELS_PATH, DEFAULT_ITERATIONS, DEFAULT_PPO_LEARNING_RATE, DEFAULT_CRITIC_LEARNING_RATE
-from algorithms.configs import DEFAULT_GAMMA, DEFAULT_EPOCHS, DEFAULT_BATCH_SIZE, DEFAULT_TRAJECTORY, TIME_SEQUENCE_SIZE, PARALLEL_ENVS
+from algorithms.configs import DEFAULT_GAMMA, DEFAULT_EPOCHS, DEFAULT_BATCH_SIZE, DEFAULT_TRAJECTORY, TIME_SEQUENCE_SIZE, PARALLEL_ENVS, RW_EPS
 from sim_env.configs import TIME_STEP, SIM_TIME
 
 
@@ -179,7 +179,7 @@ class A2c_Orchestrator(object):
 			# saving values
 			r = it_rw/PARALLEL_ENVS
 			if iteration_rewards:
-				r = (1-DEFAULT_GAMMA)*r + DEFAULT_GAMMA*iteration_rewards[-1]
+				r = RW_EPS*r + (1-RW_EPS)*iteration_rewards[-1]
 			iteration_rewards.append(r)
 
 		#then return iteration rewards

@@ -6,6 +6,7 @@ ALGORITHM_SEED = 2**3-1 # mersenne primes 2, 3, 5, 7, 13, 17, 19, 31
 # RL related variables
 DEFAULT_BATCH_SIZE = 32
 DEFAULT_GAMMA = 0.98
+RW_EPS = 0.02
 
 # ppo configs
 DEFAULT_TRAJECTORY = 65 # +1 since TD error

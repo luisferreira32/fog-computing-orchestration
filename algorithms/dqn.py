@@ -8,7 +8,7 @@ import time
 
 from algorithms.deep_tools.frames import Simple_Frame, Frame_1
 from algorithms.deep_tools.common import map_int_vect_to_int, map_int_to_int_vect, roll_one_step, critic_loss
-from algorithms.deep_tools.dqn_aux import Replay_buffer, Temporary_experience, instant_rw_fun
+from algorithms.deep_tools.dqn_tools import Replay_buffer, Temporary_experience, instant_rw_fun
 
 from algorithms.configs import INITIAL_EPSILON, MIN_EPSILON, EPSILON_RENEWAL_RATE, EPSILON_RENEWAL_FACTOR, ALGORITHM_SEED
 from algorithms.configs import DEFAULT_BATCH_SIZE, TARGET_NETWORK_UPDATE_RATE, MAX_DQN_TRAIN_ITERATIONS, DEFAULT_GAMMA
@@ -89,7 +89,6 @@ class Dqn_Orchestrator(object):
 		try:
 			for i in range(self.num_actors):
 				self.actors_dqn[i] = load_fun(complete_path+"_node"+str(i), compile=False)
-			self.update_target_network()
 		except Exception as e:
 			print("[ERROR LOG] It was not able to load the specified orchestrator model from", saved_models_path)
 
