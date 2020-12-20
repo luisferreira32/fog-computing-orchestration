@@ -66,6 +66,9 @@ class Replay_buffer(object):
 		self.rw_buffer = []
 		self.next_state_buffer = []
 
+	def __str__(self):
+		return "max:"+str(self.max_size)+" curr:"+str(len(self.state_buffer))
+
 	def push(self, state, action, rw, next_state):
 		if len(self.state_buffer) == self.max_size:
 			self.state_buffer.pop(0)

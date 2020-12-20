@@ -13,7 +13,7 @@ from algorithms.deep_tools.dqn_tools import Replay_buffer, Temporary_experience,
 from algorithms.configs import INITIAL_EPSILON, MIN_EPSILON, EPSILON_RENEWAL_RATE, EPSILON_RENEWAL_FACTOR, ALGORITHM_SEED
 from algorithms.configs import DEFAULT_BATCH_SIZE, TARGET_NETWORK_UPDATE_RATE, MAX_DQN_TRAIN_ITERATIONS, DEFAULT_GAMMA
 from algorithms.configs import REPLAY_BUFFER_SIZE, TIME_SEQUENCE_SIZE, DEFAULT_DQN_LEARNING_RATE
-from algorithms.configs import DEFAULT_SAVE_MODELS_PATH
+from algorithms.configs import DEFAULT_SAVE_MODELS_PATH, RW_EPS
 
 class Dqn_Orchestrator(object):
 	"""docstring for Dqn_Orchestrator"""
@@ -163,6 +163,10 @@ class Dqn_Orchestrator(object):
 
 			# then get ready on the next state
 			state = tf.identity(next_state)
+
+			# just some state prints
+			if experience_replay_buffer.size() < REPLAY_BUFFER_SIZE and t%100:
+				print("Iteration",t.numpy(),"filling replay buffer...", flush=True)
 			# <<<<<<
 
 
@@ -221,15 +225,16 @@ class Dqn_Orchestrator(object):
 					e_decay = (e_start - MIN_EPSILON)/R_e
 
 				# for display
-				reward = sum(train_reward)/batch_size
-				if t%10 == 0:
-					print("Iteration",t.numpy()," [iteration average train:", reward, "]", flush=True) # iteration print
-
 				if iter_rewards:
-					reward = (1-DEFAULT_GAMMA)*reward + DEFAULT_GAMMA*iter_rewards[-1]
-				iter_rewards.append(reward)
+					rw = (1-DEFAULT_GAMMA)*rw + DEFAULT_GAMMA*iter_rewards[-1]
+				iter_rewards.append(rw)
+				if t%10 == 0:
+					print("Iteration",t.numpy()," [cummulative instant rw:", rw, "][curr epsilon:", self.epsilon,"]", flush=True) # iteration print
+
 
 			# <<<<<<
 
+		# after training swap to exploit
+		self.epsilon = MIN_EPSILON
 		return iter_rewards
 		
