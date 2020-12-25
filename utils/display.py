@@ -51,6 +51,7 @@ def plt_box_plot(df, mili=False, title="default_title"):
 
 eps = np.finfo(np.float32).eps.item() # almost zero value
 def plt_line_plot(df, normalize=False, r=None, title="default_line_plt"):
+	fig, ax = plt.subplots()
 	for key, values in df.items():
 		if normalize:
 			if r is None:
@@ -58,7 +59,7 @@ def plt_line_plot(df, normalize=False, r=None, title="default_line_plt"):
 			values = [(v+eps)/(r+eps) for v in values]
 		plt.plot(values, label=key)
 	plt.legend(loc="upper left")
-	plt.savefig(my_path+title+".png")
+	fig.savefig(my_path+title+".png")
 
 # --- text log display ---
 # aux function

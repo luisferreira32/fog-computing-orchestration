@@ -101,28 +101,35 @@ class Dqn_Orchestrator(object):
 
 	def train(self, batch_size: int = DEFAULT_BATCH_SIZE):
 		# set up training variables
+		# for info
+		rw_buffer = tf.TensorArray(dtype=tf.float32, size=MAX_DQN_TRAIN_ITERATIONS)
+		average_instant_reward = 0; rw_it = -200
 		# for training steps
-		instant_rw_buffer = tf.TensorArray(dtype=tf.float32, size=MAX_DQN_TRAIN_ITERATIONS)
 		optimizer = tf.keras.optimizers.Adam(learning_rate=DEFAULT_DQN_LEARNING_RATE)
 		huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 		# for epsilon calculations too
 		e_start = INITIAL_EPSILON
 		e_decay = math.log(e_start)/EPSILON_RENEWAL_RATE - math.log(MIN_EPSILON)/EPSILON_RENEWAL_RATE
+		e_it = 0
 
 		# init a replay buffer with fixed size
 		experience_replay_buffer = Replay_buffer(REPLAY_BUFFER_SIZE)
 		temporary_experience_buffer = []
-
-		# set the initial state
-		obs_n = self.env.reset()
-		x = tf.expand_dims(obs_n, 0)
-		state = tf.repeat(x, repeats=TIME_SEQUENCE_SIZE, axis=0)
 
 		# set up a target network
 		actors_dqn_target =  [Frame_1(map_int_vect_to_int(action_space_n)+1, 11) for action_space_n in self.action_spaces]
 
 		# for a defined maximum number of iterations
 		for t in tf.range(MAX_DQN_TRAIN_ITERATIONS):
+			# >>>>>> Reset env every N iterations to leave pitfalls
+			if t%MAX_DQN_TRAIN_ITERATIONS == 0: # if %x < MAX_DQN_TRAIN_ITERATIONS => will reset again
+				obs_n = self.env.reset()
+				x = tf.expand_dims(obs_n, 0)
+				state = tf.repeat(x, repeats=TIME_SEQUENCE_SIZE, axis=0)
+				rw_it += 200
+				print("[LOG] env reset")
+
+			# <<<<<<
 
 			# >>>>>> RUN one timestep where you store state, action, rw, next_state in a temporary buffer, then update to the replay buffer if able
 			# pick up the action
@@ -159,7 +166,7 @@ class Dqn_Orchestrator(object):
 				if finished:
 					temporary_experience_buffer.remove(e)
 					state_t, action_t, total_rw_t, next_state_t = e.value_tuple()
-					instant_rw_buffer = instant_rw_buffer.write(int(e.init_time*1000), total_rw_t)
+					rw_buffer = rw_buffer.write(rw_it+int(e.init_time*1000), total_rw_t)
 					experience_replay_buffer.push(state_t, action_t, total_rw_t, next_state_t)
 
 			# then get ready on the next state
@@ -176,7 +183,8 @@ class Dqn_Orchestrator(object):
 			if experience_replay_buffer.size() == REPLAY_BUFFER_SIZE:
 
 				# update epsilon: EXP ( (-LOG(e_start)/R^e + LOG(e_min)/R^e) * t + log(e_start) )
-				self.epsilon = max( math.exp( -e_decay*(math.fmod(t,EPSILON_RENEWAL_RATE)) + math.log(e_start) ) , MIN_EPSILON)
+				e_it += 1
+				self.epsilon = max( math.exp( -e_decay*(math.fmod(e_it,EPSILON_RENEWAL_RATE)) + math.log(e_start) ) , MIN_EPSILON)
 
 				# 1. create a dataframe and shuffle it in batches
 				train_dataset = tf.data.Dataset.from_tensor_slices(experience_replay_buffer.get_tuple())
@@ -187,7 +195,8 @@ class Dqn_Orchestrator(object):
 					(train_state, train_action, train_reward, train_next_state) = data
 					break
 
-				# 3. compute targets and gradeient for every actor, then apply it with optimizer 
+				# 3. compute targets and gradeient for every actor, then apply it with optimizer
+				losses_buff = {}
 				for i in tf.range(self.num_actors):
 					actor_train_state = train_state[:,:,i]
 					actor_train_next_state = train_next_state[:,:,i]
@@ -214,6 +223,9 @@ class Dqn_Orchestrator(object):
 						loss = huber_loss(actual_q_values, y_target)
 					grads = tape.gradient(loss, self.actors_dqn[i].trainable_weights)
 					optimizer.apply_gradients(zip(grads, self.actors_dqn[i].trainable_weights))
+					del tape
+					# just to save it for display
+					losses_buff[i.numpy()] = loss.numpy()
 
 				
 				# every C steps replace target network with trained network
@@ -226,22 +238,24 @@ class Dqn_Orchestrator(object):
 					e_decay = math.log(e_start)/EPSILON_RENEWAL_RATE - math.log(MIN_EPSILON)/EPSILON_RENEWAL_RATE
 
 				# for display
+				average_instant_reward += rw
 				if t%10 == 0:
-					print("Iteration",t.numpy()," [instant rw:", rw, "][curr epsilon:", self.epsilon,"]", flush=True) # iteration print
+					print("Iteration",t.numpy()," [avg instant rw:", average_instant_reward/10, "][epsilon:", round(self.epsilon,3),"] dqn it losses:", losses_buff, flush=True) # iteration print
+					average_instant_reward = 0
 
 
 			# <<<<<<
 
 		# and calculate discounted rewards
 		print("Calculating average total reward...")
-		instant_rw_buffer = instant_rw_buffer.stack()
-		instant_rw_buffer_d = tf.data.Dataset.from_tensor_slices(instant_rw_buffer).batch(batch_size)
+		rw_buffer = rw_buffer.stack().numpy()
+		average_total_reward = 0
 		iter_rewards = []
-		for r in instant_rw_buffer_d:
-			reward = tf.reduce_sum(r)/batch_size
-			if iter_rewards:
-				av_r = RW_EPS*reward + (1-RW_EPS)*iter_rewards[-1]
-			iter_rewards.append(reward)
+		for t in range(0,len(rw_buffer)):
+			average_total_reward = (1-RW_EPS)*average_total_reward + RW_EPS*rw_buffer[t]
+			iter_rewards.append(average_total_reward)
+			if t%100 == 0:
+				print(int(100*t/len(rw_buffer)), "%","complete...")
 		print("Done!")
 
 		# after training swap to exploit

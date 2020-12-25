@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 # for information gathering
-from utils.tools import dictionary_append, append_to_file
+from utils.tools import dictionary_append, append_to_file, write_dictionary_on_csvs
 from utils.display import info_gather, info_logs, plt_line_plot
 # the envrionment
 from algorithms.deep_tools.common import  set_tf_seed
@@ -29,7 +29,7 @@ def run_basic_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug
 		# --
 
 	# -- info logs
-	if compiled_info is not None: info_logs(str(agents[0])+str(case), round(time.time()-start_time,2), compiled_info)
+	if compiled_info is not None: info_logs(case["case"]+"_"+str(agents[0]), round(time.time()-start_time,2), compiled_info)
 	key = case["case"]+str(agents[0])
 	# --
 	return compiled_info, key
@@ -44,7 +44,9 @@ def run_rl_algorithm_on_envrionment(alg, env, case, compiled_info=None, debug=Fa
 		orchestrator.load_models()
 	if train:
 		iteration_rewards = orchestrator.train()
-		plt_line_plot({alg.short_str()+"_"+case["case"] : iteration_rewards}, title="avg_rw"+case["case"])
+		d = {"rw_"+str(orchestrator): iteration_rewards}
+		write_dictionary_on_csvs(d)
+		plt_line_plot(d, title="avg_rw_"+str(orchestrator))
 
 	# and run as usual
 	start_time = time.time()

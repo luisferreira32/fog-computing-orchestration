@@ -8,7 +8,7 @@ SIM_TIME = TOTAL_TIME_STEPS*TIME_STEP
 DEBUG = False
 
 # envrionment reward related
-OVERLOAD_WEIGHT = 2
+OVERLOAD_WEIGHT = 0.2
 
 # random related
 RANDOM_SEED = 2**19-1 # mersenne prime seeds at 2, 3, 5, 7, 13, 17, 19, 31
@@ -21,7 +21,7 @@ NODE_BANDWIDTH = 1e6 # Hz
 NODE_BANDWIDTH_UNIT = 1e5 # Hz , i.e., 10 concurrent transmissions is the maximum
 TRANSMISSION_POWER = 20 # dBm
 # resources
-DEFAULT_SLICES = 3# default = 3
+DEFAULT_SLICES = 1# default = 3
 MAX_QUEUE = 10
 CPU_CLOCKS = [5e9, 6e9, 7e9, 8e9, 9e9, 10e9] # [5, 6, 7, 8, 9, 10] GHz
 RAM_SIZES = [2400, 4000, 8000] # MB = [6, 10, 20] units
@@ -40,8 +40,8 @@ PACKET_SIZE = 5000 # bits = 5 kBits
 # experimental case
 BASE_SLICE_CHARS = {
 	"case": "base",
-	"arrivals" : [0.6, 0.6, 0.6], #
-	"task_type" : [[5, 600, 400], [10, 600, 400], [10, 400, 800]] #[[15, 1200, 600]]
+	"arrivals" : [0.6], #[0.6, 0.6, 0.6], #
+	"task_type" : [[15, 1200, 600]] # [[5, 600, 400], [10, 600, 400], [10, 400, 800]] #
 }
 
 # ---- default simulation cases ---- 

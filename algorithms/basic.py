@@ -92,7 +92,7 @@ class Nearest_Round_Robin(object):
 		self.offload_fun = offload_fun
 
 	def __str__(self):
-		return "Nearest Round Robin"
+		return "Round_Robin_"+self.offload_fun.__name__
 
 	@staticmethod
 	def short_str():
@@ -143,7 +143,7 @@ class Nearest_Priority_Queue(object):
 		self.priorities = np.lexsort((aux_random, delay_constraints))
 
 	def __str__(self):
-		return "Nearest Priority Queue"
+		return "Priority_Queue_"+self.offload_fun.__name__
 		
 	@staticmethod
 	def short_str():
