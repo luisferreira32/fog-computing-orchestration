@@ -21,7 +21,7 @@ NODE_BANDWIDTH = 1e6 # Hz
 NODE_BANDWIDTH_UNIT = 1e5 # Hz , i.e., 10 concurrent transmissions is the maximum
 TRANSMISSION_POWER = 20 # dBm
 # resources
-DEFAULT_SLICES = 1# default = 3
+DEFAULT_SLICES = 2# default = 3
 MAX_QUEUE = 10
 CPU_CLOCKS = [5e9, 6e9, 7e9, 8e9, 9e9, 10e9] # [5, 6, 7, 8, 9, 10] GHz
 RAM_SIZES = [2400, 4000, 8000] # MB = [6, 10, 20] units
@@ -40,11 +40,12 @@ PACKET_SIZE = 5000 # bits = 5 kBits
 # experimental case
 BASE_SLICE_CHARS = {
 	"case": "base",
-	"arrivals" : [0.6], #[0.6, 0.6, 0.6], #
-	"task_type" : [[15, 1200, 600]] # [[5, 600, 400], [10, 600, 400], [10, 400, 800]] #
+	"arrivals" :  [0.6, 0.6], #[0.6, 0.6, 0.6], # [0.6],
+	"task_type" : [[10, 600, 800], [20, 1200, 400]]# [[5, 600, 400], [10, 600, 400], [10, 400, 800]] # [[15, 1200, 600]] 
 }
 
 # ---- default simulation cases ---- 
+# for 3 slices
 # Case 1
 NORMAL_CASE_1 = {
 	"case": "n1",
@@ -64,4 +65,28 @@ NORMAL_CASE_3 = {
 	"task_type" : [[5, 600, 400], [10, 600, 400], [10, 400, 1200]]
 }
 # cases compilations
-ALL_CASES = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3]
+ALL_CASES_S3 = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3]
+
+# for 2 slices
+
+# Case 1
+NORMAL_CASE_1_2 = {
+	"case": "n1",
+	"arrivals" : [0.6, 0.6],
+	"task_type" : [[20, 1200, 400], [20, 400, 1200]]
+}
+# Case 2
+NORMAL_CASE_2_2 = {
+	"case": "n2",
+	"arrivals" : [0.6, 0.6],
+	"task_type" : [[5, 600, 400], [10, 600, 400]]
+}
+# Case 3
+NORMAL_CASE_3_2 = {
+	"case": "n3",
+	"arrivals" : [0.6, 0.6],
+	"task_type" : [[5, 600, 400], [10, 400, 1200]]
+}
+# cases compilations
+ALL_CASES_S2 = [NORMAL_CASE_1_2, NORMAL_CASE_2_2, NORMAL_CASE_3_2]
+

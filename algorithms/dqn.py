@@ -254,8 +254,8 @@ class Dqn_Orchestrator(object):
 		for t in range(0,len(rw_buffer)):
 			average_total_reward = (1-RW_EPS)*average_total_reward + RW_EPS*rw_buffer[t]
 			iter_rewards.append(average_total_reward)
-			if t%100 == 0:
-				print(int(100*t/len(rw_buffer)), "%","complete...")
+			if t%1000 == 0:
+				print(int(100*t/len(rw_buffer)), "%","complete...", flush=True)
 		print("Done!")
 
 		# after training swap to exploit
