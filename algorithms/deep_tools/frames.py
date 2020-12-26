@@ -53,6 +53,7 @@ class Frame_1(tf.keras.Model):
 		self.conv1d_hidden = layers.Conv1D(64, 3, padding="same", activation="relu")
 		self.rnn_connector = layers.GRU(128)
 		self.dense_1 = layers.Dense(64, activation="relu")
+		self.dense_2 = layers.Dense(output_size)
 		self.output_layer = layers.Dense(output_size)
 		
 	def __str__(self):
@@ -70,4 +71,5 @@ class Frame_1(tf.keras.Model):
 		x = self.conv1d_hidden(x)
 		x = self.rnn_connector(x)
 		x = self.dense_1(x)
+		x = self.dense_2(x)
 		return self.output_layer(x)
