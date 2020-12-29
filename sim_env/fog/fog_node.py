@@ -317,6 +317,7 @@ class Fog_node():
 		self._avail_cpu_units = int(self.cpu_frequency/cfg.CPU_UNIT)
 		self._avail_ram_units = int(self.ram_size/cfg.RAM_UNIT)
 		self._being_processed = np.zeros(self.max_k, dtype=np.uint8)
+		self._bandwidth = cfg.NODE_BANDWIDTH
 
 	# <<<<<
 # <<<<<

@@ -145,7 +145,7 @@ class A2c_Orchestrator(object):
 
 			# after running trajectories train with the whole data
 			for e in tf.range(epochs):
-				losses = {0:0, 1:0, 2:0, 3:0, 4:0}
+				losses = {}
 				for state, action, old_action_probs, adv, _ in train_dataset:
 
 					#and each actor
@@ -165,9 +165,11 @@ class A2c_Orchestrator(object):
 						actor_optimizer.apply_gradients(zip(grads, self.actors[i].trainable_weights))
 						del tape
 
+						if i.numpy() not in losses:
+							losses[i.numpy()] = 0
 						losses[i.numpy()] += loss.numpy()
 
-				print("[EPOCH",e.numpy()+1,"/",epochs,"] cumulative losses:", losses) # epoch print
+				print("[EPOCH",e.numpy()+1,"/",epochs,"] cumulative losses:", [(x, round(y, 5)) for x, y in losses.items()]) # epoch print
 
 			# fetch the new state: with reset given some iterations ~ in order to visit more states
 			if iteration%10 == 0:
