@@ -43,7 +43,7 @@ DEFAULT_SLICES = 1
 BASE_SLICE_CHARS = {
 	"case": "base",
 	"arrivals" :  [0.6, 0.6], #[0.6, 0.6, 0.6], # [0.6],
-	"task_type" : [[10, 600, 800], [20, 1200, 400]]# [[5, 600, 400], [10, 600, 400], [10, 400, 800]] # [[15, 1200, 600]] 
+	"task_type" : [[10, 600, 800], [20, 1200, 400]]# [[5, 600, 400], [10, 600, 400], [10, 400, 800]] # [[15, 1200, 800]] 
 }
 
 # --- simulation cases writing ---
@@ -51,23 +51,13 @@ BASE_SLICE_CHARS = {
 OFF_CASE_1 = {
 	"case": "ofc1",
 	"arrivals" :  [0.6],
-	"task_type" : [[1000, 1200, 600]]
-}
-HEAVY_OFF_CASE_1= {
-	"case": "hofc1",
-	"arrivals" :  [0.8],
-	"task_type" : [[1000, 1200, 600]]
+	"task_type" : [[1000, 1200, 800]]
 }
 
 OFF_CASE_2 = {
 	"case": "ofc2",
 	"arrivals" :  [0.6],
-	"task_type" : [[15, 1200, 600]]
-}
-HEAVY_OFF_CASE_2= {
-	"case": "hofc2",
-	"arrivals" :  [0.8],
-	"task_type" : [[15, 1200, 600]]
+	"task_type" : [[15, 1200, 800]]
 }
 
 # ---- default simulation cases ---- 

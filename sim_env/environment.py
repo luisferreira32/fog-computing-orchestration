@@ -146,7 +146,6 @@ class Fog_env(gym.Env):
 		while self.evq.has_events() and self.evq.first_time() <= self.clock:
 			ev = self.evq.pop_event()
 			t = ev.execute(self.evq)
-			#print(ev.classtype+"["+str(round(ev.time*1000,2))+"ms]", end='-->')
 
 			# --- GET INFORMAITON HERE ---
 			if t is not None: # means it came from a node

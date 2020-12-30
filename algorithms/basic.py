@@ -52,6 +52,7 @@ class Placeholder_Algorithm(object):
 		super(Placeholder_Algorithm, self).__init__()
 		self.node = node
 		self.offload_fun = offload_fun
+		self.case = case
 
 	def __str__(self):
 		return "placeholder_"+self.offload_fun.__name__
@@ -67,11 +68,13 @@ class Placeholder_Algorithm(object):
 		# for every node make an decision
 		[a_k, b_k, be_k, rc_k, rm_k] = np.split(obs, [DEFAULT_SLICES, DEFAULT_SLICES*2, DEFAULT_SLICES*3, DEFAULT_SLICES*3+1])
 
-		# just try to process all!
-		for k in range(self.node.max_k):
-			while b_k[k] > be_k[k]:
-				wks[k] +=1
-				be_k[k] +=1
+		# just try to process all! - assume max_k = 1 , this placeholder is only for one slice
+		k=0
+		while b_k[k] > be_k[k] and rm_k >= np.ceil(self.case["task_type"][k][2]/RAM_UNIT) and rc_k > 0:
+			wks[k] +=1
+			be_k[k] +=1
+			rm_k -= int(np.ceil(self.case["task_type"][k][2]/RAM_UNIT))
+			rc_k -= 1
 
 		# offload to the Nearest Node if buffer bigger than 0.8
 		fks = self.offload_fun(self.node, a_k, b_k, 0.8)

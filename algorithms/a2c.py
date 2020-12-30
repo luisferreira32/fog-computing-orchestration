@@ -8,9 +8,9 @@ import numpy as np
 import copy
 
 # since we're implementing ppo with deep neural networks
-from algorithms.deep_tools.frames import Simple_Frame, Frame_1
+from algorithms.deep_tools.frames import Simple_Frame, Frame_1, Frame_2
 from algorithms.deep_tools.common import general_advantage_estimator, map_int_vect_to_int, map_int_to_int_vect, critic_loss, ppo_actor_loss
-from algorithms.deep_tools.trainners import run_actor_critic_tragectory, set_training_env_vec, training_env_vec_state
+from algorithms.deep_tools.a2c_tools import run_actor_critic_tragectory, set_training_env_vec, training_env_vec_state
 
 # some necesary constants
 from algorithms.configs import DEFAULT_SAVE_MODELS_PATH, DEFAULT_ITERATIONS, DEFAULT_PPO_LEARNING_RATE, DEFAULT_CRITIC_LEARNING_RATE
@@ -141,6 +141,8 @@ class A2c_Orchestrator(object):
 				del tape
 
 				critic_total_loss += loss.numpy()
+				break # only runs one minibatch - erase it to run all minibatches
+
 			print("[CRITIC UPDATE] total loss", critic_total_loss)
 
 			# after running trajectories train with the whole data
@@ -168,6 +170,8 @@ class A2c_Orchestrator(object):
 						if i.numpy() not in losses:
 							losses[i.numpy()] = 0
 						losses[i.numpy()] += loss.numpy()
+
+					break # only runs one minibatch - erase it to run all minibatches
 
 				print("[EPOCH",e.numpy()+1,"/",epochs,"] cumulative losses:", [(x, round(y, 5)) for x, y in losses.items()]) # epoch print
 
