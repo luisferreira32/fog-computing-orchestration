@@ -141,7 +141,7 @@ class A2c_Orchestrator(object):
 				del tape
 
 				critic_total_loss += loss.numpy()
-				break # only runs one minibatch - erase it to run all minibatches
+				#break # only runs one minibatch - erase it to run all minibatches
 
 			print("[CRITIC UPDATE] total loss", critic_total_loss)
 
@@ -171,7 +171,7 @@ class A2c_Orchestrator(object):
 							losses[i.numpy()] = 0
 						losses[i.numpy()] += loss.numpy()
 
-					break # only runs one minibatch - erase it to run all minibatches
+					#break # only runs one minibatch - erase it to run all minibatches
 
 				print("[EPOCH",e.numpy()+1,"/",epochs,"] cumulative losses:", [(x, round(y, 5)) for x, y in losses.items()]) # epoch print
 

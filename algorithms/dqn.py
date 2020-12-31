@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 import numpy as np
+import copy
 import time
 import math
 
@@ -23,12 +24,13 @@ class Dqn_Orchestrator(object):
 		super(Dqn_Orchestrator, self).__init__()
 
 		# N DQN for each node; and N DQN target for each node too
+		self.dqn_frame = dqn_frame
 		self.actors_dqn =  [dqn_frame(map_int_vect_to_int(action_space_n)+1, 11) for action_space_n in env.action_space.nvec]
 		self.num_actors = len(env.nodes)
 
 		# meta-data
-		self.name = env.case["case"]+"_rd"+str(env.rd_seed)+"_dqn_orchestrator_"+Frame_1.short_str()
-		self.env = env
+		self.name = env.case["case"]+"_rd"+str(env.rd_seed)+"_dqn_orchestrator_"+dqn_frame.short_str()
+		self.env = copy.deepcopy(env)
 		self.action_spaces = env.action_space.nvec
 		self.observation_spaces = env.observation_space.nvec
 
@@ -117,7 +119,7 @@ class Dqn_Orchestrator(object):
 		temporary_experience_buffer = []
 
 		# set up a target network
-		actors_dqn_target =  [Frame_1(map_int_vect_to_int(action_space_n)+1, 11) for action_space_n in self.action_spaces]
+		actors_dqn_target =  [self.dqn_frame(map_int_vect_to_int(action_space_n)+1, 11) for action_space_n in self.action_spaces]
 
 		# for a defined maximum number of iterations
 		for t in tf.range(MAX_DQN_TRAIN_ITERATIONS):

@@ -78,7 +78,7 @@ class Frame_2(tf.keras.Model):
 	"""Frame_2 deep neural network with  specific architecture
 	"""
 	def __init__(self, output_size: int, feature_size: int, sequence_size: int = TIME_SEQUENCE_SIZE):
-		super(Frame_1, self).__init__()
+		super(Frame_2, self).__init__()
 
 		self.conv1d_input = layers.Conv1D(32, 3, padding="same", activation="relu", input_shape=(None, sequence_size, feature_size))
 		self.conv1d_hidden = layers.Conv1D(64, 3, padding="same", activation="relu")
