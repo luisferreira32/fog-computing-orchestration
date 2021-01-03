@@ -13,7 +13,7 @@ from algorithms.deep_tools.common import general_advantage_estimator, map_int_ve
 from algorithms.deep_tools.a2c_tools import run_actor_critic_tragectory, set_training_env_vec, training_env_vec_state
 
 # some necesary constants
-from algorithms.configs import DEFAULT_SAVE_MODELS_PATH, DEFAULT_ITERATIONS, DEFAULT_PPO_LEARNING_RATE, DEFAULT_CRITIC_LEARNING_RATE
+from algorithms.configs import DEFAULT_SAVE_MODELS_PATH, DEFAULT_ITERATIONS, DEFAULT_PPO_LEARNING_RATE, DEFAULT_CRITIC_LEARNING_RATE, ENV_RESET_IT
 from algorithms.configs import DEFAULT_GAMMA, DEFAULT_EPOCHS, DEFAULT_BATCH_SIZE, DEFAULT_TRAJECTORY, TIME_SEQUENCE_SIZE, PARALLEL_ENVS, RW_EPS
 from sim_env.configs import TIME_STEP, SIM_TIME
 
@@ -176,7 +176,7 @@ class A2c_Orchestrator(object):
 				print("[EPOCH",e.numpy()+1,"/",epochs,"] cumulative losses:", [(x, round(y, 5)) for x, y in losses.items()]) # epoch print
 
 			# fetch the new state: with reset given some iterations ~ in order to visit more states
-			if iteration%10 == 0:
+			if iteration%ENV_RESET_IT == 0:
 				current_state = set_training_env_vec(self.env_vec)
 				#current_state = training_env_vec_state()
 				#print(current_state)
