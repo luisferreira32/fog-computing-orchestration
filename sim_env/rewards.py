@@ -40,8 +40,8 @@ def jbaek_reward_fun2(env, state, action, next_state, info):
 
 				# TODO@luis: solve this, how to accuratly estimate if its going to be overlowed?
 				dest_node = env.nodes[fks[k]-1]
-				# an estimated buffer length is the number of timesteps til actual arrival [ms] * (arrival - service_rate) + current buffer length
-				estimated_buffer_length = np.ceil(np.ceil(Dt_ik*1000)*(max(case["arrivals"][k]-dest_node._service_rate[k], 0)) + state[fks[k]-1][cfg.DEFAULT_SLICES+k])
+				# an estimated buffer length is: the number of timesteps til actual arrival [ms] * (arrival - service_rate) + current buffer length
+				estimated_buffer_length = min(np.ceil(np.ceil(Dt_ik*1000)*(max(case["arrivals"][k]-dest_node._service_rate[k], 0)) + state[fks[k]-1][cfg.DEFAULT_SLICES+k]), 10)
 				
 
 				# Calculate the total processing delay in [ms]
@@ -51,6 +51,7 @@ def jbaek_reward_fun2(env, state, action, next_state, info):
 				D_ik += estimated_buffer_length/dest_node._service_rate[k] # service rate is per millisecond
 				# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
 				D_ik +=  1000* cfg.PACKET_SIZE*case["task_type"][k][1] / (cfg.CPU_UNIT) # convert it to milliseconds
+
 				# finally, check if slice delay constraint is met
 				if D_ik >= case["task_type"][k][0]:
 					coeficient = -1

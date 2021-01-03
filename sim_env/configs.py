@@ -8,14 +8,13 @@ SIM_TIME = TOTAL_TIME_STEPS*TIME_STEP
 DEBUG = False
 
 # envrionment reward related
-OVERLOAD_WEIGHT = 0.2
+OVERLOAD_WEIGHT = 2 # 0.2 used for one slice
 
 # random related
 RANDOM_SEED = 2**19-1 # mersenne prime seeds at 2, 3, 5, 7, 13, 17, 19, 31
 RANDOM_SEED_LIST = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
 
 # NODES CONSTANTS
-N_NODES = 5 # default = 5
 # transmission
 NODE_BANDWIDTH = 1e6 # Hz
 NODE_BANDWIDTH_UNIT = 1e5 # Hz , i.e., 10 concurrent transmissions is the maximum
@@ -37,7 +36,8 @@ THERMAL_NOISE_DENSITY = -174 # dBm/Hz
 PACKET_SIZE = 5000 # bits = 5 kBits
 
 # NOTE: this has to change according to the TEST cases used!!
-DEFAULT_SLICES = 1
+DEFAULT_SLICES = 2
+N_NODES = 5 # default = 5
 
 # experimental case
 BASE_SLICE_CHARS = {
@@ -53,6 +53,11 @@ OFF_CASE_1 = {
 	"arrivals" :  [0.6],
 	"task_type" : [[1000, 1200, 800]]
 }
+H_OFF_CASE_1 = {
+	"case": "hofc1",
+	"arrivals" :  [0.8],
+	"task_type" : [[1000, 1200, 800]]
+}
 
 OFF_CASE_2 = {
 	"case": "ofc2",
@@ -60,27 +65,10 @@ OFF_CASE_2 = {
 	"task_type" : [[15, 1200, 800]]
 }
 
-# ---- default simulation cases ---- 
-# for 3 slices
-# Case 1
-NORMAL_CASE_1 = {
-	"case": "n1",
-	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[20, 1200, 400], [20, 600, 400], [20, 400, 1200]]
-}
-# Case 2
-NORMAL_CASE_2 = {
-	"case": "n2",
-	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[5, 600, 400], [10, 600, 400], [20, 600, 400]]
-}
-# Case 3
-NORMAL_CASE_3 = {
-	"case": "n3",
-	"arrivals" : [0.6, 0.6, 0.6],
-	"task_type" : [[5, 600, 400], [10, 600, 400], [10, 400, 1200]]
-}
-# cases compilations
-ALL_CASES_S3 = [NORMAL_CASE_1, NORMAL_CASE_2, NORMAL_CASE_3]
 
-
+# for 2 slices: to test offloading & scheduling + task heterogenity
+OFF_SCH_CASE_1 = {
+	"case": "offsch1",
+	"arrivals" : [0.6, 0.6],
+	"task_type" : [[1000, 400, 1200], [1000, 1200, 400]]
+}

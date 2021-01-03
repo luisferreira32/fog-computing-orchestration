@@ -23,7 +23,7 @@ class A2c_Orchestrator(object):
 	"""A2c_Orchestrator
 	"""
 	basic = False
-	def __init__(self, env, actor_frame=Frame_1, critic_frame=Frame_1):
+	def __init__(self, env, actor_frame=Frame_1, critic_frame=Frame_2):
 		super(A2c_Orchestrator, self).__init__()
 		# common critic
 		self.critic = critic_frame(1, 55)
@@ -95,7 +95,7 @@ class A2c_Orchestrator(object):
 		critic_lr: float = DEFAULT_CRITIC_LEARNING_RATE):
 
 		critic_optimizer = tf.keras.optimizers.SGD(learning_rate=critic_lr)
-		actor_optimizer = tf.keras.optimizers.Adam(learning_rate=ppo_lr)
+		actor_optimizer = [tf.keras.optimizers.Adam(learning_rate=ppo_lr) for _ in range(self.num_actors)]
 
 		# return values
 		iteration_rewards = []
@@ -164,7 +164,7 @@ class A2c_Orchestrator(object):
 
 							loss = ppo_actor_loss(old_action_probs[:,i], action_probs, adv)
 						grads = tape.gradient(loss, self.actors[i].trainable_weights)
-						actor_optimizer.apply_gradients(zip(grads, self.actors[i].trainable_weights))
+						actor_optimizer[i.numpy()].apply_gradients(zip(grads, self.actors[i].trainable_weights))
 						del tape
 
 						if i.numpy() not in losses:

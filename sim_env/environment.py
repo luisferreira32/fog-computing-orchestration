@@ -52,7 +52,7 @@ class Fog_env(gym.Env):
 
 	metadata = {'render.modes': ['human']}
 
-	def __init__(self, case=cfg.BASE_SLICE_CHARS, rd_seed=cfg.RANDOM_SEED, max_time=cfg.SIM_TIME, time_step=cfg.TIME_STEP, n_nodes=cfg.N_NODES):
+	def __init__(self, case=cfg.BASE_SLICE_CHARS, rd_seed=cfg.RANDOM_SEED, max_time=cfg.SIM_TIME, time_step=cfg.TIME_STEP, n_nodes=cfg.N_NODES, node_obj=None):
 		"""
 		Parameters:
 			case: dict - the case that defines slices characteristics and arrival rates
@@ -67,7 +67,10 @@ class Fog_env(gym.Env):
 		# envrionment variables
 		# self.nodes, self.evq, etc...
 		self.n_nodes = n_nodes
-		self.nodes = [create_random_node(i) for i in range(1,n_nodes+1)]
+		if node_obj is None:
+			self.nodes = [create_random_node(i) for i in range(1,n_nodes+1)]
+		else:
+			self.nodes = node_obj
 		self.case = case
 		for n in self.nodes:
 			n.set_distances(self.nodes)

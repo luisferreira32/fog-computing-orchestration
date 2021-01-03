@@ -307,7 +307,7 @@ class Fog_node():
 			self._service_rate[k] = self._dealt_tasks[k] / self._total_time_intervals
 			# to avoid zero divisions
 			if self._service_rate[k] == 0:
-				self._service_rate[k] = 1
+				self._service_rate[k] = .1
 
 	def reset(self):
 		"""Resets the node state, clearing the buffers and restoring the resources """

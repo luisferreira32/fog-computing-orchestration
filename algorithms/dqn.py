@@ -14,7 +14,7 @@ from algorithms.deep_tools.dqn_tools import Replay_buffer, Temporary_experience,
 
 from algorithms.configs import INITIAL_EPSILON, MIN_EPSILON, EPSILON_RENEWAL_RATE, EPSILON_RENEWAL_FACTOR, ALGORITHM_SEED
 from algorithms.configs import DEFAULT_BATCH_SIZE, TARGET_NETWORK_UPDATE_RATE, MAX_DQN_TRAIN_ITERATIONS, DEFAULT_GAMMA
-from algorithms.configs import REPLAY_BUFFER_SIZE, TIME_SEQUENCE_SIZE, DEFAULT_DQN_LEARNING_RATE
+from algorithms.configs import REPLAY_BUFFER_SIZE, TIME_SEQUENCE_SIZE, DEFAULT_DQN_LEARNING_RATE, MIN_DQN_LEARNING_RATE
 from algorithms.configs import DEFAULT_SAVE_MODELS_PATH, RW_EPS
 
 class Dqn_Orchestrator(object):
@@ -103,11 +103,16 @@ class Dqn_Orchestrator(object):
 
 	def train(self, batch_size: int = DEFAULT_BATCH_SIZE):
 		# set up training variables
+		# for env reset, avoiding a pitfall
+		reset_iteration = EPSILON_RENEWAL_RATE
 		# for info
 		rw_buffer = tf.TensorArray(dtype=tf.float32, size=MAX_DQN_TRAIN_ITERATIONS)
-		average_instant_reward = 0; rw_it = -200
+		average_instant_reward = 0; rw_it = -reset_iteration
 		# for training steps
-		optimizer = tf.keras.optimizers.Adam(learning_rate=DEFAULT_DQN_LEARNING_RATE)
+		optimizers = {}
+		for i in range(self.num_actors):
+			lr = tf.keras.optimizers.schedules.PolynomialDecay(DEFAULT_DQN_LEARNING_RATE, MAX_DQN_TRAIN_ITERATIONS-REPLAY_BUFFER_SIZE, MIN_DQN_LEARNING_RATE)
+			optimizers[i] = tf.keras.optimizers.Adam(learning_rate=lr)
 		huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 		# for epsilon calculations too
 		e_start = INITIAL_EPSILON
@@ -124,11 +129,11 @@ class Dqn_Orchestrator(object):
 		# for a defined maximum number of iterations
 		for t in tf.range(MAX_DQN_TRAIN_ITERATIONS):
 			# >>>>>> Reset env every N iterations to leave pitfalls
-			if t%MAX_DQN_TRAIN_ITERATIONS == 0: # if %x < MAX_DQN_TRAIN_ITERATIONS => will reset again
+			if t%reset_iteration == 0: # if %x < MAX_DQN_TRAIN_ITERATIONS => will reset again
 				obs_n = self.env.reset()
 				x = tf.expand_dims(obs_n, 0)
 				state = tf.repeat(x, repeats=TIME_SEQUENCE_SIZE, axis=0)
-				rw_it += 200
+				rw_it += reset_iteration
 				print("[LOG] env reset")
 
 			# <<<<<<
@@ -224,7 +229,7 @@ class Dqn_Orchestrator(object):
 
 						loss = huber_loss(actual_q_values, y_target)
 					grads = tape.gradient(loss, self.actors_dqn[i].trainable_weights)
-					optimizer.apply_gradients(zip(grads, self.actors_dqn[i].trainable_weights))
+					optimizers[i.numpy()].apply_gradients(zip(grads, self.actors_dqn[i].trainable_weights))
 					del tape
 					# just to save it for display
 					losses_buff[i.numpy()] = loss.numpy()
@@ -251,7 +256,7 @@ class Dqn_Orchestrator(object):
 		# and calculate discounted rewards
 		print("Calculating average total reward...")
 		rw_buffer = rw_buffer.stack().numpy()
-		average_total_reward = 0
+		average_total_reward = rw_buffer[0]
 		iter_rewards = []
 		for t in range(0,len(rw_buffer)):
 			average_total_reward = (1-RW_EPS)*average_total_reward + RW_EPS*rw_buffer[t]
