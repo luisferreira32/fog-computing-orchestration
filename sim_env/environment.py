@@ -154,10 +154,11 @@ class Fog_env(gym.Env):
 			if t is not None: # means it came from a node
 				if t.is_completed(): # finished
 					info["delay_list"].append(t.task_delay())
-				elif t.task_time() == ev.time: # overflowed
-					info["overflow"] += 1
-				else: # discarded because of delay constraint
+				elif ev.classtype=="Discard_task": # discarded because of delay constraint
 					info["discarded"] += 1
+					print(t.task_time()*1000, ev.time*1000, t.task_delay())
+				else: # overflowed
+					info["overflow"] += 1
 
 
 		# obtain next observation
