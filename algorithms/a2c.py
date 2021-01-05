@@ -178,6 +178,7 @@ class A2c_Orchestrator(object):
 			# fetch the new state: with reset given some iterations ~ in order to visit more states
 			if iteration%ENV_RESET_IT == 0:
 				current_state = set_training_env_vec(self.env_vec)
+				print("[LOG] env reset")
 				#current_state = training_env_vec_state()
 				#print(current_state)
 			else:

@@ -8,7 +8,7 @@ SIM_TIME = TOTAL_TIME_STEPS*TIME_STEP
 DEBUG = False
 
 # envrionment reward related
-OVERLOAD_WEIGHT = 2 # 0.2 used for one slice
+OVERLOAD_WEIGHT = 2 # 2 used when no delay constraint
 
 # random related
 RANDOM_SEED = 2**19-1 # mersenne prime seeds at 2, 3, 5, 7, 13, 17, 19, 31
@@ -36,7 +36,7 @@ THERMAL_NOISE_DENSITY = -174 # dBm/Hz
 PACKET_SIZE = 5000 # bits = 5 kBits
 
 # NOTE: this has to change according to the TEST cases used!!
-DEFAULT_SLICES = 2
+DEFAULT_SLICES = 1
 N_NODES = 5 # default = 5
 
 # experimental case
@@ -55,7 +55,12 @@ OFF_CASE_1 = {
 }
 H_OFF_CASE_1 = {
 	"case": "hofc1",
-	"arrivals" :  [0.8],
+	"arrivals" :  [0.7],
+	"task_type" : [[1000, 1200, 800]]
+}
+HH_OFF_CASE_1 = {
+	"case": "h2ofc1",
+	"arrivals" :  [0.7],
 	"task_type" : [[1000, 1200, 800]]
 }
 
@@ -71,4 +76,10 @@ OFF_SCH_CASE_1 = {
 	"case": "offsch1",
 	"arrivals" : [0.6, 0.6],
 	"task_type" : [[1000, 400, 1200], [1000, 1200, 400]]
+}
+
+OFF_SCH_CASE_2 = {
+	"case": "offsch2",
+	"arrivals" : [0.6, 0.6],
+	"task_type" : [[10, 400, 1200], [50, 1200, 400]]
 }

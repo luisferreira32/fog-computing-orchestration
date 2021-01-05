@@ -136,7 +136,8 @@ class Task(object):
 			self._expected_delay = task_processing_time(self)
 
 	def stop_processing(self, finish_time):
-		"""Stops task processing and verifies if the task has completed its processing
+		"""Stops task processing and verifies if the task has completed its processing. Keeps track of the
+		processing time left in case it was a premature interruption.
 		
 		Parameters:
 			finish_time: float - the precise time when it finished processing in the fog node

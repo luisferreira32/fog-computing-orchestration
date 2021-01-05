@@ -137,6 +137,7 @@ class Fog_env(gym.Env):
 		# update some envrionment values
 		for n in self.nodes:
 			n.new_interval_update_service_rate()
+			#print(n.index, n._service_rate)
 		
 		# and queue the actions
 		for i in range(self.n_nodes):
@@ -156,7 +157,7 @@ class Fog_env(gym.Env):
 					info["delay_list"].append(t.task_delay())
 				elif ev.classtype=="Discard_task": # discarded because of delay constraint
 					info["discarded"] += 1
-					print(t.task_time()*1000, ev.time*1000, t.task_delay())
+					#print(t.task_time()*1000, ev.time*1000, t.task_delay())
 				else: # overflowed
 					info["overflow"] += 1
 
