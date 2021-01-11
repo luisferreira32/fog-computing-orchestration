@@ -5,6 +5,7 @@
 
 # >>>>> imports
 import numpy as np
+import math
 
 from sim_env.fog import point_to_point_transmission_rate
 from sim_env.events import is_arrival_on_slice
@@ -50,13 +51,17 @@ def jbaek_reward_fun2(env, state, action, next_state, info):
 				# calculate the Queue delay: b_ik/service_rate_i
 				D_ik += estimated_buffer_length/dest_node._service_rate[k] # service rate is per millisecond
 				# and the processing delay T*slice_k_cpu_demand / CPU_UNIT (GHz)
-				D_ik +=  1000* cfg.PACKET_SIZE*case["task_type"][k][1] / (cfg.CPU_UNIT) # convert it to milliseconds
+				Dp_ik = 1000* cfg.PACKET_SIZE*case["task_type"][k][1] / (cfg.CPU_UNIT) # convert it to milliseconds
+				D_ik += Dp_ik
 
 				# finally, check if slice delay constraint is met
 				if D_ik >= case["task_type"][k][0]:
 					coeficient = -1
 				else:
-					coeficient = 1
+					# rw_1 
+					# coeficient = 1
+					# rw_2: 1 - (Dtotal-Dprocessing) / Dmax  \in [0,1[
+					coeficient = 1 - ((D_ik-Dp_ik)/case["task_type"][k][0])
 
 				# then just verify if the destination buffer overflowed with the new offload
 				if estimated_buffer_length+1 >= cfg.MAX_QUEUE:
@@ -68,7 +73,6 @@ def jbaek_reward_fun2(env, state, action, next_state, info):
 		# float point reward: 1/k * reward on each slice
 		rw += node_reward/n.max_k
 	return rw
-
 
 
 def simple_reward(env, state, action, next_state, info):

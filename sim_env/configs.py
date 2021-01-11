@@ -8,7 +8,7 @@ SIM_TIME = TOTAL_TIME_STEPS*TIME_STEP
 DEBUG = False
 
 # envrionment reward related
-OVERLOAD_WEIGHT = 2.0 # 2 used when no delay constraint
+OVERLOAD_WEIGHT = 0.2 # 2 used when no delay constraint
 
 # random related
 RANDOM_SEED = 2**19-1 # mersenne prime seeds at 2, 3, 5, 7, 13, 17, 19, 31
@@ -86,5 +86,5 @@ OFF_SCH_CASE_1 = {
 OFF_SCH_CASE_2 = {
 	"case": "offsch2",
 	"arrivals" : [0.6, 0.6],
-	"task_type" : [[10, 400, 1200], [50, 1200, 400]]
+	"task_type" : [[15, 400, 1200], [50, 1200, 400]]
 }
