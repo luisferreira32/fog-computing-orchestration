@@ -30,10 +30,11 @@ from algorithms.runners import run_basic_algorithm_on_envrionment
 from algorithms.basic import Nearest_Priority_Queue
 from sim_env.environment import Fog_env
 from utils.display import info_gather_init
+from sim_env import configs
 
 env = Fog_env()
 # this run will display some results in the command line, you can pick them up from the return values too
-run_basic_algorithm_on_envrionment(Nearest_Priority_Queue, env, case, info_gather_init(), debug=False)
+run_basic_algorithm_on_envrionment(Nearest_Priority_Queue, env, configs.OFF_CASE_2, info_gather_init(), debug=False)
 ```
   
 Note that the cases described in `sim_env.configurations` that will be assigned to the environment, must match the variables in that file. For example, if the number of slices in the Fog is set to 3, you cannot run a case that only describes one slice.  
@@ -44,10 +45,11 @@ from algorithms.runners import run_rl_algorithm_on_envrionment
 from algorithms.a2c import A2c_Orchestrator
 from sim_env.environment import Fog_env
 from utils.display import info_gather_init
+from sim_env import configs
 
 env = Fog_env()
 # this run will display some results in the command line, you can pick them up from the return values too
-run_rl_algorithm_on_envrionment(A2c_Orchestrator, env, case, info_gather_init(), debug=False, train=True, save=False, load=False)
+run_rl_algorithm_on_envrionment(A2c_Orchestrator, env, configs.OFF_CASE_2, info_gather_init(), debug=False, train=True, save=False, load=False)
 ```
   
 A reinforcement learning algorithm purpose is to maximize a reward given by the environment, those rewards are defined in `sim_env.rewards` and can be then imported in the `sim_env.environment` to be used as the reward function of the environment itself.  
